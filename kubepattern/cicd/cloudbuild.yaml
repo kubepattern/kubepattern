@@ -1,0 +1,46 @@
+substitutions:
+  _IMAGE_NAME: europe-west1-docker.pkg.dev/gke-test-sigemi/kubepattern-artifactregistry/kubepattern
+
+images:
+  - '$_IMAGE_NAME:latest'
+
+steps:
+  # Compilazione con Maven e Java 21
+  - id: Compile
+    name: "maven:3.9.9-eclipse-temurin-21"
+    dir: image/java
+    entrypoint: 'mvn'
+    args:
+      - '--batch-mode'
+      - '--errors'
+      - '--fail-at-end'
+      - '--show-version'
+      - '-DinstallAtEnd=true'
+      - '-DdeployAtEnd=true'
+      - '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN'
+      - '-Prelease,prod'
+      - 'install'
+    
+  # Build dell'immagine Docker
+  - id: Build
+    name: gcr.io/cloud-builders/docker
+    dir: image/java
+    args:
+      - 'build'
+      - '-t'
+      - '$_IMAGE_NAME:latest'
+      - '.'
+  
+  - id: ubuntu
+    name: aquasec/trivy:latest
+    args:
+      - 'image'
+      - '$_IMAGE_NAME:latest'
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - 'push'
+      - '$_IMAGE_NAME:latest'
+
+timeout: '1800s'
