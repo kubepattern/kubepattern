@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kubepattern
+  name: kubepattern
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubepattern
+  strategy: {}
+  template:
+    metadata:
+      namespace: kubepattern
+      labels:
+        app: kubepattern
+    spec:
+      containers:
+      - image: europe-west1-docker.pkg.dev/gke-test-sigemi/kubepattern-artifactregistry/kubepattern:latest
+        name: kubepattern
+        imagePullPolicy: Always
