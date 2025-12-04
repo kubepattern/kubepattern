@@ -93,10 +93,8 @@ spec:
       labels:
         app: kubepattern
     spec:
-      imagePullSecrets:
-      - name: gcr-key
       containers:
-      - image: europe-west1-docker.pkg.dev/gke-test-sigemi/kubepattern-artifactregistry/kubepattern:latest
+      - image: gabrielegroppo/kubepattern:latest
         imagePullPolicy: Always
         name: kpattern
       serviceAccountName: kubepattern-sa
