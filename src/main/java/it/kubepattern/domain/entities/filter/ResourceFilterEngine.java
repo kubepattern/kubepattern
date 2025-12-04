@@ -1,8 +1,8 @@
-package it.sigemi.domain.entities.filter;
+package it.kubepattern.domain.entities.filter;
 
-import it.sigemi.domain.entities.cluster.K8sPatternResource;
-import it.sigemi.domain.entities.cluster.K8sResource;
-import it.sigemi.domain.entities.pattern.PatternDefinition;
+import it.kubepattern.domain.entities.cluster.K8sPatternResource;
+import it.kubepattern.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.pattern.PatternDefinition;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

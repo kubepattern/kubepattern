@@ -1,4 +1,4 @@
-package it.sigemi.application.configuration;
+package it.kubepattern.application.configuration;
 
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.*;

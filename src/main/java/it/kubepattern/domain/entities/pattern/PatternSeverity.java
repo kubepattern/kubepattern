@@ -1,4 +1,4 @@
-package it.sigemi.domain.entities.pattern;
+package it.kubepattern.domain.entities.pattern;
 
 public enum PatternSeverity {
     INFO,

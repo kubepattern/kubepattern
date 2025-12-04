@@ -1,6 +1,6 @@
-package it.sigemi.domain.entities.pattern;
+package it.kubepattern.domain.entities.pattern;
 
-import it.sigemi.domain.entities.filter.ResourceFilter;
+import it.kubepattern.domain.entities.filter.ResourceFilter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

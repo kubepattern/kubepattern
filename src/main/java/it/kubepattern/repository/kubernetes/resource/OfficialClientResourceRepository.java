@@ -1,4 +1,4 @@
-package it.sigemi.repository.kubernetes.resource;
+package it.kubepattern.repository.kubernetes.resource;
 
 import io.kubernetes.client.common.KubernetesListObject;
 import io.kubernetes.client.common.KubernetesObject;
@@ -6,7 +6,7 @@ import io.kubernetes.client.util.generic.dynamic.DynamicKubernetesObject;
 import io.kubernetes.client.openapi.*;
 import io.kubernetes.client.openapi.apis.*;
 import io.kubernetes.client.openapi.models.V1ListMeta;
-import it.sigemi.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.cluster.K8sResource;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

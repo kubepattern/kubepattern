@@ -1,4 +1,4 @@
-package it.sigemi.domain.entities.cluster.relationships;
+package it.kubepattern.domain.entities.cluster.relationships;
 
 public enum RelationshipType {
     OWNS,           // Deployment -> ReplicaSet //ok

@@ -1,9 +1,9 @@
-package it.sigemi.domain.entities.cluster.relationships.strategies;
+package it.kubepattern.domain.entities.cluster.relationships.strategies;
 
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.relationships.K8sRelationship;
-import it.sigemi.domain.entities.cluster.K8sResource;
-import it.sigemi.domain.entities.cluster.relationships.RelationshipType;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.relationships.K8sRelationship;
+import it.kubepattern.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.cluster.relationships.RelationshipType;
 
 import java.util.List;
 

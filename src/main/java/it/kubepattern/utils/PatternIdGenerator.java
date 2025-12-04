@@ -1,6 +1,6 @@
-package it.sigemi.utils;
+package it.kubepattern.utils;
 
-import it.sigemi.domain.entities.pattern.K8sPattern;
+import it.kubepattern.domain.entities.pattern.K8sPattern;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

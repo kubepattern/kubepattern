@@ -1,14 +1,14 @@
-package it.sigemi.utils;
+package it.kubepattern.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.sigemi.domain.entities.cluster.relationships.RelationshipType;
-import it.sigemi.domain.entities.filter.FilterOperator;
-import it.sigemi.domain.entities.pattern.PatternSeverity;
-import it.sigemi.domain.entities.pattern.PatternType;
-import it.sigemi.domain.entities.pattern.PatternTopology;
-import it.sigemi.exception.MalformedPatternException;
+import it.kubepattern.domain.entities.cluster.relationships.RelationshipType;
+import it.kubepattern.domain.entities.filter.FilterOperator;
+import it.kubepattern.domain.entities.pattern.PatternSeverity;
+import it.kubepattern.domain.entities.pattern.PatternType;
+import it.kubepattern.domain.entities.pattern.PatternTopology;
+import it.kubepattern.exception.MalformedPatternException;
 
 import java.util.HashSet;
 import java.util.Set;

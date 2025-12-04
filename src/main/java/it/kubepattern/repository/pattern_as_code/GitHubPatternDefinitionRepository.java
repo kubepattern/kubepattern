@@ -1,9 +1,9 @@
-package it.sigemi.repository.pattern_as_code;
+package it.kubepattern.repository.pattern_as_code;
 
-import it.sigemi.application.configuration.AppConfig;
-import it.sigemi.domain.entities.pattern.PatternDefinition;
-import it.sigemi.utils.PatternDefinitionLinter;
-import it.sigemi.utils.PatternDefinitionParser;
+import it.kubepattern.application.configuration.AppConfig;
+import it.kubepattern.domain.entities.pattern.PatternDefinition;
+import it.kubepattern.utils.PatternDefinitionLinter;
+import it.kubepattern.utils.PatternDefinitionParser;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

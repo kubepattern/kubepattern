@@ -1,13 +1,13 @@
-package it.sigemi.domain.entities.cluster.relationships.strategies;
+package it.kubepattern.domain.entities.cluster.relationships.strategies;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.relationships.K8sRelationship;
-import it.sigemi.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.relationships.K8sRelationship;
+import it.kubepattern.domain.entities.cluster.K8sResource;
 import lombok.extern.slf4j.Slf4j;
 
-import static it.sigemi.domain.entities.cluster.relationships.RelationshipType.MANAGES_KRATEO;
+import static it.kubepattern.domain.entities.cluster.relationships.RelationshipType.MANAGES_KRATEO;
 
 @Slf4j
 public class ManagesKrateoStrategy implements RelationshipStrategy{

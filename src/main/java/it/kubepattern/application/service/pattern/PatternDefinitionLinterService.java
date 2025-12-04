@@ -1,9 +1,9 @@
-package it.sigemi.application.service.pattern;
+package it.kubepattern.application.service.pattern;
 
-import it.sigemi.dto.KubePatternHttpResponse;
-import it.sigemi.dto.LintResult;
-import it.sigemi.exception.MalformedPatternException;
-import it.sigemi.utils.PatternDefinitionLinter;
+import it.kubepattern.dto.KubePatternHttpResponse;
+import it.kubepattern.dto.LintResult;
+import it.kubepattern.exception.MalformedPatternException;
+import it.kubepattern.utils.PatternDefinitionLinter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

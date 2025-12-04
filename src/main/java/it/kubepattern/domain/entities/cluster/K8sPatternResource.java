@@ -1,4 +1,4 @@
-package it.sigemi.domain.entities.cluster;
+package it.kubepattern.domain.entities.cluster;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

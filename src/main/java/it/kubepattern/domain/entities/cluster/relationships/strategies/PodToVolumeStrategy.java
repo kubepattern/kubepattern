@@ -1,12 +1,12 @@
-package it.sigemi.domain.entities.cluster.relationships.strategies;
+package it.kubepattern.domain.entities.cluster.relationships.strategies;
 
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaim;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1Volume;
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.relationships.K8sRelationship;
-import it.sigemi.domain.entities.cluster.K8sResource;
-import it.sigemi.domain.entities.cluster.relationships.RelationshipType;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.relationships.K8sRelationship;
+import it.kubepattern.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.cluster.relationships.RelationshipType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

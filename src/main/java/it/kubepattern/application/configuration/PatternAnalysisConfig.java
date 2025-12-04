@@ -1,9 +1,9 @@
-package it.sigemi.application.configuration;
+package it.kubepattern.application.configuration;
 
-import it.sigemi.domain.entities.filter.FilterQueryEngine;
-import it.sigemi.domain.entities.filter.RelationshipFilterEngine;
-import it.sigemi.domain.entities.filter.ResourceFilterEngine;
-import it.sigemi.domain.entities.pattern.PatternEngine;
+import it.kubepattern.domain.entities.filter.FilterQueryEngine;
+import it.kubepattern.domain.entities.filter.RelationshipFilterEngine;
+import it.kubepattern.domain.entities.filter.ResourceFilterEngine;
+import it.kubepattern.domain.entities.pattern.PatternEngine;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

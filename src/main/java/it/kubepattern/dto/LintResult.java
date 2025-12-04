@@ -1,4 +1,4 @@
-package it.sigemi.dto;
+package it.kubepattern.dto;
 
 public class LintResult {
     private final boolean valid;

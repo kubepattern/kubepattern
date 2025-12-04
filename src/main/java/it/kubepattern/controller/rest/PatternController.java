@@ -1,7 +1,7 @@
-package it.sigemi.controller.rest;
+package it.kubepattern.controller.rest;
 
-import it.sigemi.application.service.pattern.PatternDefinitionLinterService;
-import it.sigemi.dto.KubePatternHttpResponse;
+import it.kubepattern.application.service.pattern.PatternDefinitionLinterService;
+import it.kubepattern.dto.KubePatternHttpResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;

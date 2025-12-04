@@ -1,7 +1,7 @@
-package it.sigemi.application.configuration;
+package it.kubepattern.application.configuration;
 
-import it.sigemi.domain.entities.cluster.relationships.RelationshipGenerator;
-import it.sigemi.domain.entities.cluster.relationships.strategies.*;
+import it.kubepattern.domain.entities.cluster.relationships.RelationshipGenerator;
+import it.kubepattern.domain.entities.cluster.relationships.strategies.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.util.List;

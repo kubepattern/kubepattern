@@ -1,6 +1,6 @@
-package it.sigemi.controller.rest;
+package it.kubepattern.controller.rest;
 
-import it.sigemi.application.service.pattern.AnalysisOrchestratorService;
+import it.kubepattern.application.service.pattern.AnalysisOrchestratorService;
 import jakarta.websocket.server.PathParam;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

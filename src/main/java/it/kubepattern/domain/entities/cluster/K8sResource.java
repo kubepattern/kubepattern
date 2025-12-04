@@ -1,4 +1,4 @@
-package it.sigemi.domain.entities.cluster;
+package it.kubepattern.domain.entities.cluster;
 
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.JSON;

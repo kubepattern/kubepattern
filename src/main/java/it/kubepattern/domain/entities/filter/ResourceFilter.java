@@ -1,4 +1,4 @@
-package it.sigemi.domain.entities.filter;
+package it.kubepattern.domain.entities.filter;
 
 import lombok.Getter;
 import lombok.Setter;

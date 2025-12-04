@@ -1,12 +1,12 @@
-package it.sigemi.repository.kubernetes.pattern;
+package it.kubepattern.repository.kubernetes.pattern;
 
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CustomObjectsApi;
-import it.sigemi.application.configuration.AppConfig;
-import it.sigemi.domain.entities.cluster.K8sPatternResource;
-import it.sigemi.domain.entities.pattern.K8sPattern;
-import it.sigemi.domain.entities.pattern.K8sPatternScore;
-import it.sigemi.utils.PatternIdGenerator;
+import it.kubepattern.application.configuration.AppConfig;
+import it.kubepattern.domain.entities.cluster.K8sPatternResource;
+import it.kubepattern.domain.entities.pattern.K8sPattern;
+import it.kubepattern.domain.entities.pattern.K8sPatternScore;
+import it.kubepattern.utils.PatternIdGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

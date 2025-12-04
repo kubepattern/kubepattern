@@ -1,4 +1,4 @@
-package it.sigemi.exception;
+package it.kubepattern.exception;
 
 import lombok.Getter;
 

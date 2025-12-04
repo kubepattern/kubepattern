@@ -1,8 +1,8 @@
-package it.sigemi.application.service.pattern;
+package it.kubepattern.application.service.pattern;
 
-import it.sigemi.domain.entities.pattern.PatternDefinition;
-import it.sigemi.exception.MalformedPatternException;
-import it.sigemi.repository.pattern_as_code.IPatternDefinitionRepository;
+import it.kubepattern.domain.entities.pattern.PatternDefinition;
+import it.kubepattern.exception.MalformedPatternException;
+import it.kubepattern.repository.pattern_as_code.IPatternDefinitionRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;

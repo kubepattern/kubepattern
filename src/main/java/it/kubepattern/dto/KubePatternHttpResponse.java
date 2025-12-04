@@ -1,4 +1,4 @@
-package it.sigemi.dto;
+package it.kubepattern.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

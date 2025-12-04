@@ -1,6 +1,6 @@
-package it.sigemi.domain.entities.pattern;
+package it.kubepattern.domain.entities.pattern;
 
-import it.sigemi.domain.entities.cluster.relationships.RelationshipType;
+import it.kubepattern.domain.entities.cluster.relationships.RelationshipType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

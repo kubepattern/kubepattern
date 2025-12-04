@@ -1,8 +1,8 @@
-package it.sigemi.domain.entities.cluster;
+package it.kubepattern.domain.entities.cluster;
 
 import io.kubernetes.client.openapi.JSON;
-import it.sigemi.domain.entities.cluster.relationships.K8sRelationship;
-import it.sigemi.domain.entities.cluster.relationships.RelationshipType;
+import it.kubepattern.domain.entities.cluster.relationships.K8sRelationship;
+import it.kubepattern.domain.entities.cluster.relationships.RelationshipType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

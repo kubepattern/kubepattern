@@ -1,10 +1,10 @@
-package it.sigemi.domain.entities.pattern;
+package it.kubepattern.domain.entities.pattern;
 
 import io.kubernetes.client.openapi.ApiException;
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.K8sPatternResource;
-import it.sigemi.domain.entities.filter.RelationshipFilterEngine;
-import it.sigemi.domain.entities.filter.ResourceFilterEngine;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.K8sPatternResource;
+import it.kubepattern.domain.entities.filter.RelationshipFilterEngine;
+import it.kubepattern.domain.entities.filter.ResourceFilterEngine;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

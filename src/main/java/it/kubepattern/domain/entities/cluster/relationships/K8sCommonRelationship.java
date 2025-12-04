@@ -1,6 +1,6 @@
-package it.sigemi.domain.entities.cluster.relationships;
+package it.kubepattern.domain.entities.cluster.relationships;
 
-import it.sigemi.domain.entities.cluster.K8sPatternResource;
+import it.kubepattern.domain.entities.cluster.K8sPatternResource;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

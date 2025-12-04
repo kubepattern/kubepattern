@@ -1,6 +1,6 @@
-package it.sigemi.domain.entities.pattern;
+package it.kubepattern.domain.entities.pattern;
 
-import it.sigemi.domain.entities.cluster.K8sPatternResource;
+import it.kubepattern.domain.entities.cluster.K8sPatternResource;
 import lombok.*;
 
 import java.util.Arrays;

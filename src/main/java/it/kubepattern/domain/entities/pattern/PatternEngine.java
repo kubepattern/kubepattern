@@ -1,9 +1,9 @@
-package it.sigemi.domain.entities.pattern;
+package it.kubepattern.domain.entities.pattern;
 
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.K8sPatternResource;
-import it.sigemi.domain.entities.cluster.K8sResource;
-import it.sigemi.domain.entities.cluster.relationships.K8sCommonRelationship;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.K8sPatternResource;
+import it.kubepattern.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.cluster.relationships.K8sCommonRelationship;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;

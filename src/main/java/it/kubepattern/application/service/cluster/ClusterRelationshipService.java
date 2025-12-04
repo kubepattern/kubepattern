@@ -1,7 +1,7 @@
-package it.sigemi.application.service.cluster;
+package it.kubepattern.application.service.cluster;
 
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.relationships.RelationshipGenerator;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.relationships.RelationshipGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

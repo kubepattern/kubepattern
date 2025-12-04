@@ -1,6 +1,6 @@
-package it.sigemi.repository.pattern_as_code;
+package it.kubepattern.repository.pattern_as_code;
 
-import it.sigemi.domain.entities.pattern.PatternDefinition;
+import it.kubepattern.domain.entities.pattern.PatternDefinition;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;

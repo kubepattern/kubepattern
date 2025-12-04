@@ -1,7 +1,7 @@
-package it.sigemi.repository.kubernetes.resource;
+package it.kubepattern.repository.kubernetes.resource;
 
 import io.kubernetes.client.openapi.ApiException;
-import it.sigemi.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.cluster.K8sResource;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;

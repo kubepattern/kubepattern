@@ -1,13 +1,13 @@
-package it.sigemi.application.service.pattern;
+package it.kubepattern.application.service.pattern;
 
 import io.kubernetes.client.openapi.ApiException;
-import it.sigemi.application.service.cluster.ClusterLifecycleService;
-import it.sigemi.domain.entities.cluster.*;
-import it.sigemi.domain.entities.pattern.K8sPattern;
-import it.sigemi.domain.entities.pattern.PatternAnalysisEngine;
-import it.sigemi.domain.entities.pattern.PatternDefinition;
-import it.sigemi.exception.MalformedPatternException;
-import it.sigemi.exception.NamespaceNotFoundException;
+import it.kubepattern.application.service.cluster.ClusterLifecycleService;
+import it.kubepattern.domain.entities.cluster.*;
+import it.kubepattern.domain.entities.pattern.K8sPattern;
+import it.kubepattern.domain.entities.pattern.PatternAnalysisEngine;
+import it.kubepattern.domain.entities.pattern.PatternDefinition;
+import it.kubepattern.exception.MalformedPatternException;
+import it.kubepattern.exception.NamespaceNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

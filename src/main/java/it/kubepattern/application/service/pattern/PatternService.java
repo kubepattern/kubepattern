@@ -1,8 +1,8 @@
-package it.sigemi.application.service.pattern;
+package it.kubepattern.application.service.pattern;
 
 import io.kubernetes.client.openapi.ApiException;
-import it.sigemi.domain.entities.pattern.K8sPattern;
-import it.sigemi.repository.kubernetes.pattern.IK8sPatternRepository;
+import it.kubepattern.domain.entities.pattern.K8sPattern;
+import it.kubepattern.repository.kubernetes.pattern.IK8sPatternRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

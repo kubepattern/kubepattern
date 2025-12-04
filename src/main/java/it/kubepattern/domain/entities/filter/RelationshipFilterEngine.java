@@ -1,9 +1,9 @@
-package it.sigemi.domain.entities.filter;
+package it.kubepattern.domain.entities.filter;
 
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.K8sPatternResource;
-import it.sigemi.domain.entities.pattern.RelationshipDefinition;
-import it.sigemi.domain.entities.pattern.PatternDefinition;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.K8sPatternResource;
+import it.kubepattern.domain.entities.pattern.RelationshipDefinition;
+import it.kubepattern.domain.entities.pattern.PatternDefinition;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

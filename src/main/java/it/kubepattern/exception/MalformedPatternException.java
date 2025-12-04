@@ -1,4 +1,4 @@
-package it.sigemi.exception;
+package it.kubepattern.exception;
 
 public class MalformedPatternException extends IllegalArgumentException {
     public MalformedPatternException(String message) {

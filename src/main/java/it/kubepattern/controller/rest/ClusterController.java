@@ -1,7 +1,7 @@
-package it.sigemi.controller.rest;
+package it.kubepattern.controller.rest;
 
 import io.kubernetes.client.openapi.ApiException;
-import it.sigemi.application.service.cluster.ClusterLifecycleService;
+import it.kubepattern.application.service.cluster.ClusterLifecycleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

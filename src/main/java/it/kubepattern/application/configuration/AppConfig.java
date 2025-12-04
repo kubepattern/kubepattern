@@ -1,4 +1,4 @@
-package it.sigemi.application.configuration;
+package it.kubepattern.application.configuration;
 
 import lombok.Data;
 import lombok.Getter;

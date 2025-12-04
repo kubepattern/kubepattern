@@ -1,9 +1,9 @@
-package it.sigemi.application.service.cluster;
+package it.kubepattern.application.service.cluster;
 
 import io.kubernetes.client.openapi.ApiException;
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.exception.NamespaceNotFoundException;
-import it.sigemi.repository.kubernetes.cluster.IK8sClusterRepository;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.exception.NamespaceNotFoundException;
+import it.kubepattern.repository.kubernetes.cluster.IK8sClusterRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

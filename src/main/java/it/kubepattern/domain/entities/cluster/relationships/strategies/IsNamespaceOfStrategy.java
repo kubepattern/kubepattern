@@ -1,10 +1,10 @@
-package it.sigemi.domain.entities.cluster.relationships.strategies;
+package it.kubepattern.domain.entities.cluster.relationships.strategies;
 
-import it.sigemi.domain.entities.cluster.K8sCluster;
-import it.sigemi.domain.entities.cluster.relationships.K8sRelationship;
-import it.sigemi.domain.entities.cluster.K8sResource;
+import it.kubepattern.domain.entities.cluster.K8sCluster;
+import it.kubepattern.domain.entities.cluster.relationships.K8sRelationship;
+import it.kubepattern.domain.entities.cluster.K8sResource;
 
-import static it.sigemi.domain.entities.cluster.relationships.RelationshipType.IS_NAMESPACE_OF;
+import static it.kubepattern.domain.entities.cluster.relationships.RelationshipType.IS_NAMESPACE_OF;
 
 public class IsNamespaceOfStrategy implements RelationshipStrategy {
 
