@@ -1,0 +1,132 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubepattern-ns
+spec: {}
+status: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pattern-analysis-ns
+spec: {}
+status: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubepattern-get-list-all
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubepattern-create-crd
+rules:
+- apiGroups: ["kubepattern.it"]
+  resources: ["k8spatterns"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubepattern-get-list-all
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubepattern-get-list-all
+subjects:
+- kind: ServiceAccount
+  name: kubepattern-sa
+  namespace: kubepattern-ns
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubepattern-create-crd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubepattern-create-crd
+subjects:
+- kind: ServiceAccount
+  name: kubepattern-sa
+  namespace: kubepattern-ns
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubepattern-sa
+  namespace: kubepattern-ns
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubepattern-svc  
+  namespace: kubepattern-ns
+spec:
+  selector:
+    app: kubepattern
+  ports:
+    - protocol: TCP
+      port: 80   
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kubepattern
+  name: kubepattern
+  namespace: kubepattern-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubepattern
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: kubepattern
+    spec:
+      imagePullSecrets:
+      - name: gcr-key
+      containers:
+      - image: europe-west1-docker.pkg.dev/gke-test-sigemi/kubepattern-artifactregistry/kubepattern:latest
+        imagePullPolicy: Always
+        name: kpattern
+      serviceAccountName: kubepattern-sa
+      restartPolicy: Always
+---
+#apiVersion: batch/v1
+#kind: CronJob
+#metadata:
+#  name: kubepattern-periodic-cluster-analysis
+#  namespace: kubepattern-ns
+#spec:
+#  schedule: "*/1 * * * *" # It runs every minute for demonstration;
+#  jobTemplate:
+#    spec:
+#      template:
+#        spec:
+#          containers:
+#          - name: api-caller
+#            image: curlimages/curl:latest
+#            imagePullPolicy: IfNotPresent
+#            command:
+#            - /bin/sh
+#            - -c
+#            - |
+#              echo "Request periodic cluster analysis:"
+#              curl -v http://kubepattern-svc/analysis/cluster
+#          restartPolicy: OnFailure
+
+#kubectl create secret docker-registry gcr-key \
+#  --namespace=kubepattern-ns \
+#  --docker-server=europe-west1-docker.pkg.dev \
+#  --docker-username=oauth2accesstoken \
+#  --docker-password=$(gcloud auth print-access-token)
