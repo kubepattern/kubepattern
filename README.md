@@ -40,4 +40,4 @@ docker pull gabrielegroppo/kubepattern:latest
 
 ## About the Author
 
-This project was created and is currently maintained by **Gabriele Groppo** ([@GabrieleGroppo](https://www.google.com/search?q=https://github.com/GabrieleGroppo)) as part of a Bachelor's Thesis project.
+This project was created and is currently maintained by **Gabriele Groppo** ([@GabrieleGroppo](https://github.com/GabrieleGroppo)) as part of a Bachelor's Thesis project.
