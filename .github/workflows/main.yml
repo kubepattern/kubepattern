@@ -72,6 +72,6 @@ jobs:
           # Docker Hub
           gabrielegroppo/kubepattern:latest
           gabrielegroppo/kubepattern:${{ github.sha }}
-          # GitHub Container Registry
-          ghcr.io/gabrielegroppo/kubepattern:latest
-          ghcr.io/gabrielegroppo/kubepattern:${{ github.sha }}
+          # GitHub Container Registry (Organizzazione kubepattern)
+          ghcr.io/kubepattern/kubepattern:latest
+          ghcr.io/kubepattern/kubepattern:${{ github.sha }}
