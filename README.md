@@ -2,13 +2,14 @@
 
 [![Status](https://img.shields.io/badge/Status-Thesis_Project-blue?style=flat&logo=bookstack)](https://kubepattern.dev)
 [![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![Website](https://img.shields.io/badge/Website-kubepattern.dev-blueviolet?style=flat&logo=google-chrome&logoColor=white)](https://kubepattern.dev)
+[![Documentation](https://img.shields.io/badge/Docs-Read_Latest-orange?style=flat&logo=read-the-docs&logoColor=white)](https://docs.kubepattern.dev)
 
 **KubePattern** is a cloud-native framework designed to identify and analyze Kubernetes patterns.
 
-### Links
-- [Official Documentation](https://docs.kubepattern.dev)
-- [Pattern as Code Registry](https://github.com/kubepattern/registry)
-- [Official Website](https://kubepattern.dev)
+### Pattern Registry
+KubePattern identifies patterns based on definitions stored in the **Pattern-as-Code** registry. You can browse the official definitions here:
+[Pattern as Code Registry](https://github.com/kubepattern/registry).
 
 # Get Started
 ## Installation Steps
