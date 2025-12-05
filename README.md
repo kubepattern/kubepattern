@@ -27,7 +27,7 @@ This will deploy an instance of KubePattern in the *kubepattern-ns* namespace an
 
 ### Docker Registry Image
 ```bash
-docker pull gabrielegroppo/kubepattern:latest
+docker pull ghcr.io/kubepattern/kubepattern:latest
 ```
 
 ### Other way to install
