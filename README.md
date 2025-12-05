@@ -1,11 +1,27 @@
 # KubePattern
+<div align="center">
+  <img src="https://kubepattern.dev/images/kubepattern.svg" alt="KubePattern Logo" width="200" height="auto">
+  <h1>KubePattern</h1>
+  
+  <p>
+    <a href="https://kubepattern.dev">
+      <img src="https://img.shields.io/badge/Status-Thesis_Project-blue?style=flat&logo=bookstack" alt="Status">
+    </a>
+    <a href="https://kubernetes.io/">
+      <img src="https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white" alt="Kubernetes">
+    </a>
+    <a href="https://kubepattern.dev">
+      <img src="https://img.shields.io/badge/Website-kubepattern.dev-blueviolet?style=flat&logo=google-chrome&logoColor=white" alt="Website">
+    </a>
+    <a href="https://docs.kubepattern.dev">
+      <img src="https://img.shields.io/badge/Docs-Read_Latest-orange?style=flat&logo=read-the-docs&logoColor=white" alt="Documentation">
+    </a>
+  </p>
 
-[![Status](https://img.shields.io/badge/Status-Thesis_Project-blue?style=flat&logo=bookstack)](https://kubepattern.dev)
-[![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
-[![Website](https://img.shields.io/badge/Website-kubepattern.dev-blueviolet?style=flat&logo=google-chrome&logoColor=white)](https://kubepattern.dev)
-[![Documentation](https://img.shields.io/badge/Docs-Read_Latest-orange?style=flat&logo=read-the-docs&logoColor=white)](https://docs.kubepattern.dev)
-
-**KubePattern** is a cloud-native framework designed to identify and analyze Kubernetes patterns.
+  <p>
+    <strong>KubePattern</strong> is a cloud-native framework designed to identify and analyze Kubernetes patterns.
+  </p>
+</div>
 
 ### Pattern Registry
 KubePattern identifies patterns based on definitions stored in the **Pattern-as-Code** registry. You can browse the official definitions here:
