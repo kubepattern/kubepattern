@@ -94,7 +94,7 @@ spec:
         app: kubepattern
     spec:
       containers:
-      - image: gabrielegroppo/kubepattern:latest
+      - image: ghcr.io/kubepattern/kubepattern:latest
         imagePullPolicy: Always
         name: kpattern
       serviceAccountName: kubepattern-sa
