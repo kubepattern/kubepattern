@@ -35,7 +35,7 @@ public class GitHubPatternDefinitionRepository implements IPatternDefinitionRepo
 
     @Override
     public PatternDefinition getPatternDefinitionByName(String name) throws IOException, InterruptedException {
-        String fileUrl = "https://raw.githubusercontent.com/GabrieleGroppo/kubepattern-registry/"+gitBranch+"/definitions/"+name+".json";
+        String fileUrl = "https://raw.githubusercontent.com/kubepattern/registry/"+gitBranch+"/definitions/"+name+".json";
         log.info("fileUrl : {}", fileUrl);
         String content = downloadContent(fileUrl);
         log.info(content);
