@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 public class PatternDefinitionConfig {
     @Bean
     public String gitBaseUrl() {
-        return "https://raw.githubusercontent.com/GabrieleGroppo/kubepattern-registry/main/definitions";
+        return "https://raw.githubusercontent.com/kubepattern/registry/main/definitions";
     }
     @Bean
     public String gitToken() {
