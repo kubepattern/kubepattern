@@ -28,6 +28,15 @@ public class AppConfig {
 
     @Data
     public static class PatternRegistry {
+
+        enum PatternRegistryType {
+            GITHUB
+        }
         private String url;
+        private PatternRegistry.PatternRegistryType type = PatternRegistry.PatternRegistryType.GITHUB;
+        private String repositoryBranch = "main";
+        private String repositoryToken = "";
+        private String organizationName = "kubepattern";
+        private String repositoryName = "registry";
     }
 }

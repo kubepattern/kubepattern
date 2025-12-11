@@ -34,11 +34,18 @@ public class PatternRepository implements IK8sPatternRepository {
         crBody.put("apiVersion", GROUP + "/" + VERSION);
         crBody.put("kind", "K8sPattern");
         String namespace = appConfig.getReport().getTargetNamespace();
+        if(appConfig.getReport().isSaveInNamespace()) {
+            if(pattern.getResources().length == 0 || pattern.getResources()[0].getNamespace() == null) {
+                log.warn("⚠️ Cannot save K8sPattern '{}' in namespace because the first resource has no namespace defined. Saving in default namespace.", pattern.getMetadata().getName());
+            }else {
+                namespace = pattern.getResources()[0].getNamespace();
+            }
+        }
+
         // Metadata
         crBody.put("metadata", parseCRDMetadata(pattern, namespace));
 
         // Spec
-
         crBody.put("spec", parseCRDSpec(pattern));
         if(appConfig.getReport().isSaveInNamespace()) {
             namespace = pattern.getResources()[0].getNamespace();
@@ -46,7 +53,7 @@ public class PatternRepository implements IK8sPatternRepository {
 
         // API Call
         try {
-            Object result = api.createNamespacedCustomObject(
+            api.createNamespacedCustomObject(
                     GROUP,
                     VERSION,
                     namespace,

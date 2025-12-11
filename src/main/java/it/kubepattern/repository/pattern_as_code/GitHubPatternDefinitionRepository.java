@@ -29,13 +29,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class GitHubPatternDefinitionRepository implements IPatternDefinitionRepository {
     private final String gitBaseUrl;
     private final String gitToken;
-    private String gitBranch;
     private final AppConfig appConfig;
 
 
     @Override
     public PatternDefinition getPatternDefinitionByName(String name) throws IOException, InterruptedException {
-        String fileUrl = "https://raw.githubusercontent.com/kubepattern/registry/"+gitBranch+"/definitions/"+name+".json";
+        String organization = appConfig.getPatternRegistry().getOrganizationName();
+        String repository = appConfig.getPatternRegistry().getRepositoryName();
+        String gitBranch = appConfig.getPatternRegistry().getRepositoryBranch();
+
+        String fileUrl = "https://raw.githubusercontent.com/"+organization+"/"+ repository + "/"+gitBranch+"/definitions/"+name+".json";
         log.info("fileUrl : {}", fileUrl);
         String content = downloadContent(fileUrl);
         log.info(content);
@@ -84,7 +87,7 @@ public class GitHubPatternDefinitionRepository implements IPatternDefinitionRepo
 
     @Override
     public List<PatternDefinition> getAllPatternDefinitions() throws IOException, InterruptedException {
-        String url = appConfig.getPatternRegistry().getUrl().concat("?ref="+gitBranch);
+        String url = appConfig.getPatternRegistry().getUrl().concat("?ref="+appConfig.getPatternRegistry().getRepositoryBranch());
         ArrayList<PatternDefinition> definitions = new ArrayList<>();
 
         String content = downloadContent(url);
