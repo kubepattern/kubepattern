@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @AllArgsConstructor
 public class GitHubPatternDefinitionRepository implements IPatternDefinitionRepository {
     private final String gitBaseUrl;
-    private final String gitToken;
     private final AppConfig appConfig;
 
 
@@ -58,14 +57,15 @@ public class GitHubPatternDefinitionRepository implements IPatternDefinitionRepo
     }
 
     private String downloadContent(String url) throws IOException, InterruptedException {
+        String gitToken = appConfig.getPatternRegistry().getRepositoryToken();
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
                 .GET();
 
-        if (gitToken != null && !gitToken.isEmpty()) {
-            requestBuilder.header("Authorization", "Bearer " + gitToken);
-        }
+        /*if (gitToken != null && !gitToken.isEmpty()) {
+            requestBuilder.header("Authorization", "token " + gitToken);
+        }*/
 
         requestBuilder.header("Accept", "application/vnd.github.v3+json");
 
@@ -87,9 +87,9 @@ public class GitHubPatternDefinitionRepository implements IPatternDefinitionRepo
 
     @Override
     public List<PatternDefinition> getAllPatternDefinitions() throws IOException, InterruptedException {
-        String url = appConfig.getPatternRegistry().getUrl().concat("?ref="+appConfig.getPatternRegistry().getRepositoryBranch());
+        String url ="https://api.github.com/repos/"+appConfig.getPatternRegistry().getOrganizationName()+"/"+appConfig.getPatternRegistry().getRepositoryName()+"/contents/definitions?ref="+appConfig.getPatternRegistry().getRepositoryBranch();
         ArrayList<PatternDefinition> definitions = new ArrayList<>();
-
+        log.info("url : {}", url);
         String content = downloadContent(url);
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode files = objectMapper.readTree(content);

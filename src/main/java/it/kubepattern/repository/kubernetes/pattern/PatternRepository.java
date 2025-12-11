@@ -101,20 +101,12 @@ public class PatternRepository implements IK8sPatternRepository {
 
     public static @NonNull Map<String, Object> parseCRDSpec(K8sPattern pattern) {
         Map<String, Object> spec = new HashMap<>();
-        spec.put("apiVersion", pattern.getMetadata().getVersion());
         spec.put("type", pattern.getMetadata().getType().name());
         spec.put("name", pattern.getMetadata().getName());
-        spec.put("description", pattern.getMetadata().getDescription());
         spec.put("referenceLink", pattern.getMetadata().getDocUrl());
         spec.put("message", pattern.generateMessage());
         spec.put("severity", pattern.getMetadata().getSeverity());
-        spec.put("category", pattern.getMetadata().getCategory());
-        spec.put("confidence", pattern.calculateConfidence());
-
-        // 5. Scores
-        spec.put("scores", getScores(pattern));
-
-        // 6. Resources
+        //spec.put("confidence", pattern.calculateConfidence());
         spec.put("resources", getResourcesList(pattern));
         return spec;
     }

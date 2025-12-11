@@ -1,0 +1,71 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: k8spatterns.kubepattern.it
+spec:
+  group: kubepattern.it
+  names:
+    plural: k8spatterns
+    singular: k8spattern
+    kind: K8sPattern
+    shortNames:
+      - k8sp
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - name
+                - type
+              properties:
+                name:
+                  type: string
+                  description: "Pattern name"
+                type:
+                  type: string
+                  description: "Pattern Type"
+                referenceLink:
+                  type: string
+                  description: "Link to Pattern docs."
+                message:
+                  type: string
+                  description: "Smell warning."
+                severity:
+                  type: string
+                  description: "Pattern Severity (INFO, WARNING, CRITICAL)."
+                  enum:
+                    - INFO
+                    - WARNING
+                    - CRITICAL
+                suppress:
+                  type: boolean
+                  description: "Resource to suppress (false positives)"
+                resources:
+                  type: array
+                  description: "Pattern resources found"
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - role
+                      - uid
+                    properties:
+                      name:
+                        type: string
+                        description: "Kubernetes resource name."
+                      namespace:
+                        type: string
+                        description: "Kubernetes resource namespace."
+                      role:
+                        type: string
+                        description: "Pattern resource role."
+                      uid:
+                        type: string
+                        description: "Kubernetes resource UID."
