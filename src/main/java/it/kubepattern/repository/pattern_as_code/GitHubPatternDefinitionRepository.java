@@ -63,9 +63,9 @@ public class GitHubPatternDefinitionRepository implements IPatternDefinitionRepo
                 .timeout(Duration.ofSeconds(10))
                 .GET();
 
-        /*if (gitToken != null && !gitToken.isEmpty()) {
-            requestBuilder.header("Authorization", "token " + gitToken);
-        }*/
+        if (gitToken != null && !gitToken.isEmpty()) {
+            requestBuilder.header("Authorization", "Bearer " + gitToken);
+        }
 
         requestBuilder.header("Accept", "application/vnd.github.v3+json");
 
