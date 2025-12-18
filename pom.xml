@@ -6,13 +6,13 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.0</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>it.kubepattern</groupId>
 	<artifactId>kubepattern</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>KubePattern</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Kubernetes Smell detector and Pattern Analyzer, with pattern as code approach.</description>
 	<url/>
 	<licenses>
 		<license/>

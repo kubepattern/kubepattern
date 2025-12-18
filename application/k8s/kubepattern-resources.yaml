@@ -91,9 +91,6 @@ spec:
     metadata:
       labels:
         app: kubepattern
-      annotations:
-        # Reload the pod if the ConfigMap changes
-        checksum/config: ${{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       serviceAccountName: kubepattern-sa
       containers:
@@ -123,6 +120,7 @@ spec:
       
       restartPolicy: Always
 ---
+# OPTIONAL - CronJob to periodically trigger cluster analysis (or namespace analysis)
 #apiVersion: batch/v1
 #kind: CronJob
 #metadata:
