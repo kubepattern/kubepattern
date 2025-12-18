@@ -87,17 +87,40 @@ spec:
   selector:
     matchLabels:
       app: kubepattern
-  strategy: {}
   template:
     metadata:
       labels:
         app: kubepattern
+      annotations:
+        # Reload the pod if the ConfigMap changes
+        checksum/config: ${{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      serviceAccountName: kubepattern-sa
       containers:
       - image: ghcr.io/kubepattern/kubepattern:latest
         imagePullPolicy: Always
         name: kpattern
-      serviceAccountName: kubepattern-sa
+        # 1. Inject the Secret as an environment variable
+        env:
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: kubepattern-secret
+              key: repository-token
+        # 2. Specify to Spring where to find the mounted file (optional but recommended)
+        args: ["--spring.config.location=file:/config/application.properties"]
+        # 3. Mount the volume at the chosen path
+        volumeMounts:
+        - name: config-volume
+          mountPath: /config
+          readOnly: true
+      
+      # 4. Define the volume based on the ConfigMap
+      volumes:
+      - name: config-volume
+        configMap:
+          name: kubepattern-config
+      
       restartPolicy: Always
 ---
 #apiVersion: batch/v1
