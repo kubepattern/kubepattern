@@ -17,7 +17,7 @@ spec:
     spec:
       serviceAccountName: kubepattern-sa
       containers:
-      - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+      - image: ghcr.io/kubepattern/kubepattern:latest
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         name: {{ .Chart.Name }}
         # 1. Inject the Secret as an environment variable
