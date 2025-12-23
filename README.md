@@ -26,8 +26,6 @@
   </p>
 </div>
 
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubepattern)](https://artifacthub.io/packages/search?repo=kubepattern)
-
 ### Pattern Registry
 KubePattern identifies patterns based on definitions stored in the **Pattern-as-Code** registry. You can browse the official definitions here:
 [Pattern as Code Registry](https://github.com/kubepattern/registry).
