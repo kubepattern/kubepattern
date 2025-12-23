@@ -9,7 +9,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kubepattern-sa
-  namespace: kubepattern-ns
+  namespace: {{ .Release.Namespace }}
 
 ---
 
@@ -24,4 +24,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kubepattern-sa
-  namespace: kubepattern-ns
+  namespace: {{ .Release.Namespace }}

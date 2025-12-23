@@ -1,4 +1,4 @@
-{{- $namespace := "kubepattern-ns" -}}
+{{- $namespace := "{{ .Release.Namespace }}" -}}
 {{- $labels := "app=kubepattern" -}}
 
 Thank you for installing {{ .Chart.Name }}!

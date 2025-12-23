@@ -4,7 +4,7 @@ metadata:
   labels:
     app: kubepattern
   name: {{ include "kubepattern.fullname" . }}
-  namespace: kubepattern-ns
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount | default 1 }}
   selector:

@@ -4,7 +4,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: kubepattern-cron-analysis
-  namespace: kubepattern-ns
+  namespace: {{ .Release.Namespace }}
 spec:
   schedule: {{ .Values.analysis.jobFrequency }}
   jobTemplate:
