@@ -6,7 +6,7 @@ image:
   tag: "latest"
 
 analysis:
-  # save in involved resoureces namespace 
+  # Save in involved resoureces namespace 
   saveInNamespace: false
   # Default output namespace if option save-in-namespace == false for namespaced resources
   # Default output namespace for cluster scoped resources
