@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: kubepattern
+  pullPolicy: Always
+  tag: "latest"
+
+analysis:
+  # save in involved resoureces namespace 
+  saveInNamespace: false
+  # Default output namespace if option save-in-namespace == false for namespaced resources
+  # Default output namespace for cluster scoped resources
+  targetNamespace: pattern-analysis-ns
+  # Deploy Cronjob
+  schedule: false
+  # Periodic analysis frequecy es: @hourly
+  jobFrequency: "0 * * * *"
+
+patternRegistry:
+  orgName: "kubepattern"
+  # kubepattern official pattern registry: https://github.com/kubepattern/registry 
+  repo:
+    branch: "main"
+    name: "registry"
+    # For private repositories access
+    token: ""

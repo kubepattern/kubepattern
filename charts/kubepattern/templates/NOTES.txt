@@ -1,0 +1,52 @@
+{{- $namespace := "kubepattern-ns" -}}
+{{- $labels := "app=kubepattern" -}}
+
+Thank you for installing {{ .Chart.Name }}!
+
+--------------------------------------------------------------------------------
+DEPLOYMENT STATUS
+--------------------------------------------------------------------------------
+The application Pod is deployed in: "{{ $namespace }}"
+
+To verify that the pods are running:
+  kubectl get pods -n {{ $namespace }} -l {{ $labels }}
+
+--------------------------------------------------------------------------------
+ACCESS THE APPLICATION (Port Forwarding)
+--------------------------------------------------------------------------------
+Since the application is running inside the cluster, you can access it locally via:
+
+1. Get the Pod name:
+   export POD_NAME=$(kubectl get pods --namespace {{ $namespace }} -l "{{ $labels }}" -o jsonpath="{.items[0].metadata.name}")
+
+2. Start port-forwarding (Local port 8080 -> Container port 8080):
+   kubectl --namespace {{ $namespace }} port-forward $POD_NAME 8080:8080
+
+3. Trigger a manual cluster analysis:
+   curl -v http://localhost:8080/analysis/cluster
+
+--------------------------------------------------------------------------------
+PERIODIC ANALYSIS (CronJob)
+--------------------------------------------------------------------------------
+{{- if eq .Values.analysis.schedule true }}
+Automatic analysis is ENABLED.
+Frequency: "{{ .Values.analysis.jobFrequency }}"
+
+To check the scheduled jobs (located in {{ $namespace }}):
+  kubectl get cronjob kubepattern-cron-analysis -n {{ $namespace }}
+{{- else }}
+Automatic analysis is DISABLED.
+You can enable it by setting 'analysis.schedule' to 'true' in your values.yaml.
+{{- end }}
+
+--------------------------------------------------------------------------------
+CONFIGURATION SUMMARY
+--------------------------------------------------------------------------------
+{{- if eq .Values.analysis.saveInNamespace true }}
+Target Namespace is ENABLED this means that all patterns will be saved in resources namespace (cluster scoped will be saved in {{ .Values.analysis.targetNamespace }}).
+{{- else }}
+Target Namespace is DISABLED this means that all patterns will be saved in {{ .Values.analysis.targetNamespace }}
+{{- end }}
+
+Pattern Registry Org: {{ .Values.patternRegistry.orgName }}
+Pattern Repository: {{ .Values.patternRegistry.repo.name }} (Branch: {{ .Values.patternRegistry.repo.branch }})

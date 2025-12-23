@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubepattern-config
+  namespace: kubepattern-ns
+data:
+  application.properties: |
+    app.report.save-in-namespace={{ .Values.analysis.saveInNamespace }}
+    app.report.target-namespace={{ .Values.analysis.targetNamespace }}
+    app.pattern-registry.organization-name={{ .Values.patternRegistry.orgName }}
+    app.pattern-registry.repository-branch={{ .Values.patternRegistry.repo.branch }}
+    app.pattern-registry.repository-name={{ .Values.patternRegistry.repo.name }}

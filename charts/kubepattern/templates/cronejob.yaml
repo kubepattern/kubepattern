@@ -1,0 +1,26 @@
+# OPTIONAL - CronJob to periodically trigger cluster analysis (or namespace analysis)
+{{ if eq .Values.analysis.schedule true }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kubepattern-cron-analysis
+  namespace: kubepattern-ns
+spec:
+  schedule: {{ .Values.analysis.jobFrequency }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: api-caller
+            image: curlimages/curl:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Request periodic cluster analysis:"
+              curl -v http://kubepattern-svc/analysis/cluster
+          restartPolicy: OnFailure
+
+{{ end }}

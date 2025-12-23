@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kubepattern
+  name: {{ include "kubepattern.fullname" . }}
+  namespace: kubepattern-ns
+spec:
+  replicas: {{ .Values.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: kubepattern
+  template:
+    metadata:
+      labels:
+        app: kubepattern
+    spec:
+      serviceAccountName: kubepattern-sa
+      containers:
+      - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        name: {{ .Chart.Name }}
+        # 1. Inject the Secret as an environment variable
+        env:
+        # GitHub Personal Access Token Environment Variable
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: kubepattern-secret
+              key: repository-token
+        # 2. Specify to Spring where to find the mounted file (optional but recommended)
+        args: ["--spring.config.location=file:/config/application.properties"]
+        # 3. Mount the volume at the chosen path
+        volumeMounts:
+        - name: config-volume
+          mountPath: /config
+          readOnly: true
+      
+      # 4. Define the volume based on the ConfigMap
+      volumes:
+      - name: config-volume
+        configMap:
+          name: kubepattern-config
+      
+      restartPolicy: Always
