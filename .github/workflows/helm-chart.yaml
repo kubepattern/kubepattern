@@ -1,0 +1,65 @@
+name: Helm Chart CI
+
+on:
+  push:
+    branches: [ "main" ]
+    # Parte solo se tocchi la cartella del chart
+    paths:
+      - 'charts/**'
+      - '.github/workflows/ci-helm-chart.yaml'
+    tags: [ "v*.*.*" ] # Parte SEMPRE sui tag di release
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'charts/**'
+
+jobs:
+  release-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.13.0
+
+      - name: Prepare Chart Metadata
+        id: meta
+        run: |
+          # Default per branch 'main'
+          VERSION="0.0.0-dev-${GITHUB_SHA::7}"
+          
+          # Se è un tag, usa la versione reale
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          
+          echo "Setting Chart version to $VERSION"
+          
+          # Modifica dinamica del nome e della versione
+          sed -i "s/^name:.*/name: kubepattern-chart/" charts/kubepattern/Chart.yaml
+          sed -i "s/^version:.*/version: $VERSION/" charts/kubepattern/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" charts/kubepattern/Chart.yaml
+          
+          # Export della versione per lo step successivo
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Package and Push Helm Chart
+        if: github.event_name != 'pull_request'
+        run: |
+          helm package charts/kubepattern
+          
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          
+          # Push OCI
+          helm push kubepattern-chart-${{ env.VERSION }}.tgz oci://ghcr.io/$OWNER_LC
