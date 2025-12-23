@@ -16,12 +16,17 @@
     <a href="https://docs.kubepattern.dev">
       <img src="https://img.shields.io/badge/Docs-Read_Latest-orange?style=flat&logo=read-the-docs&logoColor=white" alt="Documentation">
     </a>
+    <a href="https://artifacthub.io/packages/search?repo=kubepattern">
+      <img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubepattern" alt="Artifact Hub">
+    </a>
   </p>
 
   <p>
     <strong>KubePattern</strong> is a cloud-native framework designed to identify and analyze Kubernetes patterns.
   </p>
 </div>
+
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubepattern)](https://artifacthub.io/packages/search?repo=kubepattern)
 
 ### Pattern Registry
 KubePattern identifies patterns based on definitions stored in the **Pattern-as-Code** registry. You can browse the official definitions here:
