@@ -2,6 +2,16 @@ apiVersion: v2
 name: kubepattern
 description: A Helm chart to deploy KubePattern, a framework for identifying and analyzing Kubernetes patterns and smells using a Pattern-as-Code approach.
 
+annotations:
+  artifacthub.io/links: |
+    - name: Source Code
+      url: https://github.com/kubepattern/kubepattern
+  artifacthub.io/category: security
+  artifacthub.io/license: Apache-2.0
+maintainers:
+  - name: Gabriele Groppo
+    email: gabriele@gabrielegroppo.it
+
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
