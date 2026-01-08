@@ -6,7 +6,7 @@ metadata:
   name: kubepattern-cron-analysis
   namespace: {{ .Release.Namespace }}
 spec:
-  schedule: {{ .Values.analysis.jobFrequency }}
+  schedule: "{{ .Values.analysis.jobFrequency }}"
   jobTemplate:
     spec:
       template:
@@ -25,3 +25,4 @@ spec:
 
 
 {{ end }}
+
