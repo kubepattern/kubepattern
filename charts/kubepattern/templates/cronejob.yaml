@@ -20,7 +20,8 @@ spec:
             - -c
             - |
               echo "Request periodic cluster analysis:"
-              curl -v http://kubepattern-svc/analysis/cluster
+              curl -X POST http://kubepattern-svc/analysis/cluster
           restartPolicy: OnFailure
+
 
 {{ end }}
