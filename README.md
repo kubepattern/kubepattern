@@ -1,6 +1,6 @@
 # KubePattern
 <div align="center">
-  <img src="https://kubepattern.dev/images/kubepattern.svg" alt="KubePattern Logo" width="200" height="auto">
+  <img src="https://kubepattern.dev/img/kubepattern.svg" alt="KubePattern Logo" width="200" height="auto">
   <h1>KubePattern</h1>
   
   <p>
