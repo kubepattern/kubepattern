@@ -7,4 +7,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface IK8sPatternRepository {
     void savePattern (K8sPattern k8sPattern) throws ApiException;
+
+    @SuppressWarnings("unchecked")
+    void deletePatterns();
 }

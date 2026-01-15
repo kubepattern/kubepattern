@@ -123,4 +123,57 @@ public class PatternRepository implements IK8sPatternRepository {
         metadata.put("namespace", namespace);
         return metadata;
     }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void deletePatterns() {
+        log.info("Starting deletion of all K8sPatterns in all namespaces...");
+        try {
+            // 1. Fetch all K8sPatterns across all namespaces.
+            Object response = api.listClusterCustomObject(
+                    GROUP,
+                    VERSION,
+                    PLURAL
+            ).execute();
+
+            if (response instanceof Map) {
+                Map<String, Object> result = (Map<String, Object>) response;
+                List<Map<String, Object>> items = (List<Map<String, Object>>) result.get("items");
+
+                if (items == null || items.isEmpty()) {
+                    log.info("No patterns found to delete.");
+                    return;
+                }
+
+                log.info("Found {} patterns to delete.", items.size());
+
+                // 2. Iterate and delete each resource in its specific namespace
+                for (Map<String, Object> item : items) {
+                    Map<String, Object> metadata = (Map<String, Object>) item.get("metadata");
+                    String name = (String) metadata.get("name");
+                    String namespace = (String) metadata.get("namespace");
+
+                    try {
+                        api.deleteNamespacedCustomObject(
+                                GROUP,
+                                VERSION,
+                                namespace,
+                                PLURAL,
+                                name
+                        ).execute();
+                        log.info("Deleted pattern '{}' in namespace '{}'.", name, namespace);
+                    } catch (ApiException e) {
+                        // 404 Not Found is acceptable
+                        if (e.getCode() != 404) {
+                            log.error("Error deleting pattern '{}' in namespace '{}': {}", name, namespace, e.getMessage());
+                        }
+                    }
+                }
+            }
+        } catch (ApiException e) {
+            log.error("Failed to list patterns for deletion. API Message: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error during pattern deletion: {}", e.getMessage());
+        }
+    }
 }

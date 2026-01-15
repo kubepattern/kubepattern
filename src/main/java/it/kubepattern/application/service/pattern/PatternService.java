@@ -13,4 +13,8 @@ public class PatternService {
     public void savePattern(K8sPattern pattern) throws ApiException {
         patternRepository.savePattern(pattern);
     }
+
+    public void deleteAllPatterns() throws ApiException {
+        patternRepository.deletePatterns();
+    }
 }

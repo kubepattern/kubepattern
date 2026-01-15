@@ -47,6 +47,7 @@ public class AnalysisOrchestratorService {
 
     public void analyzePatterns(K8sCluster cluster) throws Exception{
         log.info("Analyzing patterns...");
+        patternService.deleteAllPatterns();
 
         for (PatternDefinition patternDefinition : fetchPatternDefinitionService.getAllPatternDefinitions()) {
             analyzePattern(patternDefinition, cluster);
