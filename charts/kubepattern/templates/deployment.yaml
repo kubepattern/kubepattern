@@ -19,6 +19,7 @@ spec:
       containers:
       - image: ghcr.io/kubepattern/kubepattern:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        name: kubepattern
         # 1. Inject the Secret as an environment variable
         env:
         # GitHub Personal Access Token Environment Variable
