@@ -3,6 +3,4 @@ kind: ClusterRole
 metadata:
   name: kubepattern-get-list-all
 rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["get", "list", "watch"]
+{{- toYaml .Values.rbac.rules | nindent 0 }}

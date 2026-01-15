@@ -1,8 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kubepattern-create-crd
+  name: kubepattern-crd
 rules:
 - apiGroups: ["kubepattern.it"]
   resources: ["k8spatterns"]
-  verbs: ["create"]
+  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]

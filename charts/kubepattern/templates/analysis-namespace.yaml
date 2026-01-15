@@ -1,4 +1,9 @@
+
+{{- if not .Values.analysis.saveInNamespace }}
+
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: pattern-analysis-ns
+  name: {{ .Values.analysis.targetNamespace }}
+
+{{- end }}

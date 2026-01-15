@@ -5,12 +5,26 @@ image:
   pullPolicy: Always
   tag: "latest"
 
+rbac:
+  # Define the RBAC rules for KubePattern (to scan only specific resources, modify accordingly)
+  rules:
+    - apiGroups: ["*"]
+      resources: ["*"]
+      verbs: ["get", "list", "watch"]
+    #- apiGroups: [""]
+    #  resources: ["pods", "services", "configmaps", "deployments", "replicasets", "namespaces"]
+    #  verbs: ["get", "list", "watch"]
+    # Example of an additional rule (commented out):
+    # - apiGroups: ["extensions"]
+    #   resources: ["deployments"]
+    #   verbs: ["get", "list"]
+
 analysis:
   # Save in involved resoureces namespace 
   saveInNamespace: false
   # Default output namespace if option save-in-namespace == false for namespaced resources
   # Default output namespace for cluster scoped resources
-  targetNamespace: pattern-analysis-ns
+  targetNamespace: default # consider using pattern-analysis-ns dedicated namespace
   # Deploy Cronjob
   schedule: false
   # Periodic analysis frequecy es: @hourly
