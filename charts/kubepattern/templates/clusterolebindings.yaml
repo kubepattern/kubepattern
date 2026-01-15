@@ -16,7 +16,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kubepattern-create-crd
+  name: kubepattern-crd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -24,4 +24,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kubepattern-sa
+
   namespace: {{ .Release.Namespace }}
