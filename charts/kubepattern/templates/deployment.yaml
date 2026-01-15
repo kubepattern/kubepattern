@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app: kubepattern
-  name: kubepattern-deployment
+  name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount | default 1 }}
@@ -19,7 +19,6 @@ spec:
       containers:
       - image: ghcr.io/kubepattern/kubepattern:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        name: {{ .Chart.Name }}
         # 1. Inject the Secret as an environment variable
         env:
         # GitHub Personal Access Token Environment Variable
