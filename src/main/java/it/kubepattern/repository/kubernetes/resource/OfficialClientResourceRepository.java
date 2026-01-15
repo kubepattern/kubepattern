@@ -110,10 +110,6 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
                 (repo, ns) -> repo.coreV1Api.listNamespacedConfigMap(ns).execute(),
                 repo -> repo.coreV1Api.listConfigMapForAllNamespaces().execute()),
 
-        SERVICE_ACCOUNT("v1", "ServiceAccount", true,
-                (repo, ns) -> repo.coreV1Api.listNamespacedServiceAccount(ns).execute(),
-                repo -> repo.coreV1Api.listServiceAccountForAllNamespaces().execute()),
-
         LIMIT_RANGE("v1", "LimitRange", true,
                 (repo, ns) -> repo.coreV1Api.listNamespacedLimitRange(ns).execute(),
                 repo -> repo.coreV1Api.listLimitRangeForAllNamespaces().execute()),
@@ -121,10 +117,6 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
         RESOURCE_QUOTAS("v1", "ResourceQuota", true,
                 (repo, ns) -> repo.coreV1Api.listNamespacedResourceQuota(ns).execute(),
                 repo -> repo.coreV1Api.listResourceQuotaForAllNamespaces().execute()),
-
-        SECRET("v1", "Secret", true,
-                (repo, ns) -> repo.coreV1Api.listNamespacedSecret(ns).execute(),
-                repo -> repo.coreV1Api.listSecretForAllNamespaces().execute()),
 
         JOB("batch/v1", "Job", true,
                 (repo, ns) -> repo.batchApi.listNamespacedJob(ns).execute(),
@@ -181,6 +173,12 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             Object result = customObjectsApi.listNamespacedCustomObject(group, version, namespace, plural).execute();
             return convertToKubernetesListObject(result);
         } catch (ApiException e) {
+
+            if (e.getCode() == 403) {
+                log.debug("Access forbidden to custom resource {}/{}. Skipping.", group, plural);
+                return convertToKubernetesListObject(Collections.emptyMap());
+            }
+
             // SE è un 404, significa che la CRD non esiste nel cluster: restituiamo una lista vuota.
             if (e.getCode() == 404) {
                 log.debug("Custom resource {}/{} not found (CRD likely missing). Returning empty list.", group, plural);
@@ -200,6 +198,11 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             // SE è un 404, significa che la CRD non esiste nel cluster: restituiamo una lista vuota.
             if (e.getCode() == 404) {
                 log.debug("Custom resource {}/{} not found (CRD likely missing). Returning empty list.", group, plural);
+                return convertToKubernetesListObject(Collections.emptyMap());
+            }
+
+            if (e.getCode() == 403) {
+                log.debug("Access forbidden to custom resource {}/{}. Skipping.", group, plural);
                 return convertToKubernetesListObject(Collections.emptyMap());
             }
 
@@ -377,8 +380,21 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             );
         }
 
-        KubernetesListObject listObject = config.namespacedFetcher.fetch(this, namespace);
-        return convertToK8sResources(listObject, config.apiVersion, config.kind);
+        try {
+            KubernetesListObject listObject = config.namespacedFetcher.fetch(this, namespace);
+            return convertToK8sResources(listObject, config.apiVersion, config.kind);
+        } catch (ApiException e) {
+
+            if (e.getCode() == 403) {
+                log.debug("Access forbidden for resource kind: {} in namespace: {}. Skipping.", config.kind, namespace);
+                return Collections.emptyList();
+            }
+
+            if (e.getCode() == 404) {
+                return Collections.emptyList();
+            }
+            throw e;
+        }
     }
 
     private List<K8sResource> fetchClusterResources(ResourceConfig config) throws ApiException {
@@ -388,8 +404,20 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             );
         }
 
-        KubernetesListObject listObject = config.clusterFetcher.fetch(this);
-        return convertToK8sResources(listObject, config.apiVersion, config.kind);
+        try {
+            KubernetesListObject listObject = config.clusterFetcher.fetch(this);
+            return convertToK8sResources(listObject, config.apiVersion, config.kind);
+        } catch (ApiException e) {
+            // AGGIUNTA: Se è Forbidden, ritorniamo una lista vuota
+            if (e.getCode() == 403) {
+                log.debug("Access forbidden for cluster resource kind: {}. Skipping.", config.kind);
+                return Collections.emptyList();
+            }
+            if (e.getCode() == 404) {
+                return Collections.emptyList();
+            }
+            throw e;
+        }
     }
 
     private List<K8sResource> convertToK8sResources(
