@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class KubePatternApplication {
 
 	public static void main(String[] args) {
+        System.out.println("KubePattern - v0.1.0");
 		SpringApplication.run(KubePatternApplication.class, args);
 	}
 
