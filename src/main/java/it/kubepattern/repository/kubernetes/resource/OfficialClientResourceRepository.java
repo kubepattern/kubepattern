@@ -186,7 +186,8 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             }
 
             log.error("Error fetching custom resource {}/{} in namespace {}", group, plural, namespace, e);
-            throw e;
+            log.info(e.getMessage());
+            return convertToKubernetesListObject(Collections.emptyMap());
         }
     }
 
@@ -207,7 +208,8 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             }
 
             log.error("Error fetching custom resource {}/{} for all namespaces", group, plural, e);
-            throw e;
+            log.info(e.getMessage());
+            return convertToKubernetesListObject(Collections.emptyMap());
         }
     }
 
@@ -358,7 +360,8 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
                 }
             } catch (ApiException e) {
                 log.error("Error fetching all {}", config.kind, e);
-                throw new ApiException(e.getMessage());
+                log.info(e.getMessage());
+                return Collections.emptyList();
             }
         }
 
@@ -393,7 +396,8 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             if (e.getCode() == 404) {
                 return Collections.emptyList();
             }
-            throw e;
+            log.info(e.getMessage());
+            return Collections.emptyList();
         }
     }
 
@@ -408,7 +412,6 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             KubernetesListObject listObject = config.clusterFetcher.fetch(this);
             return convertToK8sResources(listObject, config.apiVersion, config.kind);
         } catch (ApiException e) {
-            // AGGIUNTA: Se è Forbidden, ritorniamo una lista vuota
             if (e.getCode() == 403) {
                 log.debug("Access forbidden for cluster resource kind: {}. Skipping.", config.kind);
                 return Collections.emptyList();
@@ -416,7 +419,8 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             if (e.getCode() == 404) {
                 return Collections.emptyList();
             }
-            throw e;
+            log.info(e.getMessage());
+            return Collections.emptyList();
         }
     }
 
