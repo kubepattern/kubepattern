@@ -32,7 +32,7 @@ KubePattern identifies patterns based on definitions stored in the **Pattern-as-
 
 # Get Started
 ## Installation Steps
-To deploy KubePattern to your cluster all you need to do is apply the pre-built configuration file:
+To deploy KubePattern to your cluster all you need to do is apply the pre-built configuration file or use official Helm Chart:
 ```bash
 # Official CRD for pattern results
 kubectl apply -f application/k8s/kubepattern-resources.yaml
