@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>it.kubepattern</groupId>
 	<artifactId>kubepattern</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>KubePattern</name>
 	<description>Kubernetes Smell detector and Pattern Analyzer, with pattern as code approach.</description>
 	<url/>
