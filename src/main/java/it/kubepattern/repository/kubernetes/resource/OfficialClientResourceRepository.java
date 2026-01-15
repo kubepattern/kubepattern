@@ -94,6 +94,14 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
                 (repo, ns) -> repo.coreV1Api.listNamespacedPod(ns).execute(),
                 repo -> repo.coreV1Api.listPodForAllNamespaces().execute()),
 
+        SECRET("v1", "Secret", true,
+                (repo, ns) -> repo.coreV1Api.listNamespacedSecret(ns).execute(),
+                repo -> repo.coreV1Api.listSecretForAllNamespaces().execute()),
+
+        SERVICE_ACCOUNT("v1", "ServiceAccount", true,
+                (repo, ns) -> repo.coreV1Api.listNamespacedSecret(ns).execute(),
+                repo -> repo.coreV1Api.listSecretForAllNamespaces().execute()),
+
         DEPLOYMENT("apps/v1", "Deployment", true,
                 (repo, ns) -> repo.appsV1Api.listNamespacedDeployment(ns).execute(),
                 repo -> repo.appsV1Api.listDeploymentForAllNamespaces().execute()),
@@ -168,7 +176,27 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
         }
     }
 
-    private KubernetesListObject fetchCustomResource(String group, String version, String namespace, String plural) throws ApiException {
+    private KubernetesListObject fetchCustomResource(String group, String version, String namespace, String plural) {
+        try {
+            Object result = customObjectsApi.listNamespacedCustomObject(group, version, namespace, plural).execute();
+            return convertToKubernetesListObject(result);
+        } catch (Exception e) {
+            handleFetchError(e, plural, namespace);
+            return convertToKubernetesListObject(Collections.emptyMap());
+        }
+    }
+
+    private KubernetesListObject fetchCustomResourceAllNamespaces(String group, String version, String plural) {
+        try {
+            Object result = customObjectsApi.listCustomObjectForAllNamespaces(group, version, plural).execute();
+            return convertToKubernetesListObject(result);
+        } catch (Exception e) {
+            handleFetchError(e, plural, "all-namespaces");
+            return convertToKubernetesListObject(Collections.emptyMap());
+        }
+    }
+
+    /*private KubernetesListObject fetchCustomResource(String group, String version, String namespace, String plural) throws ApiException {
         try {
             Object result = customObjectsApi.listNamespacedCustomObject(group, version, namespace, plural).execute();
             return convertToKubernetesListObject(result);
@@ -211,7 +239,7 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             log.info(e.getMessage());
             return convertToKubernetesListObject(Collections.emptyMap());
         }
-    }
+    }*/
 
     @SuppressWarnings("unchecked")
     private KubernetesListObject convertToKubernetesListObject(Object result) {
@@ -294,9 +322,10 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
 
 
     // All resources By Kind in a Namespace
-    public List<K8sResource> getResources(String kind, String namespace) throws ApiException {
-        ResourceConfig config = findResourceConfig(kind);
+    /*public List<K8sResource> getResources(String kind, String namespace) throws ApiException {
+
         try{
+            ResourceConfig config = findResourceConfig(kind);
             if (config.namespaced && namespace != null) {
                 return fetchNamespacedResources(config, namespace);
             } else if (!config.namespaced) {
@@ -310,6 +339,27 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
         throw new IllegalArgumentException(
                 String.format("Resource %s requires a namespace", kind)
         );
+    }*/
+
+    public List<K8sResource> getResources(String kind, String namespace) {
+        try {
+            ResourceConfig config = findResourceConfig(kind);
+
+            if (config.namespaced && namespace != null) {
+                return fetchNamespacedResources(config, namespace);
+            } else if (!config.namespaced) {
+                return fetchClusterResources(config);
+            }
+
+            return Collections.emptyList();
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Resource kind '{}' not configured. Returning empty list.", kind);
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Unexpected error fetching {}/{}: {}", kind, namespace, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     //All resources by a List of Kind
@@ -317,12 +367,7 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
         List<K8sResource> allResources = new ArrayList<>();
 
         for (String kind : kinds) {
-            try {
-                allResources.addAll(getResources(kind, namespace));
-            } catch (ApiException e) {
-                log.error("Error fetching resources of kind: {} in namespace: {}", kind, namespace, e);
-                throw new ApiException("Error fetching resources of kind: " + kind + " in namespace: " + namespace);
-            }
+            allResources.addAll(getResources(kind, namespace));
         }
 
         return allResources;
@@ -334,11 +379,7 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
 
         for (ResourceConfig config : ResourceConfig.values()) {
             if (config.namespaced) {
-                try {
-                    allResources.addAll(fetchNamespacedResources(config, namespace));
-                } catch (ApiException e) {
-                    log.error("Error fetching {} in namespace: {}", config.kind, namespace, e);
-                }
+                allResources.addAll(fetchNamespacedResources(config, namespace));
             }
         }
 
@@ -350,18 +391,12 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
         List<K8sResource> allResources = new ArrayList<>();
 
         for (ResourceConfig config : ResourceConfig.values()) {
-            try {
-                if (config.namespaced && config.clusterFetcher != null) {
-                    // cluster-wide (Pod, Deployment)
-                    allResources.addAll(fetchClusterResources(config));
-                } else if (!config.namespaced) {
-                    // cluster-scoped (Node, Namespace, StorageClass)
-                    allResources.addAll(fetchClusterResources(config));
-                }
-            } catch (ApiException e) {
-                log.error("Error fetching all {}", config.kind, e);
-                log.info(e.getMessage());
-                return Collections.emptyList();
+            if (config.namespaced && config.clusterFetcher != null) {
+                // cluster-wide (Pod, Deployment)
+                allResources.addAll(fetchClusterResources(config));
+            } else if (!config.namespaced) {
+                // cluster-scoped (Node, Namespace, StorageClass)
+                allResources.addAll(fetchClusterResources(config));
             }
         }
 
@@ -376,7 +411,7 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
                 .orElseThrow(() -> new IllegalArgumentException("Unknown resource kind: " + kind));
     }
 
-    private List<K8sResource> fetchNamespacedResources(ResourceConfig config, String namespace) throws ApiException {
+    /*private List<K8sResource> fetchNamespacedResources(ResourceConfig config, String namespace) throws ApiException {
         if (config.namespacedFetcher == null) {
             throw new IllegalStateException(
                     String.format("No namespaced fetcher for %s", config.kind)
@@ -422,6 +457,31 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
             log.info(e.getMessage());
             return Collections.emptyList();
         }
+    }*/
+
+    private List<K8sResource> fetchNamespacedResources(ResourceConfig config, String namespace) {
+        if (config.namespacedFetcher == null) return Collections.emptyList();
+
+        try {
+            KubernetesListObject listObject = config.namespacedFetcher.fetch(this, namespace);
+            return convertToK8sResources(listObject, config.apiVersion, config.kind);
+        } catch (Exception e) {
+            // Gestisce 403, 404 e altri errori restituendo lista vuota
+            handleFetchError(e, config.kind, namespace);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<K8sResource> fetchClusterResources(ResourceConfig config) {
+        if (config.clusterFetcher == null) return Collections.emptyList();
+
+        try {
+            KubernetesListObject listObject = config.clusterFetcher.fetch(this);
+            return convertToK8sResources(listObject, config.apiVersion, config.kind);
+        } catch (Exception e) {
+            handleFetchError(e, config.kind, "cluster-wide");
+            return Collections.emptyList();
+        }
     }
 
     private List<K8sResource> convertToK8sResources(
@@ -429,5 +489,18 @@ public class OfficialClientResourceRepository implements IK8sResourceRepository 
         return listObject.getItems().stream()
                 .map(item -> new K8sResource(apiVersion, kind, item))
                 .toList();
+    }
+
+
+    private void handleFetchError(Exception e, String resourceName, String scope) {
+        if (e instanceof ApiException apiEx) {
+            // Se è Forbidden (es. Secret) o Not Found, è un comportamento atteso: logghiamo a DEBUG
+            if (apiEx.getCode() == 403 || apiEx.getCode() == 404) {
+                log.debug("Skipping {} in {} due to code {}: {}", resourceName, scope, apiEx.getCode(), apiEx.getMessage());
+                return;
+            }
+        }
+        // Per altri errori imprevisti, usiamo WARN ma non blocchiamo l'esecuzione
+        log.warn("Error fetching {} in {}: {}", resourceName, scope, e.getMessage());
     }
 }
