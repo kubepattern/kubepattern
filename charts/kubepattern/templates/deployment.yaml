@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app: kubepattern
-  name: {{ include "kubepattern.fullname" . }}
+  name: kubepattern-deployment
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount | default 1 }}
