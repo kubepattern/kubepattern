@@ -10,14 +10,17 @@ import (
 // LintError
 // -------------------------
 
+// LintError represents a validation failure when checking a pattern definition.
 type LintError struct {
 	Message string
 }
 
+// Error implements the error interface for LintError.
 func (e *LintError) Error() string {
 	return fmt.Sprintf("malformed pattern: %s", e.Message)
 }
 
+// lintErr is a helper to create a formatted LintError.
 func lintErr(msg string, args ...any) error {
 	return &LintError{Message: fmt.Sprintf(msg, args...)}
 }
@@ -27,20 +30,26 @@ func lintErr(msg string, args ...any) error {
 // -------------------------
 
 var (
-	reVersion  = regexp.MustCompile(`^[a-zA-Z0-9.-]+/v[a-zA-Z0-9]+$`)
-	reName     = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
+	// reVersion matches the '<domain>/v<number>' format.
+	reVersion = regexp.MustCompile(`^[a-zA-Z0-9.-]+/v[a-zA-Z0-9]+$`)
+	// reName matches alphanumeric strings including dots and dashes.
+	reName = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
+	// reCategory matches alphanumeric strings including dashes.
 	reCategory = regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
-	reURL      = regexp.MustCompile(`^https?://`)
+	// reURL ensures a string starts with a standard web protocol.
+	reURL = regexp.MustCompile(`^https?://`)
 )
 
 // -------------------------
 // Helpers
 // -------------------------
 
+// isEmpty checks if a string is empty or contains the literal string "null".
 func isEmpty(s string) bool {
 	return s == "" || s == "null"
 }
 
+// keys returns a slice of keys from a map with string-based keys.
 func keys[K ~string, V struct{}](m map[K]V) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {
@@ -49,11 +58,13 @@ func keys[K ~string, V struct{}](m map[K]V) []string {
 	return out
 }
 
+// getString performs a type assertion to safely retrieve a string from a map.
 func getString(m map[string]any, key string) string {
 	v, _ := m[key].(string)
 	return v
 }
 
+// getBool performs a type assertion to safely retrieve a boolean from a map.
 func getBool(m map[string]any, key string) bool {
 	v, _ := m[key].(bool)
 	return v
@@ -63,6 +74,8 @@ func getBool(m map[string]any, key string) bool {
 // Lint — entry point
 // -------------------------
 
+// Lint parses a JSON string and validates it against the Pattern schema requirements.
+// It returns a LintError if any field fails validation.
 func Lint(jsonStr string) error {
 	if jsonStr == "" {
 		return lintErr("json string is empty")
@@ -73,6 +86,7 @@ func Lint(jsonStr string) error {
 		return lintErr("pattern definition is not a valid json")
 	}
 
+	// Validate top-level required fields
 	if err := lintVersion(getString(root, "version")); err != nil {
 		return err
 	}
@@ -80,11 +94,13 @@ func Lint(jsonStr string) error {
 		return err
 	}
 
+	// Extract and validate nested Metadata object
 	metadata, _ := root["metadata"].(map[string]any)
 	if err := lintMetadata(metadata); err != nil {
 		return err
 	}
 
+	// Extract and validate nested Spec object
 	spec, _ := root["spec"].(map[string]any)
 	if err := lintSpec(spec); err != nil {
 		return err
@@ -97,6 +113,7 @@ func Lint(jsonStr string) error {
 // Root fields
 // -------------------------
 
+// lintVersion validates the API version format.
 func lintVersion(version string) error {
 	if isEmpty(version) {
 		return lintErr("version is null or empty")
@@ -110,6 +127,7 @@ func lintVersion(version string) error {
 	return nil
 }
 
+// lintKind ensures the kind is strictly set to 'Pattern'.
 func lintKind(kind string) error {
 	if isEmpty(kind) {
 		return lintErr("kind is null or empty")
@@ -124,6 +142,7 @@ func lintKind(kind string) error {
 // Metadata
 // -------------------------
 
+// lintMetadata runs a suite of checks against the metadata fields.
 func lintMetadata(metadata map[string]any) error {
 	if metadata == nil {
 		return lintErr("metadata is null or empty")
@@ -169,6 +188,7 @@ func lintMetadataPatternType(patternType string) error {
 	return nil
 }
 
+// lintMetadataSeverity restricts severity to a specific set of uppercase keywords.
 func lintMetadataSeverity(severity string) error {
 	if isEmpty(severity) {
 		return lintErr("metadata.severity is null or empty")
@@ -191,6 +211,7 @@ func lintMetadataURL(field, url string) error {
 // Spec
 // -------------------------
 
+// lintSpec validates the core functional definition of the Pattern.
 func lintSpec(spec map[string]any) error {
 	if spec == nil {
 		return lintErr("spec is null or empty")
@@ -211,6 +232,7 @@ func lintSpec(spec map[string]any) error {
 	return nil
 }
 
+// lintSpecResources iterates through the resource list and validates each entry.
 func lintSpecResources(raw any) error {
 	items, ok := raw.([]any)
 	if !ok || len(items) == 0 {
@@ -238,6 +260,7 @@ func lintSpecMessage(msg string) error {
 	return nil
 }
 
+// lintSpecTopology ensures the topology matches known deployment patterns.
 func lintSpecTopology(topology string) error {
 	if isEmpty(topology) {
 		return lintErr("spec.topology is null or empty")
@@ -258,6 +281,7 @@ func lintResources(resources map[string]any) error {
 	return nil
 }
 
+// lintResource validates individual resource requirements and their filters.
 func lintResource(resource map[string]any) error {
 	if resource == nil {
 		return lintErr("resource is null or empty")
@@ -267,7 +291,13 @@ func lintResource(resource map[string]any) error {
 		func() error { return lintResourceKind(getString(resource, "kind")) },
 		func() error { return lintResourceId(getString(resource, "id")) },
 		func() error { return lintResourceLeader(getBool(resource, "leader")) },
-		func() error { return lintResourceFilters(resource["filters"].(map[string]any)) },
+		func() error {
+			// Filters are optional, only lint if present
+			if f, ok := resource["filters"].(map[string]any); ok {
+				return lintResourceFilters(f)
+			}
+			return nil
+		},
 	}
 
 	for _, check := range checks {
@@ -294,16 +324,17 @@ func lintResourceId(id string) error {
 }
 
 func lintResourceLeader(leader bool) error {
-	return nil
+	return nil // Placeholder for future logic
 }
 
 // -------------------------
 // Filters
 // -------------------------
 
+// lintResourceFilters handles the validation of matchAll, matchAny, and matchNone logic groups.
 func lintResourceFilters(filters map[string]any) error {
 	if filters == nil {
-		return nil // filters è opzionale
+		return nil // Filters are optional
 	}
 
 	groups := []string{"matchAll", "matchAny", "matchNone"}
@@ -332,6 +363,7 @@ func lintResourceFilters(filters map[string]any) error {
 	return nil
 }
 
+// lintFilterCondition validates the key-operator-value triplet of a filter.
 func lintFilterCondition(group string, index int, condition map[string]any) error {
 	checks := []func() error{
 		func() error { return lintFilterKey(group, index, getString(condition, "key")) },
@@ -365,5 +397,5 @@ func lintFilterOperator(group string, index int, operator string) error {
 }
 
 func lintFilterValues(group string, index int, raw any, operator string) error {
-	return nil
+	return nil // Placeholder for value-type validation based on operator
 }
