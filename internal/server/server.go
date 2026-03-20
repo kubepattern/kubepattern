@@ -6,6 +6,7 @@ import (
 
 func Init() {
 	http.HandleFunc("/hello", hello)
+	http.HandleFunc("POST /lint/pattern", lintPattern)
 	http.HandleFunc("POST /analysis/cluster", analyzeCluster)
 	http.HandleFunc("POST /analysis/namespace/{namespace}", analyzeNamespace)
 
