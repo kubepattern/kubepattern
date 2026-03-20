@@ -1,26 +1,14 @@
 package main
 
-import (
-	"kubepattern-go/internal/server"
-)
+import "kubepattern-go/internal/server"
 
 func main() {
 	server.Init()
 }
 
 /*func main() {
-	cfg := definitions.Config{
-		OrgName:  "kubepattern",
-		RepoName: "registry",
-		Branch:   "main",
-		Token:    os.Getenv("GITHUB_TOKEN"),
-	}
 
-	if cfg.OrgName == "" || cfg.RepoName == "" || cfg.Branch == "" {
-		log.Fatal("Missing GitHub Pattern as Code Registry configuration")
-	}
-
-	ghClient := definitions.NewClient(cfg)
+	ghClient := definitions.NewClient(definitions.LoadConfig())
 
 	files, err := ghClient.ReadAllDefinitions()
 	if err != nil {
