@@ -5,65 +5,74 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
 
-type ClusterClient struct {
+type Client struct {
+	discoveryClient discovery.DiscoveryInterface
 	dynamicClient   dynamic.Interface
-	discoveryClient *discovery.DiscoveryClient
 }
 
-func NewClient(config *rest.Config) (*ClusterClient, error) {
-	dyn, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
+func NewClient(config *rest.Config) (*Client, error) {
 	disco, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
 		return nil, err
 	}
-	return &ClusterClient{
-		dynamicClient:   dyn,
+	dyn, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{
 		discoveryClient: disco,
+		dynamicClient:   dyn,
 	}, nil
 }
 
-// GetAllResources fetches everything the tool has permission to see
-func (c *ClusterClient) GetAllResources(ctx context.Context) error {
-	// 1. Discover all API groups and resources (including CRDs)
+// GetAllResources returns a flat slice of all objects in the cluster
+func (c *Client) GetAllResources(ctx context.Context) ([]unstructured.Unstructured, error) {
+	var allObjects []unstructured.Unstructured
+
+	// 1. Discover all API groups and resources
 	resourceLists, err := c.discoveryClient.ServerPreferredResources()
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed discovery: %w", err)
 	}
 
 	for _, list := range resourceLists {
 		gv, _ := schema.ParseGroupVersion(list.GroupVersion)
 
 		for _, resource := range list.APIResources {
-			// Filter: skip subresources (like pods/log) and ensure we can "list" them
-			if !contains(resource.Verbs, "list") || resource.Name == "" || isSubresource(resource.Name) {
+			// Skip subresources (e.g., pods/log) and resources we can't list
+			if !contains(resource.Verbs, "list") || isSubresource(resource.Name) {
 				continue
 			}
 
 			gvr := gv.WithResource(resource.Name)
 
-			// 2. Fetch the data dynamically
+			// 2. Fetch all instances of this resource
 			list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 			if err != nil {
-				fmt.Printf("Skipping %s: %v\n", gvr.String(), err)
+				// We log and continue because we might not have permissions for everything
 				continue
 			}
 
-			for _, item := range list.Items {
-				fmt.Printf("Found: %s/%s in %s\n", item.GetKind(), item.GetName(), item.GetNamespace())
-				// Pass item to your analyzer here
-			}
+			allObjects = append(allObjects, list.Items...)
 		}
 	}
-	return nil
+	return allObjects, nil
+}
+
+func isSubresource(name string) bool {
+	for i := 0; i < len(name); i++ {
+		if name[i] == '/' {
+			return true
+		}
+	}
+	return false
 }
 
 func contains(slice []string, s string) bool {
@@ -73,8 +82,4 @@ func contains(slice []string, s string) bool {
 		}
 	}
 	return false
-}
-
-func isSubresource(name string) bool {
-	return len(name) > 0 && (contains([]string{"status", "exec", "log", "proxy"}, name) || (len(name) > 0 && name[0] == '/'))
 }
