@@ -42,7 +42,9 @@ func main() {
 	graph := cluster.NewGraph()
 	graph.Build(resources)
 
-	fmt.Printf("✅ Graph built with %d nodes. Ready for relationship linking.\n", len(graph.Nodes))
+	fmt.Printf("✅ Graph built with %d nodes. Ready for relationship linking.\n", len(graph.GetNodes()))
+	fmt.Println()
+	graph.PrintTerminal()
 }
 
 func getKubeConfig() (*rest.Config, error) {
