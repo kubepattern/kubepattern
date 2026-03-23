@@ -3,6 +3,8 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -12,6 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// Client wraps the Kubernetes discovery and dynamic clients.
 type Client struct {
 	discoveryClient discovery.DiscoveryInterface
 	dynamicClient   dynamic.Interface
@@ -20,11 +23,11 @@ type Client struct {
 func NewClient(config *rest.Config) (*Client, error) {
 	disco, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create discovery client: %w", err)
 	}
 	dyn, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 	return &Client{
 		discoveryClient: disco,
@@ -32,52 +35,89 @@ func NewClient(config *rest.Config) (*Client, error) {
 	}, nil
 }
 
-// GetAllResources returns a flat slice of all objects in the cluster
+// GetAllResources returns a flat slice of all listable objects in the cluster.
+// Discovery errors from individual API groups are logged and skipped rather than
+// aborting the entire scan — this is intentional: clusters with unhealthy CRD
+// extensions still return partial results from ServerPreferredResources.
 func (c *Client) GetAllResources(ctx context.Context) ([]unstructured.Unstructured, error) {
-	var allObjects []unstructured.Unstructured
+	return c.getResources(ctx, metav1.NamespaceAll)
+}
 
-	// 1. Discover all API groups and resources
-	resourceLists, err := c.discoveryClient.ServerPreferredResources()
-	if err != nil {
-		return nil, fmt.Errorf("failed discovery: %w", err)
+// GetNamespaceResources returns all listable objects within a specific namespace.
+func (c *Client) GetNamespaceResources(ctx context.Context, namespace string) ([]unstructured.Unstructured, error) {
+	return c.getResources(ctx, namespace)
+}
+
+func (c *Client) getResources(ctx context.Context, namespace string) ([]unstructured.Unstructured, error) {
+	// ServerPreferredResources may return a partial result alongside an error
+	// (e.g. when some API extensions are unavailable). We log the error but
+	// continue with whatever was successfully discovered.
+	apiGroups, discoveryErr := c.discoveryClient.ServerPreferredResources()
+	if discoveryErr != nil {
+		slog.Warn("partial discovery failure; some resource types may be missing",
+			"error", discoveryErr)
+	}
+	if apiGroups == nil {
+		return nil, fmt.Errorf("discovery returned no API groups: %w", discoveryErr)
 	}
 
-	for _, list := range resourceLists {
-		gv, _ := schema.ParseGroupVersion(list.GroupVersion)
+	var allObjects []unstructured.Unstructured
 
-		for _, resource := range list.APIResources {
-			// Skip subresources (e.g., pods/log) and resources we can't list
-			if !contains(resource.Verbs, "list") || isSubresource(resource.Name) {
+	for _, apiGroup := range apiGroups {
+		gv, err := schema.ParseGroupVersion(apiGroup.GroupVersion)
+		if err != nil {
+			slog.Warn("skipping unparseable GroupVersion",
+				"groupVersion", apiGroup.GroupVersion, "error", err)
+			continue
+		}
+
+		for _, resource := range apiGroup.APIResources {
+			if !canList(resource.Verbs) || isSubresource(resource.Name) {
 				continue
 			}
 
 			gvr := gv.WithResource(resource.Name)
-
-			// 2. Fetch all instances of this resource
-			list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
+			items, err := c.listResource(ctx, gvr, namespace)
 			if err != nil {
-				// We log and continue because we might not have permissions for everything
+				// Log at debug level: permission gaps are expected in most clusters
+				slog.Debug("skipping resource",
+					"gvr", gvr.String(), "namespace", namespace, "error", err)
 				continue
 			}
 
-			allObjects = append(allObjects, list.Items...)
+			allObjects = append(allObjects, items...)
 		}
 	}
+
 	return allObjects, nil
 }
 
-func isSubresource(name string) bool {
-	for i := 0; i < len(name); i++ {
-		if name[i] == '/' {
-			return true
-		}
+// listResource fetches all instances of a single GVR, optionally scoped to a namespace.
+func (c *Client) listResource(ctx context.Context, gvr schema.GroupVersionResource, namespace string) ([]unstructured.Unstructured, error) {
+	var result *unstructured.UnstructuredList
+	var err error
+
+	if namespace == metav1.NamespaceAll {
+		result, err = c.dynamicClient.Resource(gvr).Namespace("").List(ctx, metav1.ListOptions{})
+	} else {
+		result, err = c.dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	}
-	return false
+
+	if err != nil {
+		return nil, err
+	}
+	return result.Items, nil
 }
 
-func contains(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
+// isSubresource reports whether a resource name refers to a subresource (e.g. "pods/log").
+func isSubresource(name string) bool {
+	return strings.Contains(name, "/")
+}
+
+// canList reports whether the resource supports the "list" verb.
+func canList(verbs []string) bool {
+	for _, v := range verbs {
+		if v == "list" {
 			return true
 		}
 	}

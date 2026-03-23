@@ -107,7 +107,7 @@ func (g *Graph) PrintTerminal() {
 // PrintGraphviz generates output in DOT format for image generation
 func (g *Graph) PrintGraphviz() {
 	fmt.Println("digraph KubernetesCluster {")
-	fmt.Println("  rankdir=LR;") // Disegna da sinistra a destra
+	fmt.Println("  rankdir=LR;")
 	fmt.Println("  node [shape=box, style=filled, fillcolor=lightgrey, fontname=\"Helvetica\"];")
 
 	// 1. Defining all nodes
