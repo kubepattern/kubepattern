@@ -35,16 +35,16 @@ func NewClient(config *rest.Config) (*Client, error) {
 	}, nil
 }
 
-// GetAllResources returns a flat slice of all listable objects in the cluster.
+// FetchAll returns a flat slice of all listable objects in the cluster.
 // Discovery errors from individual API groups are logged and skipped rather than
 // aborting the entire scan — this is intentional: clusters with unhealthy CRD
 // extensions still return partial results from ServerPreferredResources.
-func (c *Client) GetAllResources(ctx context.Context) ([]unstructured.Unstructured, error) {
+func (c *Client) FetchAll(ctx context.Context) ([]unstructured.Unstructured, error) {
 	return c.getResources(ctx, metav1.NamespaceAll)
 }
 
-// GetNamespaceResources returns all listable objects within a specific namespace.
-func (c *Client) GetNamespaceResources(ctx context.Context, namespace string) ([]unstructured.Unstructured, error) {
+// FetchByNamespace returns all listable objects within a specific namespace.
+func (c *Client) FetchByNamespace(ctx context.Context, namespace string) ([]unstructured.Unstructured, error) {
 	return c.getResources(ctx, namespace)
 }
 
@@ -98,7 +98,7 @@ func (c *Client) listResource(ctx context.Context, gvr schema.GroupVersionResour
 	var err error
 
 	if namespace == metav1.NamespaceAll {
-		result, err = c.dynamicClient.Resource(gvr).Namespace("").List(ctx, metav1.ListOptions{})
+		result, err = c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 	} else {
 		result, err = c.dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	}

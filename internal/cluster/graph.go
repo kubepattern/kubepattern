@@ -1,12 +1,19 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+// ResourceFetcher is the interface that internal/repository/kubernetes/client.go will implement.
+type ResourceFetcher interface {
+	FetchAll(ctx context.Context) ([]unstructured.Unstructured, error)
+	FetchByNamespace(ctx context.Context, namespace string) ([]unstructured.Unstructured, error)
+}
 
 // Graph is the Kubernetes cluster abstraction
 type Graph struct {

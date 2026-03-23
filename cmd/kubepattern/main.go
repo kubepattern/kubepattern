@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	fmt.Println("🚀 KubePattern: Starting Analysis Trigger...")
+	fmt.Println("🚀 Starting KubePattern...")
 
 	config, err := getKubeConfig()
 	if err != nil {
@@ -33,7 +33,7 @@ func main() {
 	defer cancel()
 
 	fmt.Println("🔍 Scanning cluster for resources...")
-	resources, err := client.GetAllResources(ctx)
+	resources, err := client.FetchAll(ctx)
 	if err != nil {
 		log.Fatalf("Scan failed: %v", err)
 	}
