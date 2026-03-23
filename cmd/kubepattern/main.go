@@ -45,6 +45,7 @@ func main() {
 	fmt.Printf("✅ Graph built with %d nodes. Ready for relationship linking.\n", len(graph.GetNodes()))
 	fmt.Println()
 	graph.PrintTerminal()
+	graph.PrintGraphviz()
 }
 
 func getKubeConfig() (*rest.Config, error) {

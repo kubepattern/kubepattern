@@ -103,3 +103,31 @@ func (g *Graph) PrintTerminal() {
 	}
 	fmt.Println(strings.Repeat("=", 33))
 }
+
+// PrintGraphviz generates output in DOT format for image generation
+func (g *Graph) PrintGraphviz() {
+	fmt.Println("digraph KubernetesCluster {")
+	fmt.Println("  rankdir=LR;") // Disegna da sinistra a destra
+	fmt.Println("  node [shape=box, style=filled, fillcolor=lightgrey, fontname=\"Helvetica\"];")
+
+	// 1. Defining all nodes
+	for uid, node := range g.nodes {
+		// Kind and Name label
+		label := fmt.Sprintf("%s\\n%s", node.GetKind(), node.GetName())
+		// Print: "uid-del-nodo" [label="Deployment\nmy-app"];
+		fmt.Printf("  \"%s\" [label=\"%s\"];\n", uid, label)
+	}
+
+	fmt.Println("")
+
+	// 2. Drawing edges
+	for fromUID, edges := range g.edges {
+		for _, e := range edges {
+			// Print: "uid-parent" -> "uid-child" [label="owns"];
+			fmt.Printf("  \"%s\" -> \"%s\" [label=\"%s\", fontsize=10];\n",
+				fromUID, e.toNode, e.reason)
+		}
+	}
+
+	fmt.Println("}")
+}
