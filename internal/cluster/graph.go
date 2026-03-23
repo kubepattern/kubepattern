@@ -8,17 +8,20 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// Graph is the Kubernetes cluster abstraction
 type Graph struct {
 	nodes map[types.UID]*unstructured.Unstructured
 	edges map[types.UID][]edge
 }
 
+// edge represent the relationship between two nodes
 type edge struct {
 	fromNode types.UID
 	toNode   types.UID
 	reason   string
 }
 
+// NewGraph creates an instance of a Graph
 func NewGraph() *Graph {
 	return &Graph{
 		nodes: make(map[types.UID]*unstructured.Unstructured),
@@ -43,10 +46,12 @@ func (g *Graph) Build(resources []unstructured.Unstructured) {
 	g.link()
 }
 
+// GetNodes exposes a  Graph's nodes to other packages
 func (g *Graph) GetNodes() map[types.UID]*unstructured.Unstructured {
 	return g.nodes
 }
 
+// link checks for edges between nodes in Graph based on Kubernetes ownership mechanism
 func (g *Graph) link() {
 	for fromUID, fromNode := range g.nodes {
 		for toUID, toNode := range g.nodes {
@@ -65,6 +70,7 @@ func (g *Graph) link() {
 	}
 }
 
+// addEdge create an edge between two nodes
 func (g *Graph) addEdge(from, to types.UID, reason string) {
 	g.edges[from] = append(g.edges[from], edge{
 		fromNode: from,
