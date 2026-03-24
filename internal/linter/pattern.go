@@ -343,6 +343,15 @@ func lintFilterOperator(resourceIndex int, group string, index int, op FilterOpe
 	case
 		FilterEquals,
 		FilterExists,
+		FilterGreaterThan,
+		FilterGreaterOrEqual,
+		FilterLessThan,
+		FilterLessOrEqual,
+		FilterArraySizeEquals,
+		FilterArraySizeGreaterThan,
+		FilterArraySizeGreaterOrEqual,
+		FilterArraySizeLessThan,
+		FilterArraySizeLessOrEqual,
 		FilterIsEmpty:
 		return nil
 	case "":

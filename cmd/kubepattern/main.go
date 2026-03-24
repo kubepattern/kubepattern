@@ -1,6 +1,139 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"time"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
+
+	"kubepattern-go/internal/analysis"
+	"kubepattern-go/internal/cluster"
+	"kubepattern-go/internal/kube"
+	"kubepattern-go/internal/linter"
+)
+
+const testPatternYAML = `
+version: kubepattern.dev/v1
+kind: PatternAsCode
+metadata:
+  name: test-sidecar-pods
+  displayName: "Trova Pod con Sidecar"
+  patternType: "test"
+  severity: MEDIUM
+spec:
+  message: "Trovato Pod con più di un container (potenziale sidecar)"
+  resources:
+    - id: pod-target
+      kind: Pod
+      apiVersion: v1
+      leader: true
+      filters:
+        matchAll:
+          # Niente wildcard qui! Vogliamo contare l'intero array 'containers'
+          - key: spec.containers
+            operator: ARRAY_SIZE_GREATER_THAN
+            values:
+              - "1"
+`
+
+func main() {
+	fmt.Println("🚀 Inizio test di KubePattern...")
+
+	// 1. Linting e parsing del pattern YAML
+	fmt.Println("\n📄 Parsing del PatternAsCode...")
+	pattern, err := linter.Lint([]byte(testPatternYAML))
+	if err != nil {
+		log.Fatalf("❌ Errore durante il linting del pattern: %v", err)
+	}
+	fmt.Printf("✅ Pattern '%s' caricato correttamente!\n", pattern.Metadata.Name)
+
+	// 2. Setup Kubernetes Client
+	config, err := getKubeConfig()
+	if err != nil {
+		log.Fatalf("❌ Errore caricamento kubeconfig: %v", err)
+	}
+
+	client, err := kube.NewClient(config)
+	if err != nil {
+		log.Fatalf("❌ Errore creazione client K8s: %v", err)
+	}
+
+	// 3. Fetch delle risorse dal cluster
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+
+	fmt.Println("\n🔍 Scansione del cluster in corso (potrebbe richiedere qualche secondo)...")
+	resources, err := client.FetchAll(ctx)
+	if err != nil {
+		log.Fatalf("❌ Scansione fallita: %v", err)
+	}
+
+	// 4. Costruzione del grafo
+	graph := cluster.NewGraph()
+	graph.Build(resources)
+	nodes := graph.GetNodes()
+	fmt.Printf("✅ Grafo costruito con %d nodi totali.\n", len(nodes))
+
+	// 5. Test del filtro (estraiamo la risorsa leader dal pattern)
+	leaderResource := linter.LeaderResource(pattern)
+	if leaderResource == nil {
+		log.Fatalf("❌ Nessuna risorsa trovata nel pattern")
+	}
+
+	fmt.Printf("\n⚙️  Applicazione filtri per %s (%s)...\n", leaderResource.Kind, leaderResource.APIVersion)
+
+	// Chiamata alla funzione di filtro che hai scritto in analysis
+	filteredNodes := analysis.FilterResources(nodes, *leaderResource)
+
+	// 6. Stampa dei risultati
+	fmt.Println("--------------------------------------------------")
+	if len(filteredNodes) == 0 {
+		fmt.Println("⚠️ Nessuna risorsa trovata che matcha i criteri del pattern.")
+	} else {
+		fmt.Printf("🎯 Trovate %d risorse corrispondenti:\n", len(filteredNodes))
+		for i, node := range filteredNodes {
+			fmt.Printf("   %d. [%s] %s/%s\n",
+				i+1,
+				node.GetKind(),
+				node.GetNamespace(),
+				node.GetName(),
+			)
+		}
+	}
+	fmt.Println("--------------------------------------------------")
+	fmt.Println("🏁 Test completato!")
+}
+
+// getKubeConfig gestisce la connessione sia In-Cluster che da locale
+func getKubeConfig() (*rest.Config, error) {
+	// Prova configurazione In-Cluster (produzione/pod)
+	config, err := rest.InClusterConfig()
+	if err == nil {
+		return config, nil
+	}
+
+	// Fallback su Kubeconfig locale (sviluppo)
+	var kubeconfig string
+	if home := homedir.HomeDir(); home != "" {
+		kubeconfig = filepath.Join(home, ".kube", "config")
+	}
+
+	// Permetti override tramite variabile d'ambiente
+	if env := os.Getenv("KUBECONFIG"); env != "" {
+		kubeconfig = env
+	}
+
+	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+}
+
+/*
+import (
 	"fmt"
 	"kubepattern-go/internal/linter"
 	"kubepattern-go/internal/repository/definitions"
