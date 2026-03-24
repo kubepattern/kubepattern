@@ -30,10 +30,18 @@ const (
 type FilterOperator string
 
 const (
-	FilterEquals  FilterOperator = "EQUALS"
-	FilterIn      FilterOperator = "IN"
-	FilterIsEmpty FilterOperator = "IS_EMPTY"
-	FilterExists  FilterOperator = "EXISTS"
+	FilterEquals                  FilterOperator = "EQUALS"
+	FilterIsEmpty                 FilterOperator = "IS_EMPTY"
+	FilterExists                  FilterOperator = "EXISTS"
+	FilterGreaterThan             FilterOperator = "GREATER_THAN"
+	FilterGreaterOrEqual          FilterOperator = "GREATER_OR_EQUAL"
+	FilterLessThan                FilterOperator = "LESS_THAN"
+	FilterLessOrEqual             FilterOperator = "LESS_OR_EQUAL"
+	FilterArraySizeEquals         FilterOperator = "ARRAY_SIZE_EQUALS"
+	FilterArraySizeGreaterThan    FilterOperator = "ARRAY_SIZE_GREATER_THAN"
+	FilterArraySizeGreaterOrEqual FilterOperator = "ARRAY_SIZE_GREATER_OR_EQUAL"
+	FilterArraySizeLessThan       FilterOperator = "ARRAY_SIZE_LESS_THAN"
+	FilterArraySizeLessOrEqual    FilterOperator = "ARRAY_SIZE_LESS_OR_EQUAL"
 )
 
 type CriteriaOperator string
