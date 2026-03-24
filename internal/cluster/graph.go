@@ -21,7 +21,7 @@ type Graph struct {
 	edges map[types.UID][]edge
 }
 
-// edge represent the relationship between two nodes
+// edge represents the relationship between two nodes
 type edge struct {
 	fromNode types.UID
 	toNode   types.UID
@@ -53,12 +53,12 @@ func (g *Graph) Build(resources []unstructured.Unstructured) {
 	g.link()
 }
 
-// GetNodes exposes a  Graph's nodes to other packages
+// GetNodes exposes a Graph's nodes to other packages
 func (g *Graph) GetNodes() map[types.UID]*unstructured.Unstructured {
 	return g.nodes
 }
 
-// link checks for edges between nodes in Graph based on Kubernetes ownership mechanism
+// link checks for edges between nodes in Graph based on the Kubernetes ownership mechanism
 func (g *Graph) link() {
 	for fromUID, fromNode := range g.nodes {
 		for toUID, toNode := range g.nodes {
