@@ -50,7 +50,7 @@ func (c *Client) FetchByNamespace(ctx context.Context, namespace string) ([]unst
 
 func (c *Client) getResources(ctx context.Context, namespace string) ([]unstructured.Unstructured, error) {
 	// ServerPreferredResources may return a partial result alongside an error
-	// (e.g. when some API extensions are unavailable). We log the error but
+	// (e.g., when some API extensions are unavailable). We log the error but
 	// continue with whatever was successfully discovered.
 	apiGroups, discoveryErr := c.discoveryClient.ServerPreferredResources()
 	if discoveryErr != nil {

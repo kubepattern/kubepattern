@@ -140,7 +140,6 @@ func lintErr(msg string, args ...any) error {
 var (
 	reVersion = regexp.MustCompile(`^[a-zA-Z0-9.-]+/v[a-zA-Z0-9]+$`)
 	reName    = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
-	reURL     = regexp.MustCompile(`^https?://`)
 )
 
 // -------------------------
