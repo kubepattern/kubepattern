@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
+	// Assicurati che i percorsi corrispondano al tuo modulo
 	"kubepattern-go/internal/analysis"
 	"kubepattern-go/internal/cluster"
 	"kubepattern-go/internal/kube"
@@ -19,27 +21,32 @@ import (
 )
 
 const testPatternYAML = `
-version: kubepattern.dev/v1
-kind: PatternAsCode
+apiVersion: kubepattern.dev/v1
+kind: Pattern
 metadata:
-  name: test-sidecar-pods
-  displayName: "Trova Pod con Sidecar"
-  patternType: "test"
-  severity: MEDIUM
+  name: dangling-service
+  displayName: Dangling Service (Selects no Pods)
+  category: Networking
+  severity: CRITICAL
 spec:
-  message: "Trovato Pod con più di un container (potenziale sidecar)"
-  resources:
-    - id: pod-target
+  message: "Service {{target.metadata.name}} does not route to any Pods."
+  target:
+    kind: Service
+    apiVersion: v1
+    filters:
+      matchNone:
+        - path: metadata.name
+          operator: EQUALS
+          values:
+            - kubernetes
+  dependencies:
+    - id: target-pods
       kind: Pod
       apiVersion: v1
-      leader: true
-      filters:
-        matchAll:
-          # Niente wildcard qui! Vogliamo contare l'intero array 'containers'
-          - key: spec.containers
-            operator: ARRAY_SIZE_GREATER_THAN
-            values:
-              - "1"
+  relationships:
+    matchNone:
+      - with: target-pods
+        type: selects
 `
 
 func main() {
@@ -80,33 +87,54 @@ func main() {
 	nodes := graph.GetNodes()
 	fmt.Printf("✅ Grafo costruito con %d nodi totali.\n", len(nodes))
 
-	// 5. Test del filtro (estraiamo la risorsa leader dal pattern)
-	leaderResource := linter.LeaderResource(pattern)
-	if leaderResource == nil {
-		log.Fatalf("❌ Nessuna risorsa trovata nel pattern")
+	// 5. Valutazione del Target
+	fmt.Println("\n🎯 Estrazione dei Target...")
+	targetDef := pattern.Spec.Target
+	fmt.Printf("   Filtro Target per %s (%s)...\n", targetDef.Kind, targetDef.APIVersion)
+	targetNodes := analysis.FilterResources(nodes, targetDef.Kind, targetDef.APIVersion, targetDef.Filters)
+
+	// 6. Valutazione delle Dependencies
+	fmt.Println("\n🔗 Estrazione delle Dependencies...")
+	// Creiamo una mappa per tenere traccia dei nodi filtrati per ogni dipendenza
+	dependenciesMap := make(map[string][]*unstructured.Unstructured)
+
+	for _, dep := range pattern.Spec.Dependencies {
+		fmt.Printf("   Filtro Dependency '%s' per %s (%s)...\n", dep.ID, dep.Kind, dep.APIVersion)
+		depNodes := analysis.FilterResources(nodes, dep.Kind, dep.APIVersion, dep.Filters)
+		dependenciesMap[dep.ID] = depNodes
 	}
 
-	fmt.Printf("\n⚙️  Applicazione filtri per %s (%s)...\n", leaderResource.Kind, leaderResource.APIVersion)
+	// 7. Stampa dei risultati preliminari (in attesa del motore delle relationships)
+	fmt.Println("\n==================================================")
+	fmt.Println("📊 RISULTATI DEL FILTRAGGIO")
+	fmt.Println("==================================================")
 
-	// Chiamata alla funzione di filtro che hai scritto in analysis
-	filteredNodes := analysis.FilterResources(nodes, *leaderResource)
-
-	// 6. Stampa dei risultati
-	fmt.Println("--------------------------------------------------")
-	if len(filteredNodes) == 0 {
-		fmt.Println("⚠️ Nessuna risorsa trovata che matcha i criteri del pattern.")
+	if len(targetNodes) == 0 {
+		fmt.Println("⚠️ Nessun TARGET trovato che matcha i criteri del pattern.")
 	} else {
-		fmt.Printf("🎯 Trovate %d risorse corrispondenti:\n", len(filteredNodes))
-		for i, node := range filteredNodes {
-			fmt.Printf("   %d. [%s] %s/%s\n",
-				i+1,
-				node.GetKind(),
-				node.GetNamespace(),
-				node.GetName(),
-			)
+		fmt.Printf("🎯 Trovati %d TARGET candidati:\n", len(targetNodes))
+		for i, node := range targetNodes {
+			fmt.Printf("   %d. [%s] %s/%s\n", i+1, node.GetKind(), node.GetNamespace(), node.GetName())
 		}
 	}
+
 	fmt.Println("--------------------------------------------------")
+	for depID, depNodes := range dependenciesMap {
+		fmt.Printf("🔗 Trovati %d nodi per la dependency '%s':\n", len(depNodes), depID)
+		// Limitiamo la stampa per non inondare il terminale se ci sono troppi pod
+		limit := len(depNodes)
+		if limit > 5 {
+			limit = 5
+		}
+		for i := 0; i < limit; i++ {
+			node := depNodes[i]
+			fmt.Printf("   %d. [%s] %s/%s\n", i+1, node.GetKind(), node.GetNamespace(), node.GetName())
+		}
+		if len(depNodes) > 5 {
+			fmt.Printf("   ... e altri %d\n", len(depNodes)-5)
+		}
+	}
+	fmt.Println("==================================================")
 	fmt.Println("🏁 Test completato!")
 }
 

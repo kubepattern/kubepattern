@@ -13,20 +13,23 @@ import (
 )
 
 // FilterResources returns the graph nodes that match the kind,
-// apiVersion, and all the filters declared in the pattern's resource.
+// apiVersion, and all the filters provided. It can be used interchangeably
+// for both Target and Dependency definitions.
 func FilterResources(
 	nodes map[types.UID]*unstructured.Unstructured,
-	resource linter.Resource,
+	kind string,
+	apiVersion string,
+	filters linter.Filters,
 ) []*unstructured.Unstructured {
 
 	// Using the zero-value slice here is perfectly idiomatic in Go
 	var candidates []*unstructured.Unstructured
 
 	for _, node := range nodes {
-		if !matchKind(node, resource) {
+		if !matchKind(node, kind, apiVersion) {
 			continue
 		}
-		if !matchFilters(node, resource.Filters) {
+		if !matchFilters(node, filters) {
 			continue
 		}
 		candidates = append(candidates, node)
@@ -35,12 +38,12 @@ func FilterResources(
 	return candidates
 }
 
-// matchKind verifies that the node matches the kind and apiVersion of the resource.
-func matchKind(node *unstructured.Unstructured, resource linter.Resource) bool {
-	if node.GetKind() != resource.Kind {
+// matchKind verifies that the node matches the given kind and apiVersion.
+func matchKind(node *unstructured.Unstructured, kind string, apiVersion string) bool {
+	if node.GetKind() != kind {
 		return false
 	}
-	if resource.APIVersion != "" && node.GetAPIVersion() != resource.APIVersion {
+	if apiVersion != "" && node.GetAPIVersion() != apiVersion {
 		return false
 	}
 	return true
@@ -81,7 +84,8 @@ func matchFilters(node *unstructured.Unstructured, filters linter.Filters) bool 
 
 // evalCondition evaluates a single FilterCondition against the node.
 func evalCondition(node *unstructured.Unstructured, cond linter.FilterCondition) bool {
-	values, found := getFieldValues(node.Object, cond.Key)
+	// Aggiornato da cond.Key a cond.Path per matchare il nuovo linter schema
+	values, found := getFieldValues(node.Object, cond.Path)
 
 	switch cond.Operator {
 
@@ -144,19 +148,19 @@ func evalCondition(node *unstructured.Unstructured, cond linter.FilterCondition)
 		return compareNumeric(values, cond.Values, func(a, b int) bool { return a <= b })
 
 	case linter.FilterArraySizeEquals:
-		return compareArraySize(node.Object, cond.Key, cond.Values, func(a, b int) bool { return a == b })
+		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a == b })
 
 	case linter.FilterArraySizeGreaterThan:
-		return compareArraySize(node.Object, cond.Key, cond.Values, func(a, b int) bool { return a > b })
+		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a > b })
 
 	case linter.FilterArraySizeGreaterOrEqual:
-		return compareArraySize(node.Object, cond.Key, cond.Values, func(a, b int) bool { return a >= b })
+		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a >= b })
 
 	case linter.FilterArraySizeLessThan:
-		return compareArraySize(node.Object, cond.Key, cond.Values, func(a, b int) bool { return a < b })
+		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a < b })
 
 	case linter.FilterArraySizeLessOrEqual:
-		return compareArraySize(node.Object, cond.Key, cond.Values, func(a, b int) bool { return a <= b })
+		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a <= b })
 	}
 
 	return false
@@ -209,11 +213,6 @@ func compareArraySize(obj map[string]any, path string, targetValues []string, cm
 
 // getFieldValues navigates a path inside the unstructured object and returns
 // all found values. It supports the [*] wildcard to iterate over arrays.
-//
-// Supported path examples:
-//   - ".metadata.namespace"
-//   - "spec.volumes[*].name"
-//   - "spec.resourcesRefs.items[*].name"
 func getFieldValues(obj map[string]any, path string) ([]any, bool) {
 	path = strings.TrimPrefix(path, ".")
 	results := navigatePath(any(obj), strings.Split(path, "."))
