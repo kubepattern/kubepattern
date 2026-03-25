@@ -14,8 +14,11 @@ import (
 type RelationshipType string
 
 const (
-	RelationshipCustom    RelationshipType = "custom"
-	RelationshipOwnership RelationshipType = "ownership"
+	RelationshipCustom     RelationshipType = "custom"
+	RelationshipOwns       RelationshipType = "owns"
+	RelationshipOwnedBy    RelationshipType = "ownedBy"
+	RelationshipSelects    RelationshipType = "selects"
+	RelationshipSelectedBy RelationshipType = "selectedBy"
 )
 
 type Severity string
@@ -57,64 +60,68 @@ const (
 // -------------------------
 
 type PatternAsCode struct {
-	Version  string   `yaml:"version"`
-	Kind     string   `yaml:"kind"`
-	Metadata Metadata `yaml:"metadata"`
-	Spec     Spec     `yaml:"spec"`
+	APIVersion string   `yaml:"apiVersion"`
+	Kind       string   `yaml:"kind"`
+	Metadata   Metadata `yaml:"metadata"`
+	Spec       Spec     `yaml:"spec"`
 }
 
 type Metadata struct {
 	Name        string   `yaml:"name"`
 	DisplayName string   `yaml:"displayName"`
-	PatternType string   `yaml:"patternType"`
+	Category    string   `yaml:"category"`
 	Severity    Severity `yaml:"severity"`
-	Reference   string   `yaml:"reference"`
+	Reference   string   `yaml:"reference,omitempty"`
 }
 
 type Spec struct {
-	Message       string         `yaml:"message"`
-	Resources     []Resource     `yaml:"resources"`
-	Relationships []Relationship `yaml:"relationships"`
-	MinRequired   int            `yaml:"minRequired"`
+	Message       string        `yaml:"message"`
+	Target        Target        `yaml:"target"`
+	Dependencies  []Dependency  `yaml:"dependencies,omitempty"`
+	Relationships Relationships `yaml:"relationships,omitempty"`
 }
 
-type Resource struct {
+type Target struct {
+	Kind       string  `yaml:"kind"`
+	APIVersion string  `yaml:"apiVersion"`
+	Filters    Filters `yaml:"filters,omitempty"`
+}
+
+type Dependency struct {
 	ID         string  `yaml:"id"`
 	Kind       string  `yaml:"kind"`
 	APIVersion string  `yaml:"apiVersion"`
-	Leader     bool    `yaml:"leader"`
-	Filters    Filters `yaml:"filters"`
+	Filters    Filters `yaml:"filters,omitempty"`
 }
 
 type Filters struct {
-	MatchAll  []FilterCondition `yaml:"matchAll"`
-	MatchAny  []FilterCondition `yaml:"matchAny"`
-	MatchNone []FilterCondition `yaml:"matchNone"`
+	MatchAll  []FilterCondition `yaml:"matchAll,omitempty"`
+	MatchAny  []FilterCondition `yaml:"matchAny,omitempty"`
+	MatchNone []FilterCondition `yaml:"matchNone,omitempty"`
 }
 
 type FilterCondition struct {
-	Key      string         `yaml:"key"`
+	Path     string         `yaml:"path"`
 	Operator FilterOperator `yaml:"operator"`
-	Values   []string       `yaml:"values"`
+	Values   []string       `yaml:"values,omitempty"`
+}
+
+type Relationships struct {
+	MatchAll  []Relationship `yaml:"matchAll,omitempty"`
+	MatchAny  []Relationship `yaml:"matchAny,omitempty"`
+	MatchNone []Relationship `yaml:"matchNone,omitempty"`
 }
 
 type Relationship struct {
-	Type      RelationshipType `yaml:"type"`
-	Required  bool             `yaml:"required"`
-	Shared    bool             `yaml:"shared"`
-	Resources RelationshipSide `yaml:"resources"`
-}
-
-type RelationshipSide struct {
-	From     string     `yaml:"from"`
-	To       string     `yaml:"to"`
-	Criteria []Criteria `yaml:"criteria"`
+	With     string           `yaml:"with"`
+	Type     RelationshipType `yaml:"type"`
+	Criteria []Criteria       `yaml:"criteria,omitempty"`
 }
 
 type Criteria struct {
-	From     string           `yaml:"from"`
-	To       string           `yaml:"to"`
-	Operator CriteriaOperator `yaml:"operator"`
+	TargetPath     string           `yaml:"targetPath"`
+	DependencyPath string           `yaml:"dependencyPath"`
+	Operator       CriteriaOperator `yaml:"operator"`
 }
 
 // -------------------------
@@ -138,8 +145,8 @@ func lintErr(msg string, args ...any) error {
 // -------------------------
 
 var (
-	reVersion = regexp.MustCompile(`^[a-zA-Z0-9.-]+/v[a-zA-Z0-9]+$`)
-	reName    = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
+	reAPIVersion = regexp.MustCompile(`^[a-zA-Z0-9.-]+/v[a-zA-Z0-9]+$`)
+	reName       = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
 )
 
 // -------------------------
@@ -158,7 +165,7 @@ func Lint(data []byte) (*PatternAsCode, error) {
 		return nil, lintErr("pattern definition is not valid yaml: %v", err)
 	}
 
-	if err := lintVersion(p.Version); err != nil {
+	if err := lintAPIVersion(p.APIVersion); err != nil {
 		return nil, err
 	}
 	if err := lintKind(p.Kind); err != nil {
@@ -178,12 +185,12 @@ func Lint(data []byte) (*PatternAsCode, error) {
 // Root fields
 // -------------------------
 
-func lintVersion(version string) error {
+func lintAPIVersion(version string) error {
 	if version == "" {
-		return lintErr("version is empty")
+		return lintErr("apiVersion is empty")
 	}
-	if !reVersion.MatchString(version) {
-		return lintErr("'%s' is not a valid version. Expected format: '<domain>/v<version>' (e.g. kubepattern.dev/v1)", version)
+	if !reAPIVersion.MatchString(version) {
+		return lintErr("'%s' is not a valid apiVersion. Expected format: '<domain>/v<version>' (e.g. kubepattern.dev/v1)", version)
 	}
 	return nil
 }
@@ -193,7 +200,7 @@ func lintKind(kind string) error {
 		return lintErr("kind is empty")
 	}
 	if kind != "PatternAsCode" && kind != "Pattern" {
-		return lintErr("kind must be 'PatternAsCode', found: %s", kind)
+		return lintErr("kind must be 'PatternAsCode' or 'Pattern', found: %s", kind)
 	}
 	return nil
 }
@@ -212,8 +219,8 @@ func lintMetadata(m Metadata) error {
 	if m.DisplayName == "" {
 		return lintErr("metadata.displayName is empty")
 	}
-	if m.PatternType == "" {
-		return lintErr("metadata.patternType is empty")
+	if m.Category == "" {
+		return lintErr("metadata.category is empty")
 	}
 	if err := lintSeverity(m.Severity); err != nil {
 		return err
@@ -240,61 +247,57 @@ func lintSpec(spec *Spec) error {
 	if spec.Message == "" {
 		return lintErr("spec.message is empty")
 	}
-	if err := lintResources(spec.Resources); err != nil {
+
+	if err := lintTarget(spec.Target); err != nil {
 		return err
 	}
 
-	// Build the set of valid resource IDs for relationship validation
-	resourceIDs := make(map[string]struct{}, len(spec.Resources))
-	for _, r := range spec.Resources {
-		resourceIDs[r.ID] = struct{}{}
-	}
-
-	if err := lintRelationships(spec.Relationships, resourceIDs); err != nil {
-		return err
-	}
-	return nil
-}
-
-// -------------------------
-// Resources
-// -------------------------
-
-func lintResources(resources []Resource) error {
-	if len(resources) == 0 {
-		return lintErr("spec.resources is empty")
-	}
-
-	leaderCount := 0
-	for i, r := range resources {
-		if err := lintResource(i, r); err != nil {
+	depIDs := make(map[string]struct{}, len(spec.Dependencies))
+	for i, dep := range spec.Dependencies {
+		if err := lintDependency(i, dep); err != nil {
 			return err
 		}
-		if r.Leader {
-			leaderCount++
+		if _, exists := depIDs[dep.ID]; exists {
+			return lintErr("spec.dependencies[%d].id '%s' is not unique", i, dep.ID)
 		}
+		depIDs[dep.ID] = struct{}{}
 	}
 
-	// If no leader declared, the first resource is the implicit leader — no error.
-	// If more than one leader declared, that is ambiguous.
-	if leaderCount > 1 {
-		return lintErr("spec.resources has %d resources with leader: true — exactly one is allowed", leaderCount)
+	if err := lintRelationships(spec.Relationships, depIDs); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func lintResource(index int, r Resource) error {
-	if r.ID == "" {
-		return lintErr("spec.resources[%d].id is empty", index)
+// -------------------------
+// Target & Dependencies
+// -------------------------
+
+func lintTarget(t Target) error {
+	if t.Kind == "" {
+		return lintErr("spec.target.kind is empty")
 	}
-	if r.Kind == "" {
-		return lintErr("spec.resources[%d].kind is empty", index)
+	if t.APIVersion == "" {
+		return lintErr("spec.target.apiVersion is empty")
 	}
-	if r.APIVersion == "" {
-		return lintErr("spec.resources[%d].apiVersion is empty", index)
+	if err := lintFilters("target", t.Filters); err != nil {
+		return err
 	}
-	if err := lintFilters(index, r.Filters); err != nil {
+	return nil
+}
+
+func lintDependency(index int, d Dependency) error {
+	if d.ID == "" {
+		return lintErr("spec.dependencies[%d].id is empty", index)
+	}
+	if d.Kind == "" {
+		return lintErr("spec.dependencies[%d].kind is empty", index)
+	}
+	if d.APIVersion == "" {
+		return lintErr("spec.dependencies[%d].apiVersion is empty", index)
+	}
+	if err := lintFilters(fmt.Sprintf("dependencies[%d]", index), d.Filters); err != nil {
 		return err
 	}
 	return nil
@@ -304,7 +307,7 @@ func lintResource(index int, r Resource) error {
 // Filters
 // -------------------------
 
-func lintFilters(resourceIndex int, f Filters) error {
+func lintFilters(context string, f Filters) error {
 	groups := []struct {
 		name  string
 		items []FilterCondition
@@ -316,7 +319,7 @@ func lintFilters(resourceIndex int, f Filters) error {
 
 	for _, g := range groups {
 		for i, cond := range g.items {
-			if err := lintFilterCondition(resourceIndex, g.name, i, cond); err != nil {
+			if err := lintFilterCondition(context, g.name, i, cond); err != nil {
 				return err
 			}
 		}
@@ -324,20 +327,20 @@ func lintFilters(resourceIndex int, f Filters) error {
 	return nil
 }
 
-func lintFilterCondition(resourceIndex int, group string, index int, c FilterCondition) error {
-	if c.Key == "" {
-		return lintErr("spec.resources[%d].filters.%s[%d].key is empty", resourceIndex, group, index)
+func lintFilterCondition(context string, group string, index int, c FilterCondition) error {
+	if c.Path == "" {
+		return lintErr("spec.%s.filters.%s[%d].path is empty", context, group, index)
 	}
-	if err := lintFilterOperator(resourceIndex, group, index, c.Operator); err != nil {
+	if err := lintFilterOperator(context, group, index, c.Operator); err != nil {
 		return err
 	}
-	if err := lintFilterValues(resourceIndex, group, index, c.Operator, c.Values); err != nil {
+	if err := lintFilterValues(context, group, index, c.Operator, c.Values); err != nil {
 		return err
 	}
 	return nil
 }
 
-func lintFilterOperator(resourceIndex int, group string, index int, op FilterOperator) error {
+func lintFilterOperator(context string, group string, index int, op FilterOperator) error {
 	switch op {
 	case
 		FilterEquals,
@@ -354,19 +357,22 @@ func lintFilterOperator(resourceIndex int, group string, index int, op FilterOpe
 		FilterIsEmpty:
 		return nil
 	case "":
-		return lintErr("spec.resources[%d].filters.%s[%d].operator is empty", resourceIndex, group, index)
+		return lintErr("spec.%s.filters.%s[%d].operator is empty", context, group, index)
 	default:
-		return lintErr("spec.resources[%d].filters.%s[%d].operator '%s' is not valid", resourceIndex, group, index, op)
+		return lintErr("spec.%s.filters.%s[%d].operator '%s' is not valid", context, group, index, op)
 	}
 }
 
-func lintFilterValues(resourceIndex int, group string, index int, op FilterOperator, values []string) error {
+func lintFilterValues(context string, group string, index int, op FilterOperator, values []string) error {
 	// EXISTS and IS_EMPTY do not require values
 	if op == FilterExists || op == FilterIsEmpty {
+		if len(values) > 0 {
+			return lintErr("spec.%s.filters.%s[%d].values should be empty for operator %s", context, group, index, op)
+		}
 		return nil
 	}
 	if len(values) == 0 {
-		return lintErr("spec.resources[%d].filters.%s[%d].values is empty for operator %s", resourceIndex, group, index, op)
+		return lintErr("spec.%s.filters.%s[%d].values is empty for operator %s", context, group, index, op)
 	}
 	return nil
 }
@@ -375,112 +381,88 @@ func lintFilterValues(resourceIndex int, group string, index int, op FilterOpera
 // Relationships
 // -------------------------
 
-func lintRelationships(relationships []Relationship, resourceIDs map[string]struct{}) error {
-	for i, rel := range relationships {
-		if err := lintRelationship(i, rel, resourceIDs); err != nil {
-			return err
+func lintRelationships(rels Relationships, depIDs map[string]struct{}) error {
+	groups := []struct {
+		name  string
+		items []Relationship
+	}{
+		{"matchAll", rels.MatchAll},
+		{"matchAny", rels.MatchAny},
+		{"matchNone", rels.MatchNone},
+	}
+
+	for _, g := range groups {
+		for i, rel := range g.items {
+			if err := lintRelationship(g.name, i, rel, depIDs); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func lintRelationship(index int, rel Relationship, resourceIDs map[string]struct{}) error {
-	if err := lintRelationshipType(index, rel.Type); err != nil {
-		return err
+func lintRelationship(group string, index int, rel Relationship, depIDs map[string]struct{}) error {
+	if rel.With == "" {
+		return lintErr("spec.relationships.%s[%d].with is empty", group, index)
 	}
-	if err := lintRelationshipSide(index, rel.Resources, resourceIDs); err != nil {
+	if _, exists := depIDs[rel.With]; !exists {
+		return lintErr("spec.relationships.%s[%d].with '%s' does not match any dependency id", group, index, rel.With)
+	}
+	if err := lintRelationshipType(group, index, rel.Type); err != nil {
 		return err
 	}
 
 	switch rel.Type {
 	case RelationshipCustom:
-		// custom requires at least one criterion
-		if len(rel.Resources.Criteria) == 0 {
-			return lintErr("spec.relationships[%d] of type 'custom' must have at least one criteria", index)
+		if len(rel.Criteria) == 0 {
+			return lintErr("spec.relationships.%s[%d] of type 'custom' must have at least one criteria", group, index)
 		}
-		for i, c := range rel.Resources.Criteria {
-			if err := lintCriteria(index, i, c); err != nil {
+		for i, c := range rel.Criteria {
+			if err := lintCriteria(group, index, i, c); err != nil {
 				return err
 			}
 		}
-	case RelationshipOwnership:
-		// ownership uses the pre-built graph edges — criteria are not needed
-		if len(rel.Resources.Criteria) > 0 {
-			return lintErr("spec.relationships[%d] of type 'ownership' must not declare criteria", index)
+	case RelationshipOwns, RelationshipOwnedBy, RelationshipSelects, RelationshipSelectedBy:
+		// These types leverage graph knowledge / standardized k8s relations. They shouldn't have criteria.
+		if len(rel.Criteria) > 0 {
+			return lintErr("spec.relationships.%s[%d] of type '%s' must not declare criteria", group, index, rel.Type)
 		}
 	}
 
 	return nil
 }
 
-func lintRelationshipType(index int, t RelationshipType) error {
+func lintRelationshipType(group string, index int, t RelationshipType) error {
 	switch t {
-	case RelationshipCustom, RelationshipOwnership:
+	case RelationshipCustom, RelationshipOwns, RelationshipOwnedBy, RelationshipSelects, RelationshipSelectedBy:
 		return nil
 	case "":
-		return lintErr("spec.relationships[%d].type is empty", index)
+		return lintErr("spec.relationships.%s[%d].type is empty", group, index)
 	default:
-		return lintErr("spec.relationships[%d].type '%s' is not valid. Expected: custom, ownership", index, t)
+		return lintErr("spec.relationships.%s[%d].type '%s' is not valid. Expected: custom, owns, ownedBy, selects, selectedBy", group, index, t)
 	}
 }
 
-func lintRelationshipSide(index int, side RelationshipSide, resourceIDs map[string]struct{}) error {
-	if side.From == "" {
-		return lintErr("spec.relationships[%d].resources.from is empty", index)
+func lintCriteria(group string, relIndex int, index int, c Criteria) error {
+	if c.TargetPath == "" {
+		return lintErr("spec.relationships.%s[%d].criteria[%d].targetPath is empty", group, relIndex, index)
 	}
-	if side.To == "" {
-		return lintErr("spec.relationships[%d].resources.to is empty", index)
+	if c.DependencyPath == "" {
+		return lintErr("spec.relationships.%s[%d].criteria[%d].dependencyPath is empty", group, relIndex, index)
 	}
-	if _, ok := resourceIDs[side.From]; !ok {
-		return lintErr("spec.relationships[%d].resources.from '%s' does not match any resource id", index, side.From)
-	}
-	if _, ok := resourceIDs[side.To]; !ok {
-		return lintErr("spec.relationships[%d].resources.to '%s' does not match any resource id", index, side.To)
-	}
-	if side.From == side.To {
-		return lintErr("spec.relationships[%d].resources.from and to must be different", index)
-	}
-	return nil
-}
-
-func lintCriteria(relIndex int, index int, c Criteria) error {
-	if c.From == "" {
-		return lintErr("spec.relationships[%d].criteria[%d].from is empty", relIndex, index)
-	}
-	if c.To == "" {
-		return lintErr("spec.relationships[%d].criteria[%d].to is empty", relIndex, index)
-	}
-	if err := lintCriteriaOperator(relIndex, index, c.Operator); err != nil {
+	if err := lintCriteriaOperator(group, relIndex, index, c.Operator); err != nil {
 		return err
 	}
 	return nil
 }
 
-func lintCriteriaOperator(relIndex int, index int, op CriteriaOperator) error {
+func lintCriteriaOperator(group string, relIndex int, index int, op CriteriaOperator) error {
 	switch op {
 	case CriteriaEquals, CriteriaContains, CriteriaLabelSelector:
 		return nil
 	case "":
-		return lintErr("spec.relationships[%d].criteria[%d].operator is empty", relIndex, index)
+		return lintErr("spec.relationships.%s[%d].criteria[%d].operator is empty", group, relIndex, index)
 	default:
-		return lintErr("spec.relationships[%d].criteria[%d].operator '%s' is not valid. Expected: EQUALS, CONTAINS, LABEL_SELECTOR", relIndex, index, op)
+		return lintErr("spec.relationships.%s[%d].criteria[%d].operator '%s' is not valid. Expected: EQUALS, CONTAINS, LABEL_SELECTOR", group, relIndex, index, op)
 	}
-}
-
-// -------------------------
-// Helpers
-// -------------------------
-
-// LeaderResource returns the leader resource from the pattern.
-// If none is explicitly marked, the first resource is returned as an implicit leader.
-func LeaderResource(p *PatternAsCode) *Resource {
-	for i := range p.Spec.Resources {
-		if p.Spec.Resources[i].Leader {
-			return &p.Spec.Resources[i]
-		}
-	}
-	if len(p.Spec.Resources) > 0 {
-		return &p.Spec.Resources[0]
-	}
-	return nil
 }

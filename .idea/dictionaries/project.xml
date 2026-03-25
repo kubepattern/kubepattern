@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>kubepattern</w>
+      <w>rels</w>
     </words>
   </dictionary>
 </component>
