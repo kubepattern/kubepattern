@@ -235,14 +235,14 @@ func TestFilterResources(t *testing.T) {
 		wantCount  int
 	}{
 		{
-			name:       "Filtro solo per Kind (Pod) - trova 2",
+			name:       "Filter only by Kind (Pod) - finds 2",
 			kind:       "Pod",
 			apiVersion: "v1",
 			filters:    linter.Filters{},
 			wantCount:  2,
 		},
 		{
-			name:       "Filtro per Kind diverso (Service) - trova 1",
+			name:       "Filter by different Kind (Service) - finds 1",
 			kind:       "Service",
 			apiVersion: "v1",
 			filters:    linter.Filters{},
@@ -271,25 +271,25 @@ func TestFilterResources(t *testing.T) {
 			wantCount: 1,
 		},
 		{
-			name:       "MatchAny - una condizione vera e una falsa - trova pod1",
+			name:       "MatchAny - one true and one false condition - finds pod1",
 			kind:       "Pod",
 			apiVersion: "v1",
 			filters: linter.Filters{
 				MatchAny: []linter.FilterCondition{
 					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"test-pod"}},
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"non-esiste"}},
+					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"does-not-exist"}},
 				},
 			},
 			wantCount: 1,
 		},
 		{
-			name:       "MatchAny - tutte condizioni false - trova 0",
+			name:       "MatchAny - all false conditions - finds 0",
 			kind:       "Pod",
 			apiVersion: "v1",
 			filters: linter.Filters{
 				MatchAny: []linter.FilterCondition{
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"pippo"}},
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"pluto"}},
+					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"foo"}},
+					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"bar"}},
 				},
 			},
 			wantCount: 0,
@@ -300,7 +300,7 @@ func TestFilterResources(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := FilterResources(nodes, tt.kind, tt.apiVersion, tt.filters)
 			if len(got) != tt.wantCount {
-				t.Errorf("FilterResources() = %d risultati, attesi %d", len(got), tt.wantCount)
+				t.Errorf("FilterResources() = %d results, expected %d", len(got), tt.wantCount)
 			}
 		})
 	}
@@ -310,19 +310,19 @@ func TestFilterResources(t *testing.T) {
 func TestCompareErrors(t *testing.T) {
 	res := compareNumeric([]any{3}, []string{"abc"}, func(a, b int) bool { return a > b })
 	if res != false {
-		t.Errorf("compareNumeric con target non valido doveva ritornare false")
+		t.Errorf("compareNumeric with invalid target should have returned false")
 	}
 
 	obj := map[string]any{"items": []any{1, 2}}
 	res = compareArraySize(obj, "items", []string{"xyz"}, func(a, b int) bool { return a > b })
 	if res != false {
-		t.Errorf("compareArraySize con target non valido doveva ritornare false")
+		t.Errorf("compareArraySize with invalid target should have returned false")
 	}
 
 	obj2 := map[string]any{"not-an-array": "hello"}
 	res = compareArraySize(obj2, "not-an-array", []string{"1"}, func(a, b int) bool { return a > b })
 	if res != false {
-		t.Errorf("compareArraySize su campo non-array doveva ritornare false")
+		t.Errorf("compareArraySize on non-array field should have returned false")
 	}
 }
 
@@ -332,11 +332,11 @@ func TestMoreOperators(t *testing.T) {
 
 	condGreaterOrEqual := linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterGreaterOrEqual, Values: []string{"3"}}
 	if !evalCondition(obj, condGreaterOrEqual) {
-		t.Errorf("FilterGreaterOrEqual fallito (3 >= 3 dovrebbe essere true)")
+		t.Errorf("FilterGreaterOrEqual failed (3 >= 3 should be true)")
 	}
 
 	condLessOrEqual := linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterLessOrEqual, Values: []string{"3"}}
 	if !evalCondition(obj, condLessOrEqual) {
-		t.Errorf("FilterLessOrEqual fallito (3 <= 3 dovrebbe essere true)")
+		t.Errorf("FilterLessOrEqual failed (3 <= 3 should be true)")
 	}
 }
