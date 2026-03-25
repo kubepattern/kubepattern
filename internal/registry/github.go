@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 // Config holds the GitHub Repository coordinates and authentication details
@@ -128,8 +129,9 @@ func (c *Client) ReadAllDefinitions() (map[string][]byte, error) {
 
 	filesData := make(map[string][]byte)
 	for _, item := range contents {
-		// Only process actual files, ignoring directories or symlinks
-		if item.Type == "file" {
+		isYaml := strings.HasSuffix(item.Name, ".yaml") || strings.HasSuffix(item.Name, ".yml")
+
+		if item.Type == "file" && isYaml {
 			content, err := c.ReadFile(item.Name)
 			if err != nil {
 				return nil, fmt.Errorf("error reading file %s: %w", item.Name, err)

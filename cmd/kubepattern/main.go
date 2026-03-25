@@ -1,25 +1,43 @@
 package main
 
-import "kubepattern-go/internal/server"
+import (
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
+)
 
 func main() {
-	server.Init()
+	// 1. Setup Kubernetes Client
+	config, err := getKubeConfig()
+	if err != nil {
+		log.Fatalf("❌ Errore caricamento kubeconfig: %v", err)
+	}
+
+	fmt.Print(config.Host)
 }
 
-/*func main() {
-
-	ghClient := definitions.NewClient(definitions.LoadConfig())
-
-	files, err := ghClient.ReadAllDefinitions()
-	if err != nil {
-		log.Fatalf("Fail to read files: %v", err)
+// getKubeConfig fetches Kubernetes configuration, attempting in-cluster config first, then falling back to local KUBECONFIG.
+func getKubeConfig() (*rest.Config, error) {
+	config, err := rest.InClusterConfig()
+	if err == nil {
+		return config, nil
 	}
 
-	fmt.Printf("Successfully downloaded %d files:\n\n", len(files))
-
-	for fileName, fileContent := range files {
-		fmt.Printf("--- File: %s (%d bytes) ---\n", fileName, len(fileContent))
-		fmt.Println(string(fileContent))
-		fmt.Println()
+	// Fallback local kubeconfig
+	var kubeconfig string
+	if home := homedir.HomeDir(); home != "" {
+		kubeconfig = filepath.Join(home, ".kube", "config")
 	}
-}*/
+
+	// Allow KUBECONFIG to be set via an environment variable
+	if env := os.Getenv("KUBECONFIG"); env != "" {
+		kubeconfig = env
+	}
+
+	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+}
