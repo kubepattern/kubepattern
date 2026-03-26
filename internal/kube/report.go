@@ -18,7 +18,7 @@ const (
 	smellGroup       = "kubepattern.dev"
 	smellVersion     = "v1"
 	smellResource    = "smells"
-	defaultNamespace = "pattern-analysis-ns"
+	defaultNamespace = "kubepattern-system" // Meglio usare il namespace standard in cui gira KubePattern
 )
 
 var smellGVR = schema.GroupVersionResource{
@@ -29,23 +29,40 @@ var smellGVR = schema.GroupVersionResource{
 
 // SmellWriter writes Smell CRDs to the Kubernetes cluster.
 type SmellWriter struct {
-	client dynamic.Interface
+	client          dynamic.Interface
+	saveInNamespace bool
+	targetNamespace string
 }
 
-// NewSmellWriter creates a SmellWriter using the provided REST config.
-func NewSmellWriter(config *rest.Config) (*SmellWriter, error) {
+// NewSmellWriter creates a SmellWriter using the provided REST config and namespace preferences.
+func NewSmellWriter(config *rest.Config, saveInNamespace bool, targetNamespace string) (*SmellWriter, error) {
 	dynClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic client for smell writer: %w", err)
 	}
-	return &SmellWriter{client: dynClient}, nil
+	return &SmellWriter{
+		client:          dynClient,
+		saveInNamespace: saveInNamespace,
+		targetNamespace: targetNamespace,
+	}, nil
 }
 
-// Write persists a Smell as a CRD in the target's namespace.
-// If the smell already exists, it is updated (upsert) — this makes the
-// writer idempotent across multiple analysis runs.
+// Write persists a Smell as a CRD.
+// The namespace is chosen based on the writer's configuration.
 func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
-	namespace := smell.Target.Namespace
+	var namespace string
+
+	if w.saveInNamespace {
+		namespace = smell.Target.Namespace
+
+		// Fallback: cluster-scoped resources (es. Node, Namespace) to use targetNamespace.
+		if namespace == "" {
+			namespace = w.targetNamespace
+		}
+	} else {
+		namespace = w.targetNamespace
+	}
+
 	if namespace == "" {
 		namespace = defaultNamespace
 	}
@@ -79,7 +96,6 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 }
 
 // toUnstructured converts a Smell into an unstructured Kubernetes object
-// ready to be submitted to the API server.
 func toUnstructured(smell analysis.Smell, namespace string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]any{
@@ -104,7 +120,7 @@ func toUnstructured(smell analysis.Smell, namespace string) *unstructured.Unstru
 					"apiVersion": smell.Target.APIVersion,
 					"kind":       smell.Target.Kind,
 					"name":       smell.Target.Name,
-					"namespace":  smell.Target.Namespace,
+					"namespace":  smell.Target.Namespace, // Mantiene l'info originale per debug
 					"uid":        smell.Target.UID,
 				},
 			},

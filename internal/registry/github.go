@@ -1,17 +1,18 @@
 package registry
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"kubepattern-go/internal/config"
 	"net/http"
 	"os"
 	"strings"
+
+	"kubepattern-go/internal/config"
 )
 
 // Config holds the GitHub Repository coordinates and authentication details
-// used to locate and access the target files.
 type Config struct {
 	OrgName  string
 	RepoName string
@@ -19,9 +20,7 @@ type Config struct {
 	Token    string
 }
 
-// LoadConfig automatically parses environment variables into the Config struct.
-// It uses default values for the organization, repository, and branch if
-// the corresponding environment variables are not set.
+// LoadConfig automatically parses environment variables and config into the Config struct.
 func LoadConfig(appCfg *config.AppConfig) Config {
 	return Config{
 		OrgName:  fallback(appCfg.PatternRegistry.OrganizationName, "kubepattern"),
@@ -38,24 +37,12 @@ func fallback(val, def string) string {
 	return def
 }
 
-// getEnvOrDefault is a helper function that returns the environment variable
-// if it exists and is not empty; otherwise, it returns the fallback value.
-func getEnvOrDefault(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists && value != "" {
-		return value
-	}
-	return fallback
-}
-
-// Client wraps the configuration and the HTTP client used to interact with
-// the GitHub API and raw content servers.
+// Client wraps the configuration and the HTTP client used to interact with GitHub.
 type Client struct {
 	config     Config
 	httpClient *http.Client
 }
 
-// githubContent represents the minimal structure of a GitHub API response
-// when listing directory contents.
 type githubContent struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
@@ -69,19 +56,17 @@ func NewClient(cfg Config) *Client {
 	}
 }
 
-// ReadFile fetches the raw byte content of a specific file located within
-// the "definitions" directory of the configured repository.
-func (c *Client) ReadFile(filePath string) ([]byte, error) {
-	// Construct the URL for the raw file content
+// ReadFile fetches the raw byte content of a specific file, respecting the context.
+func (c *Client) ReadFile(ctx context.Context, filePath string) ([]byte, error) {
 	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/definitions/%s",
 		c.config.OrgName, c.config.RepoName, c.config.Branch, filePath)
 
-	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	// Usa NewRequestWithContext per supportare i timeout!
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error during request creation: %w", err)
 	}
 
-	// Apply authentication headers if a token is provided
 	if c.config.Token != "" {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.config.Token))
 		req.Header.Add("Accept", "application/vnd.github.v3.raw")
@@ -100,15 +85,13 @@ func (c *Client) ReadFile(filePath string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-// ReadAllDefinitions lists all files in the "definitions" directory via the GitHub API
-// and then performs individual fetches to retrieve their full content.
-// It returns a map where the key is the filename and the value is the file content.
-func (c *Client) ReadAllDefinitions() (map[string][]byte, error) {
-	// API URL to list the contents of the 'definitions' folder
+// ReadAllDefinitions implements the Fetcher interface.
+func (c *Client) ReadAllDefinitions(ctx context.Context) (map[string][]byte, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/definitions?ref=%s",
 		c.config.OrgName, c.config.RepoName, c.config.Branch)
 
-	req, err := http.NewRequest(http.MethodGet, apiURL, nil)
+	// Usa NewRequestWithContext
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error during API request creation: %w", err)
 	}
@@ -138,7 +121,7 @@ func (c *Client) ReadAllDefinitions() (map[string][]byte, error) {
 		isYaml := strings.HasSuffix(item.Name, ".yaml") || strings.HasSuffix(item.Name, ".yml")
 
 		if item.Type == "file" && isYaml {
-			content, err := c.ReadFile(item.Name)
+			content, err := c.ReadFile(ctx, item.Name)
 			if err != nil {
 				return nil, fmt.Errorf("error reading file %s: %w", item.Name, err)
 			}

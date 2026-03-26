@@ -87,7 +87,6 @@ func main() {
 		slog.Info("using GitHub registry as primary source")
 		ghConfig := registry.LoadConfig(appCfg)
 		fetcher = registry.NewClient(ghConfig)
-
 		var ghErr error
 		rawPatterns, ghErr = fetcher.ReadAllDefinitions(ctx)
 
@@ -135,7 +134,11 @@ func main() {
 	}
 
 	// --- Step 4: run analysis ---
-	smellWriter, err := kube.NewSmellWriter(restConfig)
+	smellWriter, err := kube.NewSmellWriter(
+		restConfig,
+		appCfg.Analysis.SaveInNamespace,
+		appCfg.Analysis.TargetNamespace,
+	)
 	if err != nil {
 		slog.Error("failed to create smell writer", "error", err)
 		os.Exit(1)
