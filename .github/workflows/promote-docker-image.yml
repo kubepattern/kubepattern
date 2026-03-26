@@ -1,0 +1,50 @@
+name: 2. Promote Docker Image
+
+on:
+  push:
+    branches:
+      - test
+    tags:
+      - 'app/v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine New Tag
+        id: get_tag
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/test" ]]; then
+            echo "NEW_TAG=test" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == refs/tags/app/v* ]]; then
+            VERSION=${GITHUB_REF_NAME#app/v}
+            echo "NEW_TAG=$VERSION" >> $GITHUB_ENV
+          fi
+
+      - name: Get short SHA
+        id: vars
+        run: echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Retag and Push Image (No Build!)
+        run: |
+          IMAGE_ID="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          
+          docker pull $IMAGE_ID:sha-${{ env.SHA_SHORT }}
+          
+          docker tag $IMAGE_ID:sha-${{ env.SHA_SHORT }} $IMAGE_ID:${{ env.NEW_TAG }}
+          
+          docker push $IMAGE_ID:${{ env.NEW_TAG }}

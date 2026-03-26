@@ -1,4 +1,4 @@
-name: Publish Helm Chart
+name: 3. Publish Helm Chart
 
 on:
   push:
@@ -29,12 +29,11 @@ jobs:
 
       - name: Package and Push Chart
         run: |
+          
           CHART_VERSION=${GITHUB_REF_NAME#chart/v}
           
           echo "Packaging chart version $CHART_VERSION"
           
-          # Sovrascrive la versione del Chart.yaml con quella del tag Git
           helm package charts/kubepattern --version $CHART_VERSION
           
-          # Pusha il pacchetto sul registry
           helm push kubepattern-$CHART_VERSION.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
