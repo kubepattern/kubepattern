@@ -49,10 +49,6 @@ func main() {
 	graph.Build(resources)
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
-	/*for _, node := range graph.GetNodes() {
-		slog.Info("node", "kind", node.GetKind(), "name", node.GetName())
-	}*/
-
 	// --- Step 2: fetch patterns from the GitHub registry ---
 	slog.Info("fetching patterns from registry...")
 	ghConfig := definitions.LoadConfig()
