@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-cronjob
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  suspend: {{ .Values.suspend }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: kubepattern-analyzer
+        spec:
+          serviceAccountName: {{ .Release.Name }}-sa
+          restartPolicy: OnFailure
+          containers:
+            - name: kubepattern-analyzer
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+              # 1. Inject the GitHub PAT from the secret
+              env:
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Release.Name }}-secret
+                      key: repository-token
+                      optional: true
+
+              # 2. Mount the configmap as a file in /app/config
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /app/config
+                  readOnly: true
+
+          # 3. Define the volume backed by the ConfigMap
+          volumes:
+            - name: config-volume
+              configMap:
+                name: {{ .Release.Name }}-config

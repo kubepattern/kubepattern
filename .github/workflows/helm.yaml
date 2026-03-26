@@ -1,0 +1,40 @@
+name: Publish Helm Chart
+
+on:
+  push:
+    tags:
+      - 'chart/v*'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  package-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.2
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Package and Push Chart
+        run: |
+          CHART_VERSION=${GITHUB_REF_NAME#chart/v}
+          
+          echo "Packaging chart version $CHART_VERSION"
+          
+          # Sovrascrive la versione del Chart.yaml con quella del tag Git
+          helm package charts/kubepattern --version $CHART_VERSION
+          
+          # Pusha il pacchetto sul registry
+          helm push kubepattern-$CHART_VERSION.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
