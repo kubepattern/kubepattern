@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"kubepattern-go/internal/config"
 	"log/slog"
 	"os"
 	"time"
@@ -43,6 +44,21 @@ func main() {
 	if err != nil {
 		slog.Error("failed to create kubernetes client", "error", err)
 		os.Exit(1)
+	}
+
+	// --- Step 0: Load App Configuration ---
+	configPath := "/app/config/config.yaml"
+	// Fallback per test in locale
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		configPath = "config.yaml" // Cerca nella cartella corrente se non è nel cluster
+	}
+
+	appCfg, err := config.Load(configPath)
+	if err != nil {
+		slog.Warn("config file not found or invalid, using defaults", "error", err)
+		appCfg = &config.AppConfig{} // Usa una struct vuota (dovrai gestire i default)
+	} else {
+		slog.Info("configuration loaded successfully")
 	}
 
 	// --- Step 1: build the graph ---

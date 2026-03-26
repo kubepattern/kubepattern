@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"kubepattern-go/internal/config"
 	"net/http"
 	"os"
 	"strings"
@@ -21,15 +22,20 @@ type Config struct {
 // LoadConfig automatically parses environment variables into the Config struct.
 // It uses default values for the organization, repository, and branch if
 // the corresponding environment variables are not set.
-func LoadConfig() Config {
-	cfg := Config{
-		OrgName:  getEnvOrDefault("GITHUB_ORG", "kubepattern"),
-		RepoName: getEnvOrDefault("GITHUB_REPO", "registry"),
-		Branch:   getEnvOrDefault("GITHUB_BRANCH", "main"),
-		Token:    os.Getenv("GITHUB_TOKEN"), // No default; required for private repos
+func LoadConfig(appCfg *config.AppConfig) Config {
+	return Config{
+		OrgName:  fallback(appCfg.PatternRegistry.OrganizationName, "kubepattern"),
+		RepoName: fallback(appCfg.PatternRegistry.RepositoryName, "registry"),
+		Branch:   fallback(appCfg.PatternRegistry.RepositoryBranch, "main"),
+		Token:    os.Getenv("GITHUB_TOKEN"),
 	}
+}
 
-	return cfg
+func fallback(val, def string) string {
+	if val != "" {
+		return val
+	}
+	return def
 }
 
 // getEnvOrDefault is a helper function that returns the environment variable
