@@ -5,9 +5,15 @@ import (
 	"log/slog"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	"kubepattern-go/internal/linter" // Adjust the import path to your module
 )
+
+// GraphReader defines an interface for retrieving unstructured objects from a graph by their unique identifier.
+type GraphReader interface {
+	GetByUID(uid types.UID) (*unstructured.Unstructured, bool)
+}
 
 // EvaluateRelationships checks if a target satisfies the rules defined in the relationships block.
 // It receives the current target, the dependencies map (key: id, value: list of resources), and the rules.
@@ -66,7 +72,7 @@ func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*
 	return false
 }
 
-// matchRelationship routes the logic based on the relationship type (custom vs k8s native)
+// matchRelationship routes the logic based on the relationship type (custom vs. k8s native)
 func matchRelationship(target, dep *unstructured.Unstructured, rel linter.Relationship) bool {
 	switch rel.Type {
 	case linter.RelationshipCustom:
