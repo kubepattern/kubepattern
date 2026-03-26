@@ -74,16 +74,47 @@ func main() {
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
 	// --- Step 2: fetch patterns from the GitHub registry ---
-	slog.Info("fetching patterns from registry...")
-	ghConfig := definitions.LoadConfig()
-	ghClient := definitions.NewClient(ghConfig)
+	// --- Step 2: fetch patterns using Strategy Pattern ---
+	var rawPatterns map[string][]byte
+	var fetcher registry.Fetcher
 
-	rawPatterns, err := ghClient.ReadAllDefinitions()
-	if err != nil {
-		slog.Error("failed to fetch patterns from registry", "error", err)
-		os.Exit(1)
+	registryType := appCfg.PatternRegistry.Type
+	if registryType == "" {
+		registryType = "cluster" // Default sicuro
 	}
-	slog.Info("patterns fetched", "count", len(rawPatterns))
+
+	if registryType == "github" {
+		slog.Info("using GitHub registry as primary source")
+		ghConfig := registry.LoadConfig(appCfg)
+		fetcher = registry.NewClient(ghConfig)
+
+		var ghErr error
+		rawPatterns, ghErr = fetcher.ReadAllDefinitions(ctx)
+
+		if ghErr != nil {
+			slog.Warn("github registry failed, falling back to cluster registry", "error", ghErr)
+			registryType = "cluster" // Forza il fallback
+		}
+	}
+
+	// Costruzione e fetching dal Cluster (come default o come fallback)
+	if registryType == "cluster" {
+		slog.Info("using Cluster CRD registry for patterns")
+		k8sFetcher, err := registry.NewKubernetesFetcher(restConfig)
+		if err != nil {
+			slog.Error("failed to create kubernetes pattern fetcher", "error", err)
+			os.Exit(1)
+		}
+
+		fetcher = k8sFetcher
+		rawPatterns, err = fetcher.ReadAllDefinitions(ctx)
+		if err != nil {
+			slog.Error("failed to fetch patterns from cluster", "error", err)
+			os.Exit(1)
+		}
+	}
+
+	slog.Info("patterns fetched successfully", "count", len(rawPatterns))
 
 	// --- Step 3: lint patterns ---
 	var patterns []*linter.PatternAsCode

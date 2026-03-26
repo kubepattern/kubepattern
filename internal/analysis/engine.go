@@ -129,10 +129,10 @@ func buildSmell(pattern *linter.PatternAsCode, target *unstructured.Unstructured
 		PatternName:    pattern.Metadata.Name,
 		PatternVersion: pattern.APIVersion,
 		Name:           pattern.Metadata.Name,
-		Category:       pattern.Metadata.Category,
-		Severity:       pattern.Metadata.Severity,
+		Category:       pattern.Spec.Category,
+		Severity:       pattern.Spec.Severity,
 		Message:        interpolateMessage(pattern.Spec.Message, target),
-		Reference:      pattern.Metadata.Reference,
+		Reference:      pattern.Spec.Reference,
 		Suppress:       false,
 		Target: SmellTarget{
 			APIVersion: target.GetAPIVersion(),

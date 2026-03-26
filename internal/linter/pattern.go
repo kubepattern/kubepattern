@@ -67,14 +67,14 @@ type PatternAsCode struct {
 }
 
 type Metadata struct {
-	Name        string   `yaml:"name"`
-	DisplayName string   `yaml:"displayName"`
-	Category    string   `yaml:"category"`
-	Severity    Severity `yaml:"severity"`
-	Reference   string   `yaml:"reference,omitempty"`
+	Name string `yaml:"name"`
 }
 
 type Spec struct {
+	DisplayName   string        `yaml:"displayName"`
+	Category      string        `yaml:"category"`
+	Severity      Severity      `yaml:"severity"`
+	Reference     string        `yaml:"reference,omitempty"`
 	Message       string        `yaml:"message"`
 	Target        Target        `yaml:"target"`
 	Dependencies  []Dependency  `yaml:"dependencies,omitempty"`
@@ -216,27 +216,7 @@ func lintMetadata(m Metadata) error {
 	if !reName.MatchString(m.Name) {
 		return lintErr("metadata.name contains invalid characters. Expected format: [a-zA-Z0-9.-]+")
 	}
-	if m.DisplayName == "" {
-		return lintErr("metadata.displayName is empty")
-	}
-	if m.Category == "" {
-		return lintErr("metadata.category is empty")
-	}
-	if err := lintSeverity(m.Severity); err != nil {
-		return err
-	}
 	return nil
-}
-
-func lintSeverity(s Severity) error {
-	switch s {
-	case SeverityLow, SeverityMedium, SeverityHigh, SeverityCritical:
-		return nil
-	case "":
-		return lintErr("metadata.severity is empty")
-	default:
-		return lintErr("metadata.severity must be one of [LOW, MEDIUM, HIGH, CRITICAL], found: %s", s)
-	}
 }
 
 // -------------------------
@@ -244,6 +224,16 @@ func lintSeverity(s Severity) error {
 // -------------------------
 
 func lintSpec(spec *Spec) error {
+	if spec.DisplayName == "" {
+		return lintErr("spec.displayName is empty")
+	}
+	if spec.Category == "" {
+		return lintErr("spec.category is empty")
+	}
+	if err := lintSeverity(spec.Severity); err != nil {
+		return err
+	}
+
 	if spec.Message == "" {
 		return lintErr("spec.message is empty")
 	}
@@ -268,6 +258,17 @@ func lintSpec(spec *Spec) error {
 	}
 
 	return nil
+}
+
+func lintSeverity(s Severity) error {
+	switch s {
+	case SeverityLow, SeverityMedium, SeverityHigh, SeverityCritical:
+		return nil
+	case "":
+		return lintErr("spec.severity is empty")
+	default:
+		return lintErr("spec.severity must be one of [LOW, MEDIUM, HIGH, CRITICAL], found: %s", s)
+	}
 }
 
 // -------------------------

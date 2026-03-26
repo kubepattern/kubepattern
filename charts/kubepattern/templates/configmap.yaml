@@ -9,6 +9,7 @@ data:
       saveInNamespace: {{ .Values.analysis.saveInNamespace }}
       targetNamespace: {{ .Values.analysis.targetNamespace | quote }}
     patternRegistry:
+      type: {{ .Values.patternRegistry.type | quote }}
       organizationName: {{ .Values.patternRegistry.orgName | quote }}
       repositoryBranch: {{ .Values.patternRegistry.repo.branch | quote }}
       repositoryName: {{ .Values.patternRegistry.repo.name | quote }}

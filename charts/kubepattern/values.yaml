@@ -23,6 +23,7 @@ analysis:
 
 patternRegistry:
   orgName: "kubepattern"
+  type: "cluster" # "cluster" or "github"
   repo:
     branch: "main"
     name: "registry"

@@ -22,10 +22,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: krateo-page-not-referenced
+spec:
   displayName: Orphaned Krateo Page
   category: ReferencesKrateo
   severity: MEDIUM
-spec:
   message: "Page is orphaned."
   target:
     kind: Page
@@ -52,10 +52,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: naked-pod
+spec:
   displayName: Naked Pod
   category: Architecture
   severity: HIGH
-spec:
   message: "Pod is a Naked Pod."
   target:
     kind: Pod
@@ -83,10 +83,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: dangling-service
+spec:
   displayName: Dangling Service
   category: Networking
   severity: CRITICAL
-spec:
   message: "Service does not route to any Pods."
   target:
     kind: Service
@@ -125,10 +125,10 @@ apiVersion: invalid-version
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -144,10 +144,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -170,10 +170,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -193,10 +193,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -220,10 +220,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -251,10 +251,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -266,7 +266,8 @@ spec:
 `,
 			expectError:   true,
 			errorContains: "values is empty for operator EQUALS",
-		}, // --- YAML UNMARSHAL ERROR ---
+		},
+		// --- YAML UNMARSHAL ERROR ---
 		{
 			name:          "Error - Invalid YAML format",
 			yamlContent:   "apiVersion: \t\ninvalid-\n- yaml-:::",
@@ -280,10 +281,10 @@ spec:
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -298,10 +299,10 @@ spec:
 apiVersion: kubepattern.dev/v1
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -317,10 +318,10 @@ apiVersion: kubepattern.dev/v1
 kind: Deployment
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -335,10 +336,10 @@ spec:
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -354,10 +355,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: invalid_name_with_underscores!
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -366,80 +367,80 @@ spec:
 			expectError:   true,
 			errorContains: "metadata.name contains invalid characters",
 		},
+		// --- SPEC ERRORS ---
 		{
-			name: "Error - Metadata Empty DisplayName",
+			name: "Error - Spec Empty DisplayName",
 			yamlContent: `
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
     apiVersion: v1
 `,
 			expectError:   true,
-			errorContains: "metadata.displayName is empty",
+			errorContains: "spec.displayName is empty",
 		},
 		{
-			name: "Error - Metadata Empty Category",
+			name: "Error - Spec Empty Category",
 			yamlContent: `
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
     apiVersion: v1
 `,
 			expectError:   true,
-			errorContains: "metadata.category is empty",
+			errorContains: "spec.category is empty",
 		},
 		{
-			name: "Error - Metadata Empty Severity",
+			name: "Error - Spec Empty Severity",
 			yamlContent: `
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
-spec:
   message: "Test"
   target:
     kind: Pod
     apiVersion: v1
 `,
 			expectError:   true,
-			errorContains: "metadata.severity is empty",
+			errorContains: "spec.severity is empty",
 		},
 		{
-			name: "Error - Metadata Invalid Severity",
+			name: "Error - Spec Invalid Severity",
 			yamlContent: `
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: UNKNOWN
-spec:
   message: "Test"
   target:
     kind: Pod
     apiVersion: v1
 `,
 			expectError:   true,
-			errorContains: "metadata.severity must be one of",
+			errorContains: "spec.severity must be one of",
 		},
-		// --- SPEC ERRORS ---
 		{
 			name: "Error - Empty Message",
 			yamlContent: `
@@ -447,10 +448,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   target:
     kind: Pod
     apiVersion: v1
@@ -466,10 +467,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     apiVersion: v1
@@ -484,10 +485,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -502,10 +503,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -525,10 +526,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -547,10 +548,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -570,10 +571,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -596,10 +597,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -622,10 +623,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -652,10 +653,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod
@@ -684,10 +685,10 @@ apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   name: exists-test
+spec:
   displayName: Test
   category: Test
   severity: LOW
-spec:
   message: "Test"
   target:
     kind: Pod

@@ -1,4 +1,4 @@
-package definitions
+package registry
 
 import (
 	"encoding/json"

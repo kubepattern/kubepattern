@@ -13,6 +13,7 @@ type AppConfig struct {
 		TargetNamespace string `yaml:"targetNamespace"`
 	} `yaml:"analysis"`
 	PatternRegistry struct {
+		Type             string `yaml:"type"`
 		OrganizationName string `yaml:"organizationName"`
 		RepositoryBranch string `yaml:"repositoryBranch"`
 		RepositoryName   string `yaml:"repositoryName"`
