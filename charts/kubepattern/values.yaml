@@ -1,0 +1,30 @@
+# Target image for the Go-based KubePattern analyzer
+image:
+  repository: ghcr.io/kubepattern/kubepattern-go
+  pullPolicy: Always
+  tag: "latest"
+
+# CronJob scheduling configuration
+schedule: "0 * * * *" # Runs every hour by default
+suspend: false        # Set to true to temporarily suspend the CronJob
+
+rbac:
+  # Define the RBAC rules for KubePattern (to scan only specific resources, modify accordingly)
+  rules:
+    - apiGroups: ["*"]
+      resources: ["*"]
+      verbs: ["get", "list", "watch"]
+
+analysis:
+  # Save the smells in the namespace of the involved resources
+  saveInNamespace: false
+  # Default output namespace if saveInNamespace == false or for cluster-scoped resources
+  targetNamespace: pattern-analysis-ns
+
+patternRegistry:
+  orgName: "kubepattern"
+  repo:
+    branch: "main"
+    name: "registry"
+    # For private repositories access
+    token: ""
