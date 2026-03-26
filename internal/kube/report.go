@@ -1,0 +1,113 @@
+package kube
+
+import (
+	"context"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+
+	"kubepattern-go/internal/analysis"
+)
+
+const (
+	smellGroup       = "kubepattern.dev"
+	smellVersion     = "v1"
+	smellResource    = "smells"
+	defaultNamespace = "pattern-analysis-ns"
+)
+
+var smellGVR = schema.GroupVersionResource{
+	Group:    smellGroup,
+	Version:  smellVersion,
+	Resource: smellResource,
+}
+
+// SmellWriter writes Smell CRDs to the Kubernetes cluster.
+type SmellWriter struct {
+	client dynamic.Interface
+}
+
+// NewSmellWriter creates a SmellWriter using the provided REST config.
+func NewSmellWriter(config *rest.Config) (*SmellWriter, error) {
+	dynClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dynamic client for smell writer: %w", err)
+	}
+	return &SmellWriter{client: dynClient}, nil
+}
+
+// Write persists a Smell as a CRD in the target's namespace.
+// If the smell already exists, it is updated (upsert) — this makes the
+// writer idempotent across multiple analysis runs.
+func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
+	namespace := smell.Target.Namespace
+	if namespace == "" {
+		namespace = defaultNamespace
+	}
+
+	obj := toUnstructured(smell, namespace)
+
+	// 1. Fetch the existing resource to get its resourceVersion
+	existing, err := w.client.Resource(smellGVR).Namespace(namespace).Get(ctx, smell.CRDName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// 2a. Smell does not exist yet — create it.
+			_, err = w.client.Resource(smellGVR).Namespace(namespace).Create(ctx, obj, metav1.CreateOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to create smell %q: %w", smell.CRDName, err)
+			}
+			return nil
+		}
+		// 2b. A different error occurred during Get
+		return fmt.Errorf("failed to get smell %q: %w", smell.CRDName, err)
+	}
+
+	// 3. Smell already exists — set the required resourceVersion before updating
+	obj.SetResourceVersion(existing.GetResourceVersion())
+
+	_, err = w.client.Resource(smellGVR).Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update smell %q: %w", smell.CRDName, err)
+	}
+
+	return nil
+}
+
+// toUnstructured converts a Smell into an unstructured Kubernetes object
+// ready to be submitted to the API server.
+func toUnstructured(smell analysis.Smell, namespace string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": smellGroup + "/" + smellVersion,
+			"kind":       "Smell",
+			"metadata": map[string]any{
+				"name":      smell.CRDName,
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"name":      smell.Name,
+				"category":  smell.Category,
+				"message":   smell.Message,
+				"severity":  string(smell.Severity),
+				"reference": smell.Reference,
+				"suppress":  smell.Suppress,
+				"pattern": map[string]any{
+					"name":    smell.PatternName,
+					"version": smell.PatternVersion,
+				},
+				"target": map[string]any{
+					"apiVersion": smell.Target.APIVersion,
+					"kind":       smell.Target.Kind,
+					"name":       smell.Target.Name,
+					"namespace":  smell.Target.Namespace,
+					"uid":        smell.Target.UID,
+				},
+			},
+		},
+	}
+}
