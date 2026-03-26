@@ -1,4 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kubepattern-system
+  name: kubepattern-analysis-ns

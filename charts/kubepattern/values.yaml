@@ -19,7 +19,7 @@ analysis:
   # Save the smells in the namespace of the involved resources
   saveInNamespace: false
   # Default output namespace if saveInNamespace == false or for cluster-scoped resources
-  targetNamespace: kubepattern-system
+  targetNamespace: kubepattern-analysis-ns
 
 patternRegistry:
   orgName: "kubepattern"
