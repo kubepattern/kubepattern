@@ -15,6 +15,27 @@ spec:
     - name: v1
       served: true
       storage: true
+      additionalPrinterColumns:
+        - name: Category
+          type: string
+          description: "Smell category"
+          jsonPath: .spec.category
+        - name: Severity
+          type: string
+          description: "Smell severity"
+          jsonPath: .spec.severity
+        - name: Target Kind
+          type: string
+          description: "Kind of the target resource"
+          jsonPath: .spec.target.kind
+        - name: Target Name
+          type: string
+          description: "Name of the target resource"
+          jsonPath: .spec.target.name
+        - name: Suppressed
+          type: boolean
+          description: "Is the smell suppressed"
+          jsonPath: .spec.suppress
       schema:
         openAPIV3Schema:
           type: object
