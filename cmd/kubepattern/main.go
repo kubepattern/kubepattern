@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"kubepattern-go/internal/analysis"
@@ -20,15 +21,22 @@ func main() {
 	defer cancel()
 
 	// --- Kubernetes client ---
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		kubeconfig = os.Getenv("HOME") + "/.kube/config"
-	}
-
-	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	// 1. In-Cluster config
+	restConfig, err := rest.InClusterConfig()
 	if err != nil {
-		slog.Error("failed to build kubeconfig", "error", err)
-		os.Exit(1)
+		slog.Info("in-cluster config not found, falling back to kubeconfig")
+
+		// 2. Fallback to Out-Of-Cluster config
+		kubeconfig := os.Getenv("KUBECONFIG")
+		if kubeconfig == "" {
+			kubeconfig = os.Getenv("HOME") + "/.kube/config"
+		}
+
+		restConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			slog.Error("failed to build kubeconfig", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	kubeClient, err := kube.NewClient(restConfig)

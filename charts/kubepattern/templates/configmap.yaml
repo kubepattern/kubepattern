@@ -4,7 +4,6 @@ metadata:
   name: {{ .Release.Name }}-config
   namespace: {{ .Release.Namespace }}
 data:
-  # The Go application can read this YAML file using libraries like Viper or Koanf
   config.yaml: |
     analysis:
       saveInNamespace: {{ .Values.analysis.saveInNamespace }}
