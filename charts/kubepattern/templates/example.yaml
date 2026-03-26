@@ -1,0 +1,38 @@
+{{- if .Values.example.enabled }}
+# 1. Example Pattern
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test-pod
+  labels:
+    app.kubernetes.io/name: kubepattern-example
+spec:
+  displayName: Test Pod
+  category: Architecture
+  severity: HIGH
+  message: "Pod {{ "{{" }}target.metadata.name{{ "}}" }} in namespace {{ "{{" }}target.metadata.namespace{{ "}}" }} has Pattern Test label."
+
+  target:
+    kind: Pod
+    apiVersion: v1
+    filters:
+      matchAll:
+        - path: "metadata.labels.kubepattern"
+          operator: EQUALS
+          values:
+            - test
+---
+# 2. Example Pod that triggers the Pattern
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-kubepattern-test
+  namespace: {{ .Release.Namespace }}
+  labels:
+    kubepattern: test
+    run: nginx
+spec:
+  containers:
+    - image: nginx:latest
+      name: nginx
+{{- end }}

@@ -19,7 +19,7 @@ analysis:
   # Save the smells in the namespace of the involved resources
   saveInNamespace: false
   # Default output namespace if saveInNamespace == false or for cluster-scoped resources
-  targetNamespace: pattern-analysis-ns
+  targetNamespace: kubepattern-system
 
 patternRegistry:
   orgName: "kubepattern"
@@ -29,3 +29,7 @@ patternRegistry:
     name: "registry"
     # For private repositories access
     token: ""
+
+# Deploy example resources to test KubePattern (a Pattern CRD and a matching Pod)
+example:
+  enabled: true
