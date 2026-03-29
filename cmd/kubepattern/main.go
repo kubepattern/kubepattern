@@ -14,7 +14,6 @@ import (
 	"kubepattern-go/internal/cluster"
 	"kubepattern-go/internal/kube"
 	"kubepattern-go/internal/linter"
-	"kubepattern-go/internal/registry"
 )
 
 func main() {
@@ -73,42 +72,20 @@ func main() {
 	graph.Build(resources)
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
-	// --- Step 2: fetch patterns from the GitHub registry ---
+	// --- Step 2: fetch patterns from the Kubernetes registry ---
 	var rawPatterns map[string][]byte
-	var fetcher registry.Fetcher
 
-	registryType := appCfg.PatternRegistry.Type
-	if registryType == "" {
-		registryType = "cluster"
+	slog.Info("Fetching patterns from Kubernetes registry...")
+	k8sFetcher, err := kube.NewKubernetesFetcher(restConfig)
+	if err != nil {
+		slog.Error("failed to create kubernetes pattern fetcher", "error", err)
+		os.Exit(1)
 	}
 
-	if registryType == "github" {
-		slog.Info("using GitHub registry as primary source")
-		ghConfig := registry.LoadConfig(appCfg)
-		fetcher = registry.NewClient(ghConfig)
-		var ghErr error
-		rawPatterns, ghErr = fetcher.ReadAllDefinitions(ctx)
-
-		if ghErr != nil {
-			slog.Warn("github registry failed, falling back to cluster registry", "error", ghErr)
-			registryType = "cluster" // Forza il fallback
-		}
-	}
-
-	if registryType == "cluster" {
-		slog.Info("using Cluster CRD registry for patterns")
-		k8sFetcher, err := registry.NewKubernetesFetcher(restConfig)
-		if err != nil {
-			slog.Error("failed to create kubernetes pattern fetcher", "error", err)
-			os.Exit(1)
-		}
-
-		fetcher = k8sFetcher
-		rawPatterns, err = fetcher.ReadAllDefinitions(ctx)
-		if err != nil {
-			slog.Error("failed to fetch patterns from cluster", "error", err)
-			os.Exit(1)
-		}
+	rawPatterns, err = k8sFetcher.ReadAllDefinitions(ctx)
+	if err != nil {
+		slog.Error("failed to fetch patterns from cluster", "error", err)
+		os.Exit(1)
 	}
 
 	slog.Info("patterns fetched successfully", "count", len(rawPatterns))

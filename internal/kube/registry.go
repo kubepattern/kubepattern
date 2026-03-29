@@ -1,4 +1,4 @@
-package registry
+package kube
 
 import (
 	"context"
@@ -39,8 +39,7 @@ func (k *KubernetesFetcher) ReadAllDefinitions(ctx context.Context) (map[string]
 
 	patterns := make(map[string][]byte)
 	for _, item := range unstructuredList.Items {
-		// Convertiamo l'oggetto Unstructured in JSON.
-		// Il tuo linter usa yaml.Unmarshal, che supporta nativamente anche il JSON!
+		// Unstructured to JSON conversion.
 		data, err := json.Marshal(item.Object)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal pattern %s: %w", item.GetName(), err)

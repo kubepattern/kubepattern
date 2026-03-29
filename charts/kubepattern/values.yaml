@@ -21,15 +21,6 @@ analysis:
   # Default output namespace if saveInNamespace == false or for cluster-scoped resources
   targetNamespace: kubepattern-analysis-ns
 
-patternRegistry:
-  orgName: "kubepattern"
-  type: "cluster" # "cluster" or "github"
-  repo:
-    branch: "main"
-    name: "registry"
-    # For private repositories access
-    token: ""
-
 # Deploy example resources to test KubePattern (a Pattern CRD and a matching Pod)
 example:
   enabled: true

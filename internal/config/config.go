@@ -12,12 +12,6 @@ type AppConfig struct {
 		SaveInNamespace bool   `yaml:"saveInNamespace"`
 		TargetNamespace string `yaml:"targetNamespace"`
 	} `yaml:"analysis"`
-	PatternRegistry struct {
-		Type             string `yaml:"type"`
-		OrganizationName string `yaml:"organizationName"`
-		RepositoryBranch string `yaml:"repositoryBranch"`
-		RepositoryName   string `yaml:"repositoryName"`
-	} `yaml:"patternRegistry"`
 }
 
 // Load reads a YAML configuration file from the given path and unmarshals its contents into an AppConfig instance.
