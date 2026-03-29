@@ -76,13 +76,7 @@ func main() {
 	var rawPatterns map[string][]byte
 
 	slog.Info("Fetching patterns from Kubernetes registry...")
-	k8sFetcher, err := kube.NewKubernetesFetcher(restConfig)
-	if err != nil {
-		slog.Error("failed to create kubernetes pattern fetcher", "error", err)
-		os.Exit(1)
-	}
-
-	rawPatterns, err = k8sFetcher.ReadAllDefinitions(ctx)
+	rawPatterns, err = kubeClient.ReadAllDefinitions(ctx)
 	if err != nil {
 		slog.Error("failed to fetch patterns from cluster", "error", err)
 		os.Exit(1)
@@ -109,15 +103,11 @@ func main() {
 	}
 
 	// --- Step 4: run analysis ---
-	smellWriter, err := kube.NewSmellWriter(
-		restConfig,
+	smellWriter := kube.NewSmellWriter(
+		kubeClient,
 		appCfg.Analysis.SaveInNamespace,
 		appCfg.Analysis.TargetNamespace,
 	)
-	if err != nil {
-		slog.Error("failed to create smell writer", "error", err)
-		os.Exit(1)
-	}
 
 	engine := analysis.NewEngine(graph, smellWriter)
 	if err := engine.RunAll(ctx, patterns); err != nil {

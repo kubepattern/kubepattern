@@ -35,6 +35,11 @@ func NewClient(config *rest.Config) (*Client, error) {
 	}, nil
 }
 
+// DynamicClient returns the underlying dynamic client interface.
+func (c *Client) DynamicClient() dynamic.Interface {
+	return c.dynamicClient
+}
+
 // FetchAll returns a flat slice of all listable objects in the cluster.
 // Discovery errors from individual API groups are logged and skipped rather than
 // aborting the entire scan — this is intentional: clusters with unhealthy CRD
