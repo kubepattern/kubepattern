@@ -1,6 +1,6 @@
 # Target image for the Go-based KubePattern analyzer
 image:
-  repository: ghcr.io/kubepattern/kubepattern-go
+  repository: ghcr.io/kubepattern/kubepattern
   pullPolicy: Always
   tag: "latest"
 
