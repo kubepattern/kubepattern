@@ -123,8 +123,6 @@ func (e *Engine) buildDependencies(
 // buildSmell constructs a Smell from the pattern metadata and the failing target.
 func buildSmell(pattern *linter.PatternAsCode, target *unstructured.Unstructured) Smell {
 	return Smell{
-		// CRD name: deterministic and unique per pattern+target combination.
-		// Using this convention allows idempotent upserts and automatic cleanup.
 		CRDName:        smellCRDName(pattern.Metadata.Name, target.GetUID()),
 		PatternName:    pattern.Metadata.Name,
 		PatternVersion: pattern.APIVersion,
