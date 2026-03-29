@@ -1,50 +1,42 @@
-name: 2. Promote Docker Image
+name: Promote Docker Image
 
 on:
   push:
-    branches:
-      - test
     tags:
       - 'app/v*'
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   promote:
+    if: ${{ !endsWith(github.ref, '-rc') }}
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-
     steps:
-      - name: Log in to GHCR
+      - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine New Tag
-        id: get_tag
+      - name: Retag RC to Stable
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/test" ]]; then
-            echo "NEW_TAG=test" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == refs/tags/app/v* ]]; then
-            VERSION=${GITHUB_REF_NAME#app/v}
-            echo "NEW_TAG=$VERSION" >> $GITHUB_ENV
-          fi
-
-      - name: Get short SHA
-        id: vars
-        run: echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Retag and Push Image (No Build!)
-        run: |
-          IMAGE_ID="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          IMAGE_ID="ghcr.io/${{ github.repository_owner }}/kubepattern"
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           
-          docker pull $IMAGE_ID:sha-${{ env.SHA_SHORT }}
+          # from app/vX.Y.Z to X.Y.Z
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/app/v,,')
           
-          docker tag $IMAGE_ID:sha-${{ env.SHA_SHORT }} $IMAGE_ID:${{ env.NEW_TAG }}
+          # Build release candidate tag
+          RC_TAG="${VERSION}-rc"
           
-          docker push $IMAGE_ID:${{ env.NEW_TAG }}
+          echo "Promote tested image ($RC_TAG) to stable ($VERSION)"
+          
+          # 1. Discard RC tag
+          docker pull $IMAGE_ID:$RC_TAG
+          
+          # 2. Promote RC to Stable
+          docker tag $IMAGE_ID:$RC_TAG $IMAGE_ID:$VERSION
+          docker tag $IMAGE_ID:$RC_TAG $IMAGE_ID:latest
+          
+          # 3. Push stable tag
+          docker push $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:latest
