@@ -50,13 +50,13 @@ func main() {
 	configPath := "/app/config/config.yaml"
 	// Fallback per test in locale
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		configPath = "config.yaml" // Cerca nella cartella corrente se non è nel cluster
+		configPath = "config.yaml"
 	}
 
 	appCfg, err := config.Load(configPath)
 	if err != nil {
 		slog.Warn("config file not found or invalid, using defaults", "error", err)
-		appCfg = &config.AppConfig{} // Usa una struct vuota (dovrai gestire i default)
+		appCfg = &config.AppConfig{}
 	} else {
 		slog.Info("configuration loaded successfully")
 	}
@@ -74,13 +74,12 @@ func main() {
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
 	// --- Step 2: fetch patterns from the GitHub registry ---
-	// --- Step 2: fetch patterns using Strategy Pattern ---
 	var rawPatterns map[string][]byte
 	var fetcher registry.Fetcher
 
 	registryType := appCfg.PatternRegistry.Type
 	if registryType == "" {
-		registryType = "cluster" // Default sicuro
+		registryType = "cluster"
 	}
 
 	if registryType == "github" {
@@ -96,7 +95,6 @@ func main() {
 		}
 	}
 
-	// Costruzione e fetching dal Cluster (come default o come fallback)
 	if registryType == "cluster" {
 		slog.Info("using Cluster CRD registry for patterns")
 		k8sFetcher, err := registry.NewKubernetesFetcher(restConfig)
