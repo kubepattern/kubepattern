@@ -5,6 +5,10 @@ on:
     tags:
       - 'app/v*'
 
+permissions:
+  contents: read
+  packages: write
+  
 jobs:
   promote:
     if: ${{ !endsWith(github.ref, '-rc') }}
