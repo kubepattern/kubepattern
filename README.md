@@ -91,4 +91,4 @@ kubectl describe smell <smell-name> -n <namespace>
 
 ## About the Author
 
-This project was created and is currently maintained by **Gabriele Groppo** ([@GabrieleGroppo](https://github.com/GabrieleGroppo)) as part of a Bachelor's Thesis project.
+This project was created and is currently maintained by **Gabriele Groppo** ([@GabrieleGroppo](https://github.com/GabrieleGroppo)).
