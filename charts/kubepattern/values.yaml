@@ -2,7 +2,7 @@
 image:
   repository: ghcr.io/kubepattern/kubepattern-go
   pullPolicy: Always
-  tag: "dev"
+  tag: "latest"
 
 # CronJob scheduling configuration
 schedule: "0 * * * *" # Runs every hour by default
