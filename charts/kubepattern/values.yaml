@@ -1,9 +1,8 @@
 # Target image for the Go-based KubePattern analyzer
 image:
-  repository: ghcr.io/kubepattern/kubepattern-go
+  repository: ghcr.io/kubepattern/kubepattern
   pullPolicy: Always
-  tag: "dev"
-
+  # tag: latest
 # CronJob scheduling configuration
 schedule: "0 * * * *" # Runs every hour by default
 suspend: false        # Set to true to temporarily suspend the CronJob
