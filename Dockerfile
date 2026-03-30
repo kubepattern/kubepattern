@@ -1,30 +1,33 @@
 # Stage 1: Build the binary
-FROM golang:alpine AS builder
+FROM golang:1.25.8-alpine AS builder
 
 LABEL authors="gabrielegroppo"
 WORKDIR /app
-COPY go.mod ./
-# COPY go.sum ./
+
+# Install CA certificates (required for K8s API/HTTPS) and timezone data
+RUN apk --no-cache add ca-certificates tzdata
+
+# Download dependencies (cached if go.mod/go.sum remain unchanged)
+COPY go.mod go.sum ./
 RUN go mod download
+
 COPY . .
+# Build a static binary, stripping debug info (-w -s) for a smaller footprint
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o kubepattern ./cmd/kubepattern/main.go
 
-# Build the application
-# We target the main.go file in cmd/kubepattern
-RUN CGO_ENABLED=0 GOOS=linux go build -o kubepattern ./cmd/kubepattern/main.go
+# Stage 2: Final zero-CVE image
+FROM scratch
 
-# Stage 2: Final lightweight image
-FROM alpine:latest
+# Import certificates and timezone data from the builder
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# Install ca-certificates in case your tool makes HTTPS calls
-RUN apk --no-cache add ca-certificates
+ENV ZONEINFO=/usr/share/zoneinfo
+WORKDIR /app
 
-WORKDIR /root/
-
-# Copy the binary from the builder stage
 COPY --from=builder /app/kubepattern .
 
-# Expose the port (matching your server.go logic)
-EXPOSE 8090
+# Run as non-root user (UID 65532) for Kubernetes security compliance
+USER 65532:65532
 
-# Run the binary
 ENTRYPOINT ["./kubepattern"]
