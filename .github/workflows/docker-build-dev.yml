@@ -1,11 +1,9 @@
-name: Build Docker Image
+name: Build Docker Image (Prod)
 
 on:
   push:
-    branches:
-      - dev
     tags:
-      - 'app/v*-rc'
+      - 'v*'
 
 permissions:
   contents: read
@@ -25,27 +23,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine Image Tag
-        id: get_tag
+      - name: Determine Tags
+        id: vars
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # Se hai pushato un tag (es. app/v0.0.1-rc), estraiamo "0.0.1-rc"
-            VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/app/v,,')
-            echo "IMAGE_TAG=$VERSION" >> $GITHUB_ENV
-          else
-            # Se hai pushato normalmente sul branch dev
-            echo "IMAGE_TAG=dev" >> $GITHUB_ENV
-          fi
+          # Extract tag version removing 'v' (example: v1.0.0 --> 1.0.0)
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/v,,')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          
+          # Extract short SHA (example: 1234567 --> 1234567)
+          echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Build and Push
+      - name: Build and Push Prod Image
         run: |
           IMAGE_ID="ghcr.io/${{ github.repository_owner }}/kubepattern"
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           
-          echo "Building image $IMAGE_ID:${{ env.IMAGE_TAG }}..."
+          echo "Building stable image $IMAGE_ID:$VERSION..."
           
-          # Build the Docker image
-          docker build -t $IMAGE_ID:${{ env.IMAGE_TAG }} .
+          # Build the Docker image with the version short SHA tag
+          docker build -t $IMAGE_ID:$VERSION -t $IMAGE_ID:latest -t $IMAGE_ID:sha-${{ env.SHA_SHORT }} .
           
-          # Push the Docker image to GitHub Packages
-          docker push $IMAGE_ID:${{ env.IMAGE_TAG }}
+          # Push the Docker image with the version tag, latest tag, and short SHA tag
+          docker push $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:latest
+          docker push $IMAGE_ID:sha-${{ env.SHA_SHORT }}
