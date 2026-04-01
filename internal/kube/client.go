@@ -18,6 +18,7 @@ import (
 type Client struct {
 	discoveryClient discovery.DiscoveryInterface
 	dynamicClient   dynamic.Interface
+	cached          []schema.GroupVersionKind
 }
 
 func NewClient(config *rest.Config) (*Client, error) {
@@ -127,4 +128,47 @@ func canList(verbs []string) bool {
 		}
 	}
 	return false
+}
+
+type Resource struct {
+	APIVersion string
+	Kind       string
+	Resource   string
+}
+
+func (c *Client) cachedGVR(gvr schema.GroupVersionKind) bool {
+	for _, r := range c.cached {
+		if gvr.Group == r.Group && gvr.Version == r.Version {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Client) FetchSelected(resources []Resource, ctx context.Context) ([]unstructured.Unstructured, error) {
+	var allObjects []unstructured.Unstructured
+	for _, resource := range resources {
+		gvk := schema.FromAPIVersionAndKind(resource.APIVersion, resource.Kind)
+
+		if c.cachedGVR(gvk) {
+			continue
+		}
+
+		gvr := schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: resource.Resource,
+		}
+
+		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		allObjects = append(allObjects, list.Items...)
+	}
+
+	return allObjects, nil
 }
