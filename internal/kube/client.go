@@ -18,7 +18,7 @@ import (
 type Client struct {
 	discoveryClient discovery.DiscoveryInterface
 	dynamicClient   dynamic.Interface
-	cached          []schema.GroupVersionKind
+	cached          []schema.GroupVersionResource
 }
 
 func NewClient(config *rest.Config) (*Client, error) {
@@ -136,9 +136,9 @@ type Resource struct {
 	Resource   string
 }
 
-func (c *Client) cachedGVR(gvr schema.GroupVersionKind) bool {
+func (c *Client) cachedGVR(gvr schema.GroupVersionResource) bool {
 	for _, r := range c.cached {
-		if gvr.Group == r.Group && gvr.Version == r.Version {
+		if gvr.Group == r.Group && gvr.Version == r.Version && gvr.Resource == r.Resource {
 			return true
 		}
 	}
@@ -151,14 +151,14 @@ func (c *Client) FetchSelected(resources []Resource, ctx context.Context) ([]uns
 	for _, resource := range resources {
 		gvk := schema.FromAPIVersionAndKind(resource.APIVersion, resource.Kind)
 
-		if c.cachedGVR(gvk) {
-			continue
-		}
-
 		gvr := schema.GroupVersionResource{
 			Group:    gvk.Group,
 			Version:  gvk.Version,
 			Resource: resource.Resource,
+		}
+
+		if c.cachedGVR(gvr) {
+			continue
 		}
 
 		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})

@@ -62,7 +62,7 @@ func main() {
 	/*
 		// --- Step 1: build the graph ---
 		slog.Info("fetching cluster resources...")
-		resources, err := kubeClient.FetchAll(ctx)
+		resources, err:= kubeClient.FetchAll(ctx)
 		if err != nil {
 			slog.Error("failed to fetch cluster resources", "error", err)
 			os.Exit(1)
