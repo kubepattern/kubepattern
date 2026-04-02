@@ -1,13 +1,26 @@
 # Target image for the Go-based KubePattern analyzer
 image:
   repository: ghcr.io/kubepattern/kubepattern
-  pullPolicy: Always
-  # tag: latest
+  pullPolicy: IfNotPresent
+  tag: 0.0.4
 # CronJob scheduling configuration
 schedule: "0 * * * *" # Runs every hour by default
 suspend: false        # Set to true to temporarily suspend the CronJob
 
-rbac:
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "200m"
+  limits:
+    memory: "1Gi"
+    cpu: "1000m"
+
+
+tolerations: {}
+nodeSelector: {}
+affinity: {}
+
+RBAC:
   # Define the RBAC rules for KubePattern (to scan only specific resources, modify accordingly)
   rules:
     - apiGroups: ["*"]
