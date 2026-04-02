@@ -1,6 +1,6 @@
 <div align="center">
   <img src="https://kubepattern.dev/img/kubepattern.svg" alt="KubePattern Logo" width="200" height="auto">
-  <h1>KubePattern (Go Engine)</h1>
+  <h1>KubePattern</h1>
   
   <p>
     <a href="https://kubernetes.io/">
@@ -15,63 +15,38 @@
   </p>
 
   <p>
-    <strong>KubePattern</strong> is a cloud-native framework designed to identify and analyze Kubernetes architectural patterns and smells.
-  </p>
+    <strong>KubePattern</strong> is a cloud-native tool designed spot violations between Custom Resources interactions.
+</p>
 </div>
-
-> ⚠️ **Deprecation Notice:** This repository contains the new, highly optimized **Go-based engine** for KubePattern. It officially replaces and deprecates the legacy Java version. 
 
 ## Architecture & Mechanics
 
-The KubePattern Go engine operates as an in-cluster analyzer. It automatically builds a relational graph of your Kubernetes resources, fetches remote definitions, and evaluates them against your live cluster state.
+The KubePattern (Go engine) operates as an in-cluster analyzer.
+By using a graph-based approach, it retrieves complex relationships between resources and spot violations such as zombie resources and bad configurations.
 
-* **Pattern Registry**: KubePattern evaluates the cluster against definitions stored in the **Pattern-as-Code** registry. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry).
-* **CRD Output**: The engine generates and manages `Smell` Custom Resources (`smells.kubepattern.dev`) to persist analysis results directly inside the cluster, natively integrating with Kubernetes RBAC and APIs.
+* **Pattern CRD**: KubePattern evaluates the cluster against the Pattern as Code definitions (`patterns.kubepattern.dev`) applied to the cluster. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry).
+* **Smell CRD**: The engine generates and manages `Smell` Custom Resources (`smells.kubepattern.dev`) to persist analysis results directly inside the cluster.
 * **Execution**: Deployed via Helm, it runs as a lightweight `CronJob`, periodically scanning the cluster without consuming idle resources.
 
 ---
 
 ## Installation
 
-### Method 1: Helm (Recommended)
+### Using Helm (Recommended)
 
 KubePattern is packaged and distributed as an OCI Helm chart via the GitHub Container Registry (GHCR). This method automatically installs the necessary CRDs, RBAC permissions, and the analyzer CronJob.
-
-1. **Install the chart:**
    ```bash
    helm upgrade --install kubepattern oci://ghcr.io/kubepattern/charts/kubepattern \
      --version <VERSION> \
      --namespace kubepattern-system \
      --create-namespace
    ```
-
-2. **Accessing Private Pattern Registries (Optional):**
-   If your patterns are stored in a private GitHub repository, provide a Personal Access Token (PAT) during installation:
-   ```bash
-   --set patternRegistry.repo.token="<YOUR_GITHUB_TOKEN>"
-   ```
-
-3. **Customize the Schedule:**
-   By default, the analysis runs every hour. You can override the schedule:
-   ```bash
-   --set schedule="*/30 * * * *"
-   ```
-
-### Method 2: Local Container Execution (Without Helm)
-
-If you prefer to run the analyzer locally or in CI/CD pipelines without installing cluster resources, you can execute the container directly. You must mount your local `kubeconfig` to allow the engine to authenticate and query the cluster.
-
-```bash
-docker run -rm --name kubepattern-app \
-  -v ~/.kube/config:/root/.kube/config:ro \
-  -e KUBECONFIG=/root/.kube/config \
-  -e GITHUB_TOKEN="<YOUR_GITHUB_TOKEN>" \
-  ghcr.io/kubepattern/kubepattern-go:latest
-```
-*(Note: You can swap `docker` with `podman` depending on your local setup).*
-
----
-
+> [!TIP]
+> By default, the analysis runs every hour. You can override the schedule:
+>
+>   ```bash
+>   --set schedule="*/30 * * * *"
+>   ```
 ## Viewing Results
 
 Once the CronJob completes a run, KubePattern saves the detected architectural issues as `Smell` resources. You can inspect them using standard `kubectl` commands:
