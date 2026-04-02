@@ -119,7 +119,7 @@ func main() {
 	// --- Step 3: lazy fetching ---
 	slog.Info("fetching cluster resources using lazy fetch...")
 
-	resources, err := kubeClient.FetchSelected(listResourcesGroup, ctx)
+	resources, err := kubeClient.FetchSelectedWithInheritance(listResourcesGroup, ctx)
 	if err != nil {
 		slog.Error("failed to fetch cluster resources", "error", err)
 		os.Exit(1)
@@ -130,6 +130,8 @@ func main() {
 	graph := cluster.NewGraph()
 	graph.Build(resources)
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
+
+	graph.PrintGraphviz()
 
 	// --- Step 4: run analysis ---
 	smellWriter := kube.NewSmellWriter(
