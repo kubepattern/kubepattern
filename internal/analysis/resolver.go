@@ -13,28 +13,29 @@ import (
 // GraphReader defines an interface for retrieving unstructured objects from a graph by their unique identifier.
 type GraphReader interface {
 	GetByUID(uid types.UID) (*unstructured.Unstructured, bool)
+	IsParentOwner(parent, child types.UID) bool
 }
 
 // EvaluateRelationships checks if a target satisfies the rules defined in the relationships block.
-// It receives the current target, the dependency map (key: id, value: list of resources), and the rules.
 func EvaluateRelationships(
 	target *unstructured.Unstructured,
 	deps map[string][]*unstructured.Unstructured,
 	rels linter.Relationships,
+	g GraphReader, // <-- Uso l'interfaccia!
 ) bool {
 	slog.Info("Evaluating relationships")
-	// matchAll — all relationships must be satisfied
+	// matchAll ? all relationships must be satisfied
 	for _, rel := range rels.MatchAll {
-		if !evalRelationshipConfig(target, deps[rel.With], rel) {
+		if !evalRelationshipConfig(target, deps[rel.With], rel, g) { // <-- Passato g
 			return false
 		}
 	}
 
-	// matchAny — at least one relationship must be satisfied (ignored if empty)
+	// matchAny ? at least one relationship must be satisfied (ignored if empty)
 	if len(rels.MatchAny) > 0 {
 		anyPassed := false
 		for _, rel := range rels.MatchAny {
-			if evalRelationshipConfig(target, deps[rel.With], rel) {
+			if evalRelationshipConfig(target, deps[rel.With], rel, g) { // <-- Passato g
 				anyPassed = true
 				break
 			}
@@ -44,9 +45,9 @@ func EvaluateRelationships(
 		}
 	}
 
-	// matchNone — no relationships must be satisfied
+	// matchNone ? no relationships must be satisfied
 	for _, rel := range rels.MatchNone {
-		if evalRelationshipConfig(target, deps[rel.With], rel) {
+		if evalRelationshipConfig(target, deps[rel.With], rel, g) { // <-- Passato g
 			return false
 		}
 	}
@@ -56,9 +57,8 @@ func EvaluateRelationships(
 	return true
 }
 
-// evalRelationshipConfig evaluates a single relationship configuration between the target
-// and the list of dependencies associated with a specific ID.
-func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*unstructured.Unstructured, rel linter.Relationship) bool {
+// evalRelationshipConfig evaluates a single relationship configuration
+func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*unstructured.Unstructured, rel linter.Relationship, g GraphReader) bool { // <-- Aggiunto g alla firma
 	// If there are no candidates for this dependency, the relationship cannot exist
 	if len(depCandidates) == 0 {
 		return false
@@ -66,7 +66,7 @@ func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*
 
 	// The relationship is considered "satisfied" if it holds true with AT LEAST ONE of the candidate dependencies
 	for _, dep := range depCandidates {
-		if matchRelationship(target, dep, rel) {
+		if matchRelationship(target, dep, rel, g) {
 			return true
 		}
 	}
@@ -75,21 +75,32 @@ func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*
 }
 
 // matchRelationship routes the logic based on the relationship type (custom vs. k8s native)
-func matchRelationship(target, dep *unstructured.Unstructured, rel linter.Relationship) bool {
+func matchRelationship(target, dep *unstructured.Unstructured, rel linter.Relationship, g GraphReader) bool {
 	switch rel.Type {
 	case linter.RelationshipCustom:
 		return evalCustomCriteria(target, dep, rel.Criteria)
 
 	case linter.RelationshipOwns:
-		return evalOwns(target, dep)
+		return evalOwns(target, dep, g)
 
 	case linter.RelationshipOwnedBy:
-		return evalOwnedBy(target, dep)
+		return evalOwnedBy(target, dep, g)
 
 	default:
 		slog.Warn("Unhandled relationship type", "type", rel.Type)
 		return false
 	}
+}
+
+// -------------------------
+// Kubernetes Native Logic
+// -------------------------
+func evalOwns(target, dep *unstructured.Unstructured, g GraphReader) bool {
+	return g.IsParentOwner(target.GetUID(), dep.GetUID())
+}
+
+func evalOwnedBy(target, dep *unstructured.Unstructured, g GraphReader) bool {
+	return evalOwns(dep, target, g)
 }
 
 // -------------------------
@@ -141,32 +152,5 @@ func evalOperatorEquals(targetVals []any, depVals []any) bool {
 			}
 		}
 	}
-	return false
-}
-
-// -------------------------
-// Kubernetes Native Logic (Stubs)
-// -------------------------
-
-func evalOwns(target, dep *unstructured.Unstructured) bool {
-	// TODO: Implement cluster query or OwnerReferences check
-
-	for _, owner := range target.GetOwnerReferences() {
-		if owner.UID == dep.GetUID() {
-			return true
-		}
-	}
-	return false
-}
-
-func evalOwnedBy(target, dep *unstructured.Unstructured) bool {
-	// TODO: Inverse logic of evalOwns
-
-	for _, owner := range dep.GetOwnerReferences() {
-		if owner.UID == target.GetUID() {
-			return true
-		}
-	}
-
 	return false
 }

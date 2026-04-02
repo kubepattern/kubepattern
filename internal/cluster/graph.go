@@ -63,7 +63,16 @@ func (g *Graph) GetEdges() map[types.UID][]edge {
 	return g.edges
 }
 
-func (g *Graph) isParentOwner(child, parent types.UID) bool {
+func (g *Graph) GetByUID(uid types.UID) (*unstructured.Unstructured, bool) {
+	n, exists := g.nodes[uid]
+	if !exists {
+		return nil, false
+	}
+	return n, true
+}
+
+// IsParentOwner returns true if a child is owned by a parent (direct edge or ancestor)
+func (g *Graph) IsParentOwner(parent, child types.UID) bool {
 	owned, exists := g.nodes[child]
 	if !exists || owned == nil {
 		return false
@@ -75,7 +84,7 @@ func (g *Graph) isParentOwner(child, parent types.UID) bool {
 			return true
 		}
 
-		if g.isParentOwner(r.UID, parent) {
+		if g.IsParentOwner(parent, r.UID) {
 			return true
 		}
 	}

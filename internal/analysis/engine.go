@@ -62,7 +62,7 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 
 	// --- Step 4 & 5: evaluate relationships and emit smells ---
 	for _, target := range targets {
-		satisfied := EvaluateRelationships(target, deps, pattern.Spec.Relationships)
+		satisfied := EvaluateRelationships(target, deps, pattern.Spec.Relationships, e.graph)
 		if !satisfied {
 			// Relationships are not satisfied — no smell for this target.
 			continue

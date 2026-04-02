@@ -129,7 +129,7 @@ func TestEvaluateRelationships(t *testing.T) {
 	// 4. Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := EvaluateRelationships(tt.target, tt.deps, tt.relationships)
+			got := EvaluateRelationships(tt.target, tt.deps, tt.relationships, nil)
 			if got != tt.want {
 				t.Errorf("EvaluateRelationships() = %v, want %v", got, tt.want)
 			}
