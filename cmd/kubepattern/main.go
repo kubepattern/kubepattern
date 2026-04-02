@@ -131,7 +131,7 @@ func main() {
 	graph.Build(resources)
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
-	graph.PrintGraphviz()
+	//graph.PrintGraphviz()
 
 	// --- Step 4: run analysis ---
 	smellWriter := kube.NewSmellWriter(
