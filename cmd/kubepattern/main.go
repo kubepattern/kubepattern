@@ -59,15 +59,6 @@ func main() {
 	} else {
 		slog.Info("configuration loaded successfully")
 	}
-	/*
-		// --- Step 1: build the graph ---
-		slog.Info("fetching cluster resources...")
-		resources, err:= kubeClient.FetchAll(ctx)
-		if err != nil {
-			slog.Error("failed to fetch cluster resources", "error", err)
-			os.Exit(1)
-		}
-	*/
 
 	// --- Step 1: fetch patterns from the Kubernetes registry ---
 	var rawPatterns map[string][]byte

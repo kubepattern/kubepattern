@@ -9,18 +9,18 @@ import (
 )
 
 func TestEvaluateRelationships(t *testing.T) {
-	// 1. Setup mock resources
+	// 1. Set up mock resources
 	podObj := &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": "v1",
 			"kind":       "Pod",
 			"metadata": map[string]any{
-				"name": "my-dep-b458fdbb4-twq66",
+				"name": "my-dep-b458fd6bb4-twq66",
 				"ownerReferences": []any{
 					map[string]any{
 						"apiVersion": "apps/v1",
 						"kind":       "ReplicaSet",
-						"name":       "my-dep-b458fdbb4",
+						"name":       "my-dep-b458fd6bb4",
 						"uid":        "fake-uid-1234",
 					},
 				},
@@ -33,7 +33,7 @@ func TestEvaluateRelationships(t *testing.T) {
 			"apiVersion": "apps/v1",
 			"kind":       "ReplicaSet",
 			"metadata": map[string]any{
-				"name": "my-dep-b458fdbb4",
+				"name": "my-dep-b458fd6bb4",
 			},
 		},
 	}
@@ -48,7 +48,7 @@ func TestEvaluateRelationships(t *testing.T) {
 		},
 	}
 
-	// 2. Setup the relationship rule (Custom EQUALS on ownerReferences)
+	// 2. Set up the relationship rule (Custom EQUALS on ownerReferences)
 	customRelRule := linter.Relationship{
 		With: "my-rs-dep",
 		Type: linter.RelationshipCustom,
@@ -61,7 +61,7 @@ func TestEvaluateRelationships(t *testing.T) {
 		},
 	}
 
-	// 3. Define test cases using table-driven approach
+	// 3. Define test cases using a table-driven approach
 	tests := []struct {
 		name          string
 		target        *unstructured.Unstructured

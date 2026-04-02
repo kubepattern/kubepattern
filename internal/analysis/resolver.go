@@ -16,13 +16,13 @@ type GraphReader interface {
 }
 
 // EvaluateRelationships checks if a target satisfies the rules defined in the relationships block.
-// It receives the current target, the dependencies map (key: id, value: list of resources), and the rules.
+// It receives the current target, the dependency map (key: id, value: list of resources), and the rules.
 func EvaluateRelationships(
 	target *unstructured.Unstructured,
 	deps map[string][]*unstructured.Unstructured,
 	rels linter.Relationships,
 ) bool {
-
+	slog.Info("Evaluating relationships")
 	// matchAll — all relationships must be satisfied
 	for _, rel := range rels.MatchAll {
 		if !evalRelationshipConfig(target, deps[rel.With], rel) {
@@ -50,6 +50,8 @@ func EvaluateRelationships(
 			return false
 		}
 	}
+
+	slog.Info("Evaluated relationships")
 
 	return true
 }
@@ -83,12 +85,6 @@ func matchRelationship(target, dep *unstructured.Unstructured, rel linter.Relati
 
 	case linter.RelationshipOwnedBy:
 		return evalOwnedBy(target, dep)
-
-	case linter.RelationshipSelects:
-		return evalSelects(target, dep)
-
-	case linter.RelationshipSelectedBy:
-		return evalSelectedBy(target, dep)
 
 	default:
 		slog.Warn("Unhandled relationship type", "type", rel.Type)
@@ -154,21 +150,23 @@ func evalOperatorEquals(targetVals []any, depVals []any) bool {
 
 func evalOwns(target, dep *unstructured.Unstructured) bool {
 	// TODO: Implement cluster query or OwnerReferences check
-	// Ex: Does the target have the dependency's UID in its OwnerReferences?
+
+	for _, owner := range target.GetOwnerReferences() {
+		if owner.UID == dep.GetUID() {
+			return true
+		}
+	}
 	return false
 }
 
 func evalOwnedBy(target, dep *unstructured.Unstructured) bool {
 	// TODO: Inverse logic of evalOwns
-	return false
-}
 
-func evalSelects(target, dep *unstructured.Unstructured) bool {
-	// TODO: Does the target have a labelSelector that matches the dependency's labels?
-	return false
-}
+	for _, owner := range dep.GetOwnerReferences() {
+		if owner.UID == target.GetUID() {
+			return true
+		}
+	}
 
-func evalSelectedBy(target, dep *unstructured.Unstructured) bool {
-	// TODO: Inverse logic of evalSelects
 	return false
 }

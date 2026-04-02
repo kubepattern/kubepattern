@@ -21,7 +21,7 @@ func FilterResources(
 	apiVersion string,
 	filters linter.Filters,
 ) []*unstructured.Unstructured {
-
+	slog.Info("Filtering resources")
 	// Using the zero-value slice here is perfectly idiomatic in Go
 	var candidates []*unstructured.Unstructured
 
@@ -34,7 +34,7 @@ func FilterResources(
 		}
 		candidates = append(candidates, node)
 	}
-
+	slog.Info("Filtered resources")
 	return candidates
 }
 
@@ -84,7 +84,6 @@ func matchFilters(node *unstructured.Unstructured, filters linter.Filters) bool 
 
 // evalCondition evaluates a single FilterCondition against the node.
 func evalCondition(node *unstructured.Unstructured, cond linter.FilterCondition) bool {
-	// Aggiornato da cond.Key a cond.Path per matchare il nuovo linter schema
 	values, found := getFieldValues(node.Object, cond.Path)
 
 	switch cond.Operator {

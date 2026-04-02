@@ -3,6 +3,7 @@ package kube
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"kubepattern-go/internal/analysis"
 
@@ -45,7 +46,7 @@ func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace string
 // The namespace is chosen based on the writer's configuration.
 func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	var namespace string
-
+	slog.Info("Writing smell.")
 	if w.saveInNamespace {
 		namespace = smell.Target.Namespace
 
@@ -87,7 +88,7 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	if err != nil {
 		return fmt.Errorf("failed to update smell %q: %w", smell.CRDName, err)
 	}
-
+	slog.Info("Writing smell complete.")
 	return nil
 }
 

@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -60,6 +61,7 @@ func (g *Graph) GetNodes() map[types.UID]*unstructured.Unstructured {
 
 // link checks for edges between nodes in Graph based on the Kubernetes ownership mechanism
 func (g *Graph) link() {
+	slog.Info("Linking graph using ownership")
 	for fromUID, fromNode := range g.nodes {
 		for toUID, toNode := range g.nodes {
 			if fromUID == toUID {
@@ -75,6 +77,7 @@ func (g *Graph) link() {
 			}
 		}
 	}
+	slog.Info("Linking graph complete")
 }
 
 // addEdge create an edge between two nodes
