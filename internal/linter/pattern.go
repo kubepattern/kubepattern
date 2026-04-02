@@ -84,6 +84,7 @@ type Spec struct {
 type Target struct {
 	Kind       string  `yaml:"kind"`
 	APIVersion string  `yaml:"apiVersion"`
+	PluralName string  `yaml:"plural"`
 	Filters    Filters `yaml:"filters,omitempty"`
 }
 
@@ -91,6 +92,7 @@ type Dependency struct {
 	ID         string  `yaml:"id"`
 	Kind       string  `yaml:"kind"`
 	APIVersion string  `yaml:"apiVersion"`
+	PluralName string  `yaml:"plural"`
 	Filters    Filters `yaml:"filters,omitempty"`
 }
 
@@ -282,6 +284,11 @@ func lintTarget(t Target) error {
 	if t.APIVersion == "" {
 		return lintErr("spec.target.apiVersion is empty")
 	}
+
+	if t.PluralName == "" {
+		return lintErr("spec.target.pluralName is empty")
+	}
+
 	if err := lintFilters("target", t.Filters); err != nil {
 		return err
 	}
@@ -298,6 +305,11 @@ func lintDependency(index int, d Dependency) error {
 	if d.APIVersion == "" {
 		return lintErr("spec.dependencies[%d].apiVersion is empty", index)
 	}
+
+	if d.PluralName == "" {
+		return lintErr("spec.dependencies[%d].pluralName is empty", index)
+	}
+
 	if err := lintFilters(fmt.Sprintf("dependencies[%d]", index), d.Filters); err != nil {
 		return err
 	}

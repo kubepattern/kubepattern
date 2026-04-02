@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -58,23 +59,55 @@ func (g *Graph) GetNodes() map[types.UID]*unstructured.Unstructured {
 	return g.nodes
 }
 
+func (g *Graph) GetEdges() map[types.UID][]edge {
+	return g.edges
+}
+
+func (g *Graph) GetByUID(uid types.UID) (*unstructured.Unstructured, bool) {
+	n, exists := g.nodes[uid]
+	if !exists {
+		return nil, false
+	}
+	return n, true
+}
+
+// IsParentOwner returns true if a child is owned by a parent (direct edge or ancestor)
+func (g *Graph) IsParentOwner(parent, child types.UID) bool {
+	owned, exists := g.nodes[child]
+	if !exists || owned == nil {
+		return false
+	}
+
+	for _, r := range owned.GetOwnerReferences() {
+		// direct owner
+		if r.UID == parent {
+			return true
+		}
+
+		if g.IsParentOwner(parent, r.UID) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // link checks for edges between nodes in Graph based on the Kubernetes ownership mechanism
 func (g *Graph) link() {
-	for fromUID, fromNode := range g.nodes {
-		for toUID, toNode := range g.nodes {
-			if fromUID == toUID {
-				continue
-			}
-			owners := toNode.GetOwnerReferences()
-			for _, owner := range owners {
-				if owner.UID == fromUID {
-					reason := fromNode.GetKind() + " owns " + toNode.GetKind()
-					g.addEdge(fromUID, toUID, reason)
-					break
-				}
+	slog.Info("Linking graph using ownership")
+
+	for toUID, toNode := range g.nodes {
+		owners := toNode.GetOwnerReferences()
+
+		for _, owner := range owners {
+			// Se l'owner esiste nei nostri nodi, creiamo l'arco
+			if fromNode, exists := g.nodes[owner.UID]; exists {
+				reason := fromNode.GetKind() + " owns " + toNode.GetKind()
+				g.addEdge(owner.UID, toUID, reason)
 			}
 		}
 	}
+	slog.Info("Linking graph complete")
 }
 
 // addEdge create an edge between two nodes
