@@ -15,7 +15,7 @@
   </p>
 
   <p>
-    <strong>KubePattern</strong> is a cloud-native tool designed spot violations between Custom Resources interactions.
+    <strong>KubePattern</strong> is a cloud-native framework designed spot violations between Kubernetes Custom Resources interactions.
 </p>
 </div>
 
