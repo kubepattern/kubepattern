@@ -172,3 +172,57 @@ func (c *Client) FetchSelected(resources []Resource, ctx context.Context) ([]uns
 
 	return allObjects, nil
 }
+
+func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.Context) ([]unstructured.Unstructured, error) {
+	var allObjects []unstructured.Unstructured
+	for _, resource := range resources {
+		gvk := schema.FromAPIVersionAndKind(resource.APIVersion, resource.Kind)
+
+		gvr := schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: resource.Resource,
+		}
+
+		if c.cachedGVR(gvr) {
+			continue
+		}
+
+		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, r := range list.Items {
+			owners := r.GetOwnerReferences()
+			for _, owner := range owners {
+				gvk := schema.FromAPIVersionAndKind(owner.APIVersion, owner.Kind)
+				gvr := schema.GroupVersionResource{
+					Group:    gvk.Group,
+					Version:  gvk.Version,
+					Resource: owner.OpenAPIModelName(),
+				}
+				if c.cachedGVR(gvr) {
+					break
+				} else {
+					var inherited []Resource
+					inherited = append(inherited, Resource{
+						APIVersion: owner.APIVersion,
+						Kind:       owner.Kind,
+						Resource:   owner.OpenAPIModelName(),
+					})
+					var fetched, err = c.FetchSelectedWithInheritance(inherited, ctx)
+					if err != nil {
+						return nil, err
+					}
+					allObjects = append(allObjects, fetched...)
+				}
+			}
+		}
+
+		allObjects = append(allObjects, list.Items...)
+	}
+
+	return allObjects, nil
+}
