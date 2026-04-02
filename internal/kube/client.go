@@ -6,18 +6,22 @@ import (
 	"log/slog"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 )
 
 // Client wraps the Kubernetes discovery and dynamic clients.
 type Client struct {
 	discoveryClient discovery.DiscoveryInterface
 	dynamicClient   dynamic.Interface
+	mapper          meta.RESTMapper
+	cached          []schema.GroupVersionResource
 }
 
 func NewClient(config *rest.Config) (*Client, error) {
@@ -29,9 +33,17 @@ func NewClient(config *rest.Config) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
+
+	groupResources, err := restmapper.GetAPIGroupResources(disco)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get API group resources for mapper: %w", err)
+	}
+	mapper := restmapper.NewDiscoveryRESTMapper(groupResources)
+
 	return &Client{
 		discoveryClient: disco,
 		dynamicClient:   dyn,
+		mapper:          mapper,
 	}, nil
 }
 
@@ -127,4 +139,129 @@ func canList(verbs []string) bool {
 		}
 	}
 	return false
+}
+
+type Resource struct {
+	APIVersion string
+	Kind       string
+	Resource   string
+}
+
+func (c *Client) cachedGVR(gvr schema.GroupVersionResource) bool {
+	for _, r := range c.cached {
+		if gvr.Group == r.Group && gvr.Version == r.Version && gvr.Resource == r.Resource {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Client) FetchSelected(resources []Resource, ctx context.Context) ([]unstructured.Unstructured, error) {
+	var allObjects []unstructured.Unstructured
+	for _, resource := range resources {
+		gvk := schema.FromAPIVersionAndKind(resource.APIVersion, resource.Kind)
+
+		gvr := schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: resource.Resource,
+		}
+
+		if c.cachedGVR(gvr) {
+			continue
+		}
+
+		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		allObjects = append(allObjects, list.Items...)
+	}
+
+	return allObjects, nil
+}
+
+// GetGVR maps a GroupVersionKind to a GroupVersionResource using the cluster's RESTMapper.
+func (c *Client) GetGVR(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+	mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return schema.GroupVersionResource{}, fmt.Errorf("failed to map GVK %s to GVR: %w", gvk.String(), err)
+	}
+	return mapping.Resource, nil
+}
+
+// FetchSelectedWithInheritance retrieves the specified resources and recursively
+// fetches their owners (e.g., Pod -> ReplicaSet -> Deployment) to build a full dependency graph.
+func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.Context) ([]unstructured.Unstructured, error) {
+	var allObjects []unstructured.Unstructured
+
+	for _, resource := range resources {
+		gvk := schema.FromAPIVersionAndKind(resource.APIVersion, resource.Kind)
+
+		gvr := schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: resource.Resource,
+		}
+
+		// Fallback to the RESTMapper if the plural resource name is not provided.
+		if gvr.Resource == "" {
+			var err error
+			gvr, err = c.GetGVR(gvk)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// Skip if we have already fetched this resource type.
+		if c.cachedGVR(gvr) {
+			continue
+		}
+
+		// Add to cache before listing to prevent circular dependencies or redundant calls.
+		c.cached = append(c.cached, gvr)
+
+		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		allObjects = append(allObjects, list.Items...)
+		var inherited []Resource
+
+		// Scan fetched items to discover their owners.
+		for _, r := range list.Items {
+			for _, owner := range r.GetOwnerReferences() {
+				ownerGVK := schema.FromAPIVersionAndKind(owner.APIVersion, owner.Kind)
+				ownerGVR, err := c.GetGVR(ownerGVK)
+				if err != nil {
+					slog.Warn("skipping owner due to mapping failure", "owner", owner.Name, "error", err)
+					continue
+				}
+
+				// Queue the owner for the next fetch cycle if not cached yet.
+				if !c.cachedGVR(ownerGVR) {
+					inherited = append(inherited, Resource{
+						APIVersion: owner.APIVersion,
+						Kind:       owner.Kind,
+						Resource:   ownerGVR.Resource,
+					})
+				}
+			}
+		}
+
+		// Recursively fetch newly discovered owner resource types.
+		if len(inherited) > 0 {
+			fetched, err := c.FetchSelectedWithInheritance(inherited, ctx)
+			if err != nil {
+				return nil, err
+			}
+			allObjects = append(allObjects, fetched...)
+		}
+	}
+
+	return allObjects, nil
 }

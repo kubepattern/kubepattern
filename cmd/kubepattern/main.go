@@ -60,19 +60,7 @@ func main() {
 		slog.Info("configuration loaded successfully")
 	}
 
-	// --- Step 1: build the graph ---
-	slog.Info("fetching cluster resources...")
-	resources, err := kubeClient.FetchAll(ctx)
-	if err != nil {
-		slog.Error("failed to fetch cluster resources", "error", err)
-		os.Exit(1)
-	}
-
-	graph := cluster.NewGraph()
-	graph.Build(resources)
-	slog.Info("graph built", "nodes", len(graph.GetNodes()))
-
-	// --- Step 2: fetch patterns from the Kubernetes registry ---
+	// --- Step 1: fetch patterns from the Kubernetes registry ---
 	var rawPatterns map[string][]byte
 
 	slog.Info("Fetching patterns from Kubernetes registry...")
@@ -84,7 +72,7 @@ func main() {
 
 	slog.Info("patterns fetched successfully", "count", len(rawPatterns))
 
-	// --- Step 3: lint patterns ---
+	// --- Step 2: lint patterns ---
 	var patterns []*linter.PatternAsCode
 	for filename, data := range rawPatterns {
 		p, err := linter.Lint(data)
@@ -101,6 +89,49 @@ func main() {
 		slog.Warn("no valid patterns found, exiting")
 		os.Exit(0)
 	}
+
+	var listResourcesGroup []kube.Resource
+
+	for _, pattern := range patterns {
+		rg := kube.Resource{
+			APIVersion: pattern.Spec.Target.APIVersion,
+			Kind:       pattern.Spec.Target.Kind,
+			Resource:   pattern.Spec.Target.PluralName,
+		}
+		listResourcesGroup = append(listResourcesGroup, rg)
+
+		for _, dependency := range pattern.Spec.Dependencies {
+			rg := kube.Resource{
+				APIVersion: dependency.APIVersion,
+				Kind:       dependency.Kind,
+				Resource:   dependency.PluralName,
+			}
+
+			listResourcesGroup = append(listResourcesGroup, rg)
+		}
+	}
+	slog.Info("Fetching this GroupVersionKind")
+	for _, rg := range listResourcesGroup {
+		str := "- " + rg.APIVersion + "/" + rg.Kind + "/"
+		slog.Info(str)
+	}
+
+	// --- Step 3: lazy fetching ---
+	slog.Info("fetching cluster resources using lazy fetch...")
+
+	resources, err := kubeClient.FetchSelectedWithInheritance(listResourcesGroup, ctx)
+	if err != nil {
+		slog.Error("failed to fetch cluster resources", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("fetched cluster resources", "count", len(resources), "resources", len(resources))
+
+	graph := cluster.NewGraph()
+	graph.Build(resources)
+	slog.Info("graph built", "nodes", len(graph.GetNodes()))
+
+	//graph.PrintGraphviz()
 
 	// --- Step 4: run analysis ---
 	smellWriter := kube.NewSmellWriter(
