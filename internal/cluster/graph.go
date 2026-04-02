@@ -59,21 +59,42 @@ func (g *Graph) GetNodes() map[types.UID]*unstructured.Unstructured {
 	return g.nodes
 }
 
+func (g *Graph) GetEdges() map[types.UID][]edge {
+	return g.edges
+}
+
+func (g *Graph) isParentOwner(child, parent types.UID) bool {
+	owned, exists := g.nodes[child]
+	if !exists || owned == nil {
+		return false
+	}
+
+	for _, r := range owned.GetOwnerReferences() {
+		// direct owner
+		if r.UID == parent {
+			return true
+		}
+
+		if g.isParentOwner(r.UID, parent) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // link checks for edges between nodes in Graph based on the Kubernetes ownership mechanism
 func (g *Graph) link() {
 	slog.Info("Linking graph using ownership")
-	for fromUID, fromNode := range g.nodes {
-		for toUID, toNode := range g.nodes {
-			if fromUID == toUID {
-				continue
-			}
-			owners := toNode.GetOwnerReferences()
-			for _, owner := range owners {
-				if owner.UID == fromUID {
-					reason := fromNode.GetKind() + " owns " + toNode.GetKind()
-					g.addEdge(fromUID, toUID, reason)
-					break
-				}
+
+	for toUID, toNode := range g.nodes {
+		owners := toNode.GetOwnerReferences()
+
+		for _, owner := range owners {
+			// Se l'owner esiste nei nostri nodi, creiamo l'arco
+			if fromNode, exists := g.nodes[owner.UID]; exists {
+				reason := fromNode.GetKind() + " owns " + toNode.GetKind()
+				g.addEdge(owner.UID, toUID, reason)
 			}
 		}
 	}
