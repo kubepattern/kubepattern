@@ -3,9 +3,8 @@ package kube
 import (
 	"context"
 	"fmt"
-	"log/slog"
-
 	"kubepattern-go/internal/analysis"
+	"log/slog"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,14 +30,16 @@ type SmellWriter struct {
 	client          *Client
 	saveInNamespace bool
 	targetNamespace string
+	scanId          string
 }
 
 // NewSmellWriter creates a SmellWriter using the existing kube.Client and namespace preferences.
-func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace string) *SmellWriter {
+func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace, scanId string) *SmellWriter {
 	return &SmellWriter{
 		client:          client,
 		saveInNamespace: saveInNamespace,
 		targetNamespace: targetNamespace,
+		scanId:          scanId,
 	}
 }
 
@@ -71,6 +72,7 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// 2a. Smell does not exist yet — create it.
+			obj.SetLabels(map[string]string{"lastScan": w.scanId})
 			_, err = dynClient.Resource(smellGVR).Namespace(namespace).Create(ctx, obj, metav1.CreateOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to create smell %q: %w", smell.CRDName, err)
@@ -84,12 +86,45 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	// 3. Smell already exists — set the required resourceVersion before updating
 	obj.SetResourceVersion(existing.GetResourceVersion())
 
+	labels := existing.GetLabels()
+	if labels == nil {
+		labels = map[string]string{}
+	}
+
+	labels["lastScan"] = w.scanId
+	obj.SetLabels(labels)
+
 	_, err = dynClient.Resource(smellGVR).Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update smell %q: %w", smell.CRDName, err)
 	}
 	slog.Info("Writing smell complete.")
 	return nil
+}
+
+// CleanOldScans removes smells that have been solved or their pattern is no longer installed
+func (w *SmellWriter) CleanOldScans() {
+	res := w.client.dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    smellGroup,
+		Version:  smellVersion,
+		Resource: smellResource,
+	})
+
+	list, err := res.List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return
+	}
+
+	for _, obj := range list.Items {
+		labels := obj.GetLabels()
+
+		if labels == nil || labels["lastScan"] != w.scanId {
+			err := res.Namespace(obj.GetNamespace()).Delete(context.Background(), obj.GetName(), metav1.DeleteOptions{})
+			if err != nil {
+				slog.Error("Failed to delete old smell", "name", obj.GetName(), "error", err)
+			}
+		}
+	}
 }
 
 // toUnstructured converts a Smell into an unstructured Kubernetes object

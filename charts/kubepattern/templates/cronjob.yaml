@@ -16,6 +16,19 @@ spec:
         spec:
           serviceAccountName: {{ .Release.Name }}-sa
           restartPolicy: OnFailure
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{ toYaml . | nindent 10 }}
+            {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{ toYaml . | nindent 10 }}
+            {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{ toYaml . | nindent 10 }}
+            {{- end }}
+          activeDeadlineSeconds: 1800 # 30-minute limit for complete analysis
           containers:
             - name: kubepattern-analyzer
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -24,6 +37,13 @@ spec:
                 - name: config-volume
                   mountPath: /app/config
                   readOnly: true
+              resources:
+                requests:
+                  cpu: {{ .Values.resources.requests.cpu }}
+                  memory: {{ .Values.resources.requests.memory }}
+                limits:
+                  cpu: {{ .Values.resources.limits.cpu }}
+                  memory: {{ .Values.resources.limits.memory }}
           volumes:
             - name: config-volume
               configMap:

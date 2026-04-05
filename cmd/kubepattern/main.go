@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -132,12 +133,13 @@ func main() {
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
 	//graph.PrintGraphviz()
-
+	id := string(uuid.NewUUID())
 	// --- Step 4: run analysis ---
 	smellWriter := kube.NewSmellWriter(
 		kubeClient,
 		appCfg.Analysis.SaveInNamespace,
 		appCfg.Analysis.TargetNamespace,
+		id,
 	)
 
 	engine := analysis.NewEngine(graph, smellWriter)
