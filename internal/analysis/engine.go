@@ -22,6 +22,7 @@ type Engine struct {
 // SmellWriter is the interface that report/ will implement to persist smells on the cluster.
 type SmellWriter interface {
 	Write(ctx context.Context, smell Smell) error
+	CleanOldScans()
 }
 
 // NewEngine creates an Engine with the given graph and smell writer.
@@ -95,6 +96,9 @@ func (e *Engine) RunAll(ctx context.Context, patterns []*linter.PatternAsCode) e
 	if len(errs) > 0 {
 		return fmt.Errorf("analysis completed with errors:\n%s", strings.Join(errs, "\n"))
 	}
+
+	e.writer.CleanOldScans()
+
 	return nil
 }
 
