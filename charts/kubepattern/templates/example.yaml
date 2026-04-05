@@ -3,18 +3,19 @@
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
-  name: test-pod
+  name: test-configmap
   labels:
     app.kubernetes.io/name: kubepattern-example
 spec:
-  displayName: Test Pod
-  category: Architecture
+  displayName: Test ConfigMap
+  category: KubePattern Tests
   severity: HIGH
-  message: "Pod {{ "{{" }}target.metadata.name{{ "}}" }} in namespace {{ "{{" }}target.metadata.namespace{{ "}}" }} has Pattern Test label."
+  message: "ConfigMap {{ "{{" }}target.metadata.name{{ "}}" }} in namespace {{ "{{" }}target.metadata.namespace{{ "}}" }} has Pattern Test label."
 
   target:
-    kind: Pod
+    kind: ConfigMap
     apiVersion: v1
+    plural: configmaps
     filters:
       matchAll:
         - path: "metadata.labels.kubepattern"
@@ -24,15 +25,10 @@ spec:
 ---
 # 2. Example Pod that triggers the Pattern
 apiVersion: v1
-kind: Pod
+kind: ConfigMap
 metadata:
-  name: nginx-kubepattern-test
+  name: kubepattern-test-configmap
   namespace: {{ .Release.Namespace }}
   labels:
     kubepattern: test
-    run: nginx
-spec:
-  containers:
-    - image: nginx:latest
-      name: nginx
 {{- end }}
