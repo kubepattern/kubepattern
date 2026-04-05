@@ -85,7 +85,8 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 
 	// 3. Smell already exists — set the required resourceVersion before updating
 	obj.SetResourceVersion(existing.GetResourceVersion())
-	labels := obj.GetLabels()
+
+	labels := existing.GetLabels()
 	if labels == nil {
 		labels = map[string]string{}
 	}
@@ -99,6 +100,31 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	}
 	slog.Info("Writing smell complete.")
 	return nil
+}
+
+// CleanOldScans removes smells that have been solved or their pattern is no longer installed
+func (w *SmellWriter) CleanOldScans() {
+	res := w.client.dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    smellGroup,
+		Version:  smellVersion,
+		Resource: smellResource,
+	})
+
+	list, err := res.List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return
+	}
+
+	for _, obj := range list.Items {
+		labels := obj.GetLabels()
+
+		if labels == nil || labels["lastScan"] != w.scanId {
+			err := res.Namespace(obj.GetNamespace()).Delete(context.Background(), obj.GetName(), metav1.DeleteOptions{})
+			if err != nil {
+				slog.Error("Failed to delete old smell", "name", obj.GetName(), "error", err)
+			}
+		}
+	}
 }
 
 // toUnstructured converts a Smell into an unstructured Kubernetes object
@@ -131,29 +157,5 @@ func toUnstructured(smell analysis.Smell, namespace string) *unstructured.Unstru
 				},
 			},
 		},
-	}
-}
-
-func (w *SmellWriter) CleanOldScans() {
-	res := w.client.dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    smellGroup,
-		Version:  smellVersion,
-		Resource: smellResource,
-	})
-
-	list, err := res.List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return
-	}
-
-	for _, obj := range list.Items {
-		labels := obj.GetLabels()
-
-		if labels == nil || labels["lastScan"] != w.scanId {
-			err := res.Namespace(obj.GetNamespace()).Delete(context.Background(), obj.GetName(), metav1.DeleteOptions{})
-			if err != nil {
-				slog.Error("Failed to delete old smell", "name", obj.GetName(), "error", err)
-			}
-		}
 	}
 }
