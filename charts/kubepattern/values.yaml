@@ -2,7 +2,7 @@
 image:
   repository: ghcr.io/kubepattern/kubepattern
   pullPolicy: IfNotPresent
-  tag: 0.0.4
+  tag: 0.0.5
 # CronJob scheduling configuration
 schedule: "0 * * * *" # Runs every hour by default
 suspend: false        # Set to true to temporarily suspend the CronJob
