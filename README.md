@@ -1,7 +1,7 @@
-<div>
+<div align="center">
   <img src="https://kubepattern.dev/img/kubepattern.svg" alt="KubePattern Logo" width="200" height="auto">
   <h1>KubePattern</h1>
-  
+
   <p>
     <a href="https://kubernetes.io/">
       <img src="https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white" alt="Kubernetes">
@@ -16,10 +16,10 @@
       <img src="https://img.shields.io/badge/Artifact%20Hub-417598?logo=artifacthub&logoColor=white" alt="Artifact Hub">
     </a>
   </p>
-    <br>
+  <br>
   <p>
     <strong>KubePattern</strong> is a cloud-native framework designed spot violations between Kubernetes Custom Resources interactions.
-</p>
+  </p>
 </div>
 
 ## Architecture & Mechanics
