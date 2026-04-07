@@ -1,4 +1,4 @@
-<div align="center">
+<div>
   <img src="https://kubepattern.dev/img/kubepattern.svg" alt="KubePattern Logo" width="200" height="auto">
   <h1>KubePattern</h1>
   
@@ -12,8 +12,11 @@
     <a href="https://kubepattern.dev/docs">
       <img src="https://img.shields.io/badge/Docs-Read_Latest-orange?style=flat&logo=read-the-docs&logoColor=white" alt="Documentation">
     </a>
+    <a href="https://artifacthub.io/packages/helm/kubepattern/kubepattern">
+      <img src="https://img.shields.io/badge/Artifact%20Hub-417598?logo=artifacthub&logoColor=white" alt="Artifact Hub">
+    </a>
   </p>
-
+    <br>
   <p>
     <strong>KubePattern</strong> is a cloud-native framework designed spot violations between Kubernetes Custom Resources interactions.
 </p>
