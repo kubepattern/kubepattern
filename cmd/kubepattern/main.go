@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -91,49 +92,61 @@ func main() {
 		os.Exit(0)
 	}
 
-	var listResourcesGroup []kube.Resource
+	slog.Info("fetching cluster resources using lazy fetch...")
+
+	var validPatterns []*linter.PatternAsCode
+	var allResources []unstructured.Unstructured
 
 	for _, pattern := range patterns {
-		rg := kube.Resource{
+		var reqResources []kube.Resource
+
+		reqResources = append(reqResources, kube.Resource{
 			APIVersion: pattern.Spec.Target.APIVersion,
 			Kind:       pattern.Spec.Target.Kind,
 			Resource:   pattern.Spec.Target.PluralName,
-		}
-		listResourcesGroup = append(listResourcesGroup, rg)
+		})
 
 		for _, dependency := range pattern.Spec.Dependencies {
-			rg := kube.Resource{
+			reqResources = append(reqResources, kube.Resource{
 				APIVersion: dependency.APIVersion,
 				Kind:       dependency.Kind,
 				Resource:   dependency.PluralName,
-			}
-
-			listResourcesGroup = append(listResourcesGroup, rg)
+			})
 		}
-	}
-	slog.Info("Fetching this GroupVersionKind")
-	for _, rg := range listResourcesGroup {
-		str := "- " + rg.APIVersion + "/" + rg.Kind + "/"
-		slog.Info(str)
+
+		res, err := kubeClient.FetchSelectedWithInheritance(reqResources, ctx)
+
+		if len(res) > 0 {
+			allResources = append(allResources, res...)
+		}
+
+		if err != nil {
+			slog.Warn("skipping pattern due to resource fetch failure (e.g. missing RBAC)",
+				"pattern", pattern.Metadata.Name,
+				"error", err)
+			continue
+		}
+
+		validPatterns = append(validPatterns, pattern)
+
+		slog.Info("resources fetched for pattern", "pattern", pattern.Metadata.Name)
 	}
 
-	// --- Step 3: lazy fetching ---
-	slog.Info("fetching cluster resources using lazy fetch...")
+	patterns = validPatterns
 
-	resources, err := kubeClient.FetchSelectedWithInheritance(listResourcesGroup, ctx)
-	if err != nil {
-		slog.Error("failed to fetch cluster resources", "error", err)
-		os.Exit(1)
+	if len(patterns) == 0 {
+		slog.Warn("no patterns can be evaluated due to missing resource access, exiting")
+		os.Exit(0)
 	}
 
-	slog.Info("fetched cluster resources", "count", len(resources), "resources", len(resources))
+	slog.Info("fetched cluster resources", "count", len(allResources))
 
 	graph := cluster.NewGraph()
-	graph.Build(resources)
+	graph.Build(allResources)
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
-	//graph.PrintGraphviz()
 	id := string(uuid.NewUUID())
+
 	// --- Step 4: run analysis ---
 	smellWriter := kube.NewSmellWriter(
 		kubeClient,

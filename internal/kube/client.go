@@ -226,7 +226,7 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 
 		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 		if err != nil {
-			return nil, err
+			return allObjects, err
 		}
 
 		allObjects = append(allObjects, list.Items...)
@@ -257,7 +257,7 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 		if len(inherited) > 0 {
 			fetched, err := c.FetchSelectedWithInheritance(inherited, ctx)
 			if err != nil {
-				return nil, err
+				return allObjects, err
 			}
 			allObjects = append(allObjects, fetched...)
 		}
