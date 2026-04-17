@@ -16,6 +16,10 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
+        - name: Severity
+          type: string
+          description: "Smell severity (LOW, MEDIUM, HIGH, CRITICAL)"
+          jsonPath: .spec.severity
         - name: Target Kind
           type: string
           description: "Kind of the target resource"
@@ -28,14 +32,17 @@ spec:
           type: string
           description: "Namespace of the target resource"
           jsonPath: .spec.target.namespace
+          priority: 1
+        - name: Message
+          type: string
+          description: "Smell message"
+          jsonPath: .spec.message
+          priority: 1
         - name: Suppressed
           type: boolean
-          description: "Is the smell suppressed"
+          description: "Indicates if the smell is ignored"
           jsonPath: .spec.suppress
-        - name: Severity
-          type: string
-          description: "Smell severity"
-          jsonPath: .spec.severity
+          priority: 1
       schema:
         openAPIV3Schema:
           type: object
@@ -60,16 +67,12 @@ spec:
                   properties:
                     name:
                       type: string
-                      description: "Pattern name that generated this smell."
                     version:
                       type: string
-                      description: "Pattern version."
                 message:
                   type: string
-                  description: "Smell warning."
                 severity:
                   type: string
-                  description: "Smell severity (LOW, MEDIUM, HIGH, CRITICAL)."
                   enum:
                     - LOW
                     - MEDIUM
@@ -78,6 +81,7 @@ spec:
                 suppress:
                   type: boolean
                   description: "Resource to suppress (false positives)"
+                  default: false
                 target:
                   type: object
                   required:
@@ -88,16 +92,11 @@ spec:
                   properties:
                     apiVersion:
                       type: string
-                      description: "Kubernetes resource API version."
                     kind:
                       type: string
-                      description: "Kubernetes resource kind."
                     name:
                       type: string
-                      description: "Kubernetes resource name."
                     namespace:
                       type: string
-                      description: "Kubernetes resource namespace."
                     uid:
                       type: string
-                      description: "Kubernetes resource UID."

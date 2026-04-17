@@ -82,10 +82,11 @@ type Spec struct {
 }
 
 type Target struct {
-	Kind       string  `yaml:"kind"`
-	APIVersion string  `yaml:"apiVersion"`
-	PluralName string  `yaml:"plural"`
-	Filters    Filters `yaml:"filters,omitempty"`
+	Kind        string  `yaml:"kind"`
+	APIVersion  string  `yaml:"apiVersion"`
+	PluralName  string  `yaml:"plural"`
+	Filters     Filters `yaml:"filters,omitempty"`
+	EmitOnEmpty bool    `yaml:"emitOnEmpty"`
 }
 
 type Dependency struct {

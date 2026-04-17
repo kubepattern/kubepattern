@@ -16,7 +16,7 @@ const (
 	smellGroup       = "kubepattern.dev"
 	smellVersion     = "v1"
 	smellResource    = "smells"
-	defaultNamespace = "kubepattern-analysis-ns"
+	defaultNamespace = "default"
 )
 
 var smellGVR = schema.GroupVersionResource{
