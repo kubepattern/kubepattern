@@ -16,14 +16,6 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - name: Category
-          type: string
-          description: "Smell category"
-          jsonPath: .spec.category
-        - name: Severity
-          type: string
-          description: "Smell severity"
-          jsonPath: .spec.severity
         - name: Target Kind
           type: string
           description: "Kind of the target resource"
@@ -32,10 +24,18 @@ spec:
           type: string
           description: "Name of the target resource"
           jsonPath: .spec.target.name
+        - name: Target Namespace
+          type: string
+          description: "Namespace of the target resource"
+          jsonPath: .spec.target.namespace
         - name: Suppressed
           type: boolean
           description: "Is the smell suppressed"
           jsonPath: .spec.suppress
+        - name: Severity
+          type: string
+          description: "Smell severity"
+          jsonPath: .spec.severity
       schema:
         openAPIV3Schema:
           type: object
@@ -51,10 +51,10 @@ spec:
                   description: "Smell name"
                 category:
                   type: string
-                  description: "Smell category (e.g., Security, Performance, Maintainability)."
+                  description: "Smell category"
                 reference:
                   type: string
-                  description: "Link to Smell docs and remediation Pattern."
+                  description: "Smell Docs"
                 pattern:
                   type: object
                   properties:

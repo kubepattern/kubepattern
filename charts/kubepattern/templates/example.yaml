@@ -11,7 +11,7 @@ spec:
   category: KubePattern Tests
   severity: HIGH
   message: "ConfigMap {{ "{{" }}target.metadata.name{{ "}}" }} in namespace {{ "{{" }}target.metadata.namespace{{ "}}" }} has Pattern Test label."
-
+  reference: "https://kubepattern.dev/docs/core/patterns"
   target:
     kind: ConfigMap
     apiVersion: v1
