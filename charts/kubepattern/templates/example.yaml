@@ -3,32 +3,27 @@
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
-  name: test-configmap
+  name: no-pattern-applied
   labels:
     app.kubernetes.io/name: kubepattern-example
 spec:
-  displayName: Test ConfigMap
-  category: KubePattern Tests
-  severity: HIGH
-  message: "ConfigMap {{ "{{" }}target.metadata.name{{ "}}" }} in namespace {{ "{{" }}target.metadata.namespace{{ "}}" }} has Pattern Test label."
+  displayName: No Patterns applied
+  category: KubePattern
+  severity: LOW
+  message: "No Patterns applied!"
   reference: "https://kubepattern.dev/docs/core/patterns"
   target:
-    kind: ConfigMap
-    apiVersion: v1
-    plural: configmaps
+    kind: Pattern
+    apiVersion: kubepattern.dev/v1
+    plural: patterns
     filters:
-      matchAll:
-        - path: "metadata.labels.kubepattern"
+      matchNone:
+        - path: "metadata.name"
           operator: EQUALS
           values:
-            - test
----
-# 2. Example Pod that triggers the Pattern
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kubepattern-test-configmap
-  namespace: {{ .Release.Namespace }}
-  labels:
-    kubepattern: test
-{{- end }}
+          - "no-pattern-applied"
+      matchAny:
+        - path: "kind"
+          operator: EXISTS
+          value: []
+{{- end}}
