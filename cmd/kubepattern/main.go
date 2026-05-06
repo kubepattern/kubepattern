@@ -150,8 +150,8 @@ func main() {
 	// --- Step 4: run analysis ---
 	smellWriter := kube.NewSmellWriter(
 		kubeClient,
-		appCfg.Analysis.SaveInNamespace,
-		appCfg.Analysis.TargetNamespace,
+		appCfg.SaveInNamespace,
+		appCfg.TargetNamespace,
 		id,
 	)
 

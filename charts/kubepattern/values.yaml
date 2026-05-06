@@ -29,7 +29,7 @@ RBAC:
 
 analysis:
   # Save the smells in the namespace of the involved resources
-  saveInNamespace: false
+  saveInNamespace: true
   # Default output namespace if saveInNamespace == false or for cluster-scoped resources
   targetNamespace: kubepattern-analysis-ns
 
