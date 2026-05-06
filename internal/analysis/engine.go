@@ -53,7 +53,20 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 	)
 
 	if len(targets) == 0 {
-		slog.Info("no target candidates found, skipping pattern", "pattern", pattern.Metadata.Name)
+		if !pattern.Spec.Target.EmitOnEmpty {
+			slog.Info("no target candidates found, skipping pattern", "pattern", pattern.Metadata.Name)
+			return nil
+		}
+
+		// Absence Patterns
+		slog.Info("no targets found, emitting synthetic smell", "pattern", pattern.Metadata.Name)
+		smell := buildSyntheticSmell(pattern)
+		if err := e.writer.Write(ctx, smell); err != nil {
+			slog.Error("failed to write synthetic smell",
+				"pattern", pattern.Metadata.Name,
+				"error", err,
+			)
+		}
 		return nil
 	}
 
@@ -142,6 +155,25 @@ func buildSmell(pattern *linter.PatternAsCode, target *unstructured.Unstructured
 			Name:       target.GetName(),
 			Namespace:  target.GetNamespace(),
 			UID:        string(target.GetUID()),
+		},
+	}
+}
+
+// buildSyntheticSmell builds a Smell without a real target,
+// invoked when emitOnEmpty is true, and there are no suitable resources in Cluster.
+func buildSyntheticSmell(pattern *linter.PatternAsCode) Smell {
+	return Smell{
+		CRDName:        fmt.Sprintf("%s-empty", pattern.Metadata.Name),
+		PatternName:    pattern.Metadata.Name,
+		PatternVersion: pattern.APIVersion,
+		Name:           pattern.Metadata.Name,
+		Category:       pattern.Spec.Category,
+		Severity:       pattern.Spec.Severity,
+		Message:        pattern.Spec.Message,
+		Reference:      pattern.Spec.Reference,
+		Suppress:       false,
+		Target: SmellTarget{
+			Kind: pattern.Spec.Target.Kind,
 		},
 	}
 }

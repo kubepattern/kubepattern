@@ -13,10 +13,9 @@ import (
 )
 
 const (
-	smellGroup       = "kubepattern.dev"
-	smellVersion     = "v1"
-	smellResource    = "smells"
-	defaultNamespace = "kubepattern-analysis-ns"
+	smellGroup    = "kubepattern.dev"
+	smellVersion  = "v1"
+	smellResource = "smells"
 )
 
 var smellGVR = schema.GroupVersionResource{
@@ -48,6 +47,7 @@ func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace, scanI
 func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	var namespace string
 	slog.Info("Writing smell.")
+
 	if w.saveInNamespace {
 		namespace = smell.Target.Namespace
 
@@ -57,10 +57,6 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 		}
 	} else {
 		namespace = w.targetNamespace
-	}
-
-	if namespace == "" {
-		namespace = defaultNamespace
 	}
 
 	obj := toUnstructured(smell, namespace)

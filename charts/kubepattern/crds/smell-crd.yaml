@@ -16,13 +16,9 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - name: Category
-          type: string
-          description: "Smell category"
-          jsonPath: .spec.category
         - name: Severity
           type: string
-          description: "Smell severity"
+          description: "Smell severity (LOW, MEDIUM, HIGH, CRITICAL)"
           jsonPath: .spec.severity
         - name: Target Kind
           type: string
@@ -32,10 +28,21 @@ spec:
           type: string
           description: "Name of the target resource"
           jsonPath: .spec.target.name
+        - name: Target Namespace
+          type: string
+          description: "Namespace of the target resource"
+          jsonPath: .spec.target.namespace
+          priority: 1
+        - name: Message
+          type: string
+          description: "Smell message"
+          jsonPath: .spec.message
+          priority: 1
         - name: Suppressed
           type: boolean
-          description: "Is the smell suppressed"
+          description: "Indicates if the smell is ignored"
           jsonPath: .spec.suppress
+          priority: 1
       schema:
         openAPIV3Schema:
           type: object
@@ -51,25 +58,21 @@ spec:
                   description: "Smell name"
                 category:
                   type: string
-                  description: "Smell category (e.g., Security, Performance, Maintainability)."
+                  description: "Smell category"
                 reference:
                   type: string
-                  description: "Link to Smell docs and remediation Pattern."
+                  description: "Smell Docs"
                 pattern:
                   type: object
                   properties:
                     name:
                       type: string
-                      description: "Pattern name that generated this smell."
                     version:
                       type: string
-                      description: "Pattern version."
                 message:
                   type: string
-                  description: "Smell warning."
                 severity:
                   type: string
-                  description: "Smell severity (LOW, MEDIUM, HIGH, CRITICAL)."
                   enum:
                     - LOW
                     - MEDIUM
@@ -78,6 +81,7 @@ spec:
                 suppress:
                   type: boolean
                   description: "Resource to suppress (false positives)"
+                  default: false
                 target:
                   type: object
                   required:
@@ -88,16 +92,11 @@ spec:
                   properties:
                     apiVersion:
                       type: string
-                      description: "Kubernetes resource API version."
                     kind:
                       type: string
-                      description: "Kubernetes resource kind."
                     name:
                       type: string
-                      description: "Kubernetes resource name."
                     namespace:
                       type: string
-                      description: "Kubernetes resource namespace."
                     uid:
                       type: string
-                      description: "Kubernetes resource UID."
