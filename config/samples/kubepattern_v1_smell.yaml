@@ -1,0 +1,9 @@
+apiVersion: kubepattern.kubepattern.dev/v1
+kind: Smell
+metadata:
+  labels:
+    app.kubernetes.io/name: kubepattern-go
+    app.kubernetes.io/managed-by: kustomize
+  name: smell-sample
+spec:
+  # TODO(user): Add fields here
