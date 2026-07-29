@@ -1,4 +1,4 @@
-apiVersion: kubepattern.kubepattern.dev/v1
+apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
   labels:
@@ -6,4 +6,21 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: pattern-sample
 spec:
-  # TODO(user): Add fields here
+  displayName: No Patterns applied
+  category: KubePattern
+  severity: LOW
+  message: "No Patterns applied!"
+  reference: "https://kubepattern.dev/docs/core/patterns"
+  target:
+    kind: Pattern
+    apiVersion: kubepattern.dev/v1
+    plural: patterns
+    filters:
+      matchNone:
+        - path: "metadata.name"
+          operator: EQUALS
+          values:
+            - "pattern-sample"
+      matchAny:
+        - path: "kind"
+          operator: EXISTS

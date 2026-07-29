@@ -1,0 +1,656 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.21.0
+  name: patterns.kubepattern.dev
+spec:
+  group: kubepattern.dev
+  names:
+    kind: Pattern
+    listKind: PatternList
+    plural: patterns
+    shortNames:
+    - pat
+    singular: pattern
+  scope: Cluster
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Pattern is the Schema for the patterns API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of Pattern
+            properties:
+              category:
+                description: category groups related patterns (e.g. "zombie-resources",
+                  "misconfiguration").
+                minLength: 1
+                type: string
+              dependencies:
+                description: dependencies are the related resource kinds used to evaluate
+                  relationships.
+                items:
+                  description: Dependency identifies a related resource kind used
+                    to evaluate Relationships.
+                  properties:
+                    apiVersion:
+                      description: apiVersion is the group/version of the dependency
+                        resource (e.g. apps/v1).
+                      pattern: ^[a-zA-Z0-9.-]+/v[a-zA-Z0-9]+$
+                      type: string
+                    filters:
+                      description: filters narrow which dependency candidates are
+                        evaluated.
+                      properties:
+                        matchAll:
+                          description: matchAll requires every condition to hold (AND).
+                          items:
+                            description: FilterCondition is a single predicate evaluated
+                              against a candidate resource.
+                            properties:
+                              operator:
+                                description: operator is the comparison applied at
+                                  path.
+                                enum:
+                                - EQUALS
+                                - IS_EMPTY
+                                - EXISTS
+                                - GREATER_THAN
+                                - GREATER_OR_EQUAL
+                                - LESS_THAN
+                                - LESS_OR_EQUAL
+                                - ARRAY_SIZE_EQUALS
+                                - ARRAY_SIZE_GREATER_THAN
+                                - ARRAY_SIZE_GREATER_OR_EQUAL
+                                - ARRAY_SIZE_LESS_THAN
+                                - ARRAY_SIZE_LESS_OR_EQUAL
+                                type: string
+                              path:
+                                description: path is a dot-separated path into the
+                                  candidate resource (e.g. spec.replicas).
+                                minLength: 1
+                                type: string
+                              values:
+                                description: |-
+                                  values are the operands compared against path. Required for every operator
+                                  except EXISTS and IS_EMPTY, which must not set it.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - operator
+                            - path
+                            type: object
+                          type: array
+                        matchAny:
+                          description: matchAny requires at least one condition to
+                            hold (OR).
+                          items:
+                            description: FilterCondition is a single predicate evaluated
+                              against a candidate resource.
+                            properties:
+                              operator:
+                                description: operator is the comparison applied at
+                                  path.
+                                enum:
+                                - EQUALS
+                                - IS_EMPTY
+                                - EXISTS
+                                - GREATER_THAN
+                                - GREATER_OR_EQUAL
+                                - LESS_THAN
+                                - LESS_OR_EQUAL
+                                - ARRAY_SIZE_EQUALS
+                                - ARRAY_SIZE_GREATER_THAN
+                                - ARRAY_SIZE_GREATER_OR_EQUAL
+                                - ARRAY_SIZE_LESS_THAN
+                                - ARRAY_SIZE_LESS_OR_EQUAL
+                                type: string
+                              path:
+                                description: path is a dot-separated path into the
+                                  candidate resource (e.g. spec.replicas).
+                                minLength: 1
+                                type: string
+                              values:
+                                description: |-
+                                  values are the operands compared against path. Required for every operator
+                                  except EXISTS and IS_EMPTY, which must not set it.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - operator
+                            - path
+                            type: object
+                          type: array
+                        matchNone:
+                          description: matchNone requires no condition to hold (NOT).
+                          items:
+                            description: FilterCondition is a single predicate evaluated
+                              against a candidate resource.
+                            properties:
+                              operator:
+                                description: operator is the comparison applied at
+                                  path.
+                                enum:
+                                - EQUALS
+                                - IS_EMPTY
+                                - EXISTS
+                                - GREATER_THAN
+                                - GREATER_OR_EQUAL
+                                - LESS_THAN
+                                - LESS_OR_EQUAL
+                                - ARRAY_SIZE_EQUALS
+                                - ARRAY_SIZE_GREATER_THAN
+                                - ARRAY_SIZE_GREATER_OR_EQUAL
+                                - ARRAY_SIZE_LESS_THAN
+                                - ARRAY_SIZE_LESS_OR_EQUAL
+                                type: string
+                              path:
+                                description: path is a dot-separated path into the
+                                  candidate resource (e.g. spec.replicas).
+                                minLength: 1
+                                type: string
+                              values:
+                                description: |-
+                                  values are the operands compared against path. Required for every operator
+                                  except EXISTS and IS_EMPTY, which must not set it.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - operator
+                            - path
+                            type: object
+                          type: array
+                      type: object
+                    id:
+                      description: |-
+                        id uniquely identifies this dependency within the pattern; referenced by
+                        relationships.*.with.
+                      minLength: 1
+                      type: string
+                    kind:
+                      description: kind is the Kubernetes Kind of the dependency resource.
+                      minLength: 1
+                      type: string
+                    plural:
+                      description: plural is the plural resource name used to list
+                        the dependency (e.g. services).
+                      minLength: 1
+                      type: string
+                  required:
+                  - apiVersion
+                  - id
+                  - kind
+                  - plural
+                  type: object
+                type: array
+              displayName:
+                description: displayName is the human-readable name of the pattern.
+                minLength: 1
+                type: string
+              message:
+                description: |-
+                  message is the templated text used for smells emitted by this pattern.
+                  Supports {{target.metadata.name}}, {{target.metadata.namespace}},
+                  {{target.metadata.uid}}, {{target.kind}} and {{target.apiVersion}} placeholders.
+                minLength: 1
+                type: string
+              reference:
+                description: reference points to external documentation for this pattern.
+                type: string
+              relationships:
+                description: |-
+                  relationships constrain how dependencies must relate to the target for a
+                  smell to be emitted.
+                properties:
+                  matchAll:
+                    description: matchAll requires every relationship to hold (AND).
+                    items:
+                      description: Relationship constrains how a dependency must relate
+                        to the target resource.
+                      properties:
+                        criteria:
+                          description: |-
+                            criteria is required when type is "custom", and must be empty for the
+                            standardized relationship types (owns, ownedBy, selects, selectedBy).
+                          items:
+                            description: |-
+                              Criteria is a single predicate used by a "custom" Relationship to compare a
+                              target resource against a dependency candidate.
+                            properties:
+                              dependencyPath:
+                                description: dependencyPath is a dot-separated path
+                                  into the dependency candidate.
+                                minLength: 1
+                                type: string
+                              operator:
+                                description: operator is the comparison applied between
+                                  targetPath and dependencyPath.
+                                enum:
+                                - EQUALS
+                                - CONTAINS
+                                - LABEL_SELECTOR
+                                type: string
+                              targetPath:
+                                description: targetPath is a dot-separated path into
+                                  the target resource.
+                                minLength: 1
+                                type: string
+                            required:
+                            - dependencyPath
+                            - operator
+                            - targetPath
+                            type: object
+                          type: array
+                        type:
+                          description: |-
+                            type is the kind of relationship checked against the graph, or "custom"
+                            to evaluate criteria directly.
+                          enum:
+                          - custom
+                          - owns
+                          - ownedBy
+                          - selects
+                          - selectedBy
+                          type: string
+                        with:
+                          description: with is the id of the Dependency this relationship
+                            applies to.
+                          minLength: 1
+                          type: string
+                      required:
+                      - type
+                      - with
+                      type: object
+                    type: array
+                  matchAny:
+                    description: matchAny requires at least one relationship to hold
+                      (OR).
+                    items:
+                      description: Relationship constrains how a dependency must relate
+                        to the target resource.
+                      properties:
+                        criteria:
+                          description: |-
+                            criteria is required when type is "custom", and must be empty for the
+                            standardized relationship types (owns, ownedBy, selects, selectedBy).
+                          items:
+                            description: |-
+                              Criteria is a single predicate used by a "custom" Relationship to compare a
+                              target resource against a dependency candidate.
+                            properties:
+                              dependencyPath:
+                                description: dependencyPath is a dot-separated path
+                                  into the dependency candidate.
+                                minLength: 1
+                                type: string
+                              operator:
+                                description: operator is the comparison applied between
+                                  targetPath and dependencyPath.
+                                enum:
+                                - EQUALS
+                                - CONTAINS
+                                - LABEL_SELECTOR
+                                type: string
+                              targetPath:
+                                description: targetPath is a dot-separated path into
+                                  the target resource.
+                                minLength: 1
+                                type: string
+                            required:
+                            - dependencyPath
+                            - operator
+                            - targetPath
+                            type: object
+                          type: array
+                        type:
+                          description: |-
+                            type is the kind of relationship checked against the graph, or "custom"
+                            to evaluate criteria directly.
+                          enum:
+                          - custom
+                          - owns
+                          - ownedBy
+                          - selects
+                          - selectedBy
+                          type: string
+                        with:
+                          description: with is the id of the Dependency this relationship
+                            applies to.
+                          minLength: 1
+                          type: string
+                      required:
+                      - type
+                      - with
+                      type: object
+                    type: array
+                  matchNone:
+                    description: matchNone requires no relationship to hold (NOT).
+                    items:
+                      description: Relationship constrains how a dependency must relate
+                        to the target resource.
+                      properties:
+                        criteria:
+                          description: |-
+                            criteria is required when type is "custom", and must be empty for the
+                            standardized relationship types (owns, ownedBy, selects, selectedBy).
+                          items:
+                            description: |-
+                              Criteria is a single predicate used by a "custom" Relationship to compare a
+                              target resource against a dependency candidate.
+                            properties:
+                              dependencyPath:
+                                description: dependencyPath is a dot-separated path
+                                  into the dependency candidate.
+                                minLength: 1
+                                type: string
+                              operator:
+                                description: operator is the comparison applied between
+                                  targetPath and dependencyPath.
+                                enum:
+                                - EQUALS
+                                - CONTAINS
+                                - LABEL_SELECTOR
+                                type: string
+                              targetPath:
+                                description: targetPath is a dot-separated path into
+                                  the target resource.
+                                minLength: 1
+                                type: string
+                            required:
+                            - dependencyPath
+                            - operator
+                            - targetPath
+                            type: object
+                          type: array
+                        type:
+                          description: |-
+                            type is the kind of relationship checked against the graph, or "custom"
+                            to evaluate criteria directly.
+                          enum:
+                          - custom
+                          - owns
+                          - ownedBy
+                          - selects
+                          - selectedBy
+                          type: string
+                        with:
+                          description: with is the id of the Dependency this relationship
+                            applies to.
+                          minLength: 1
+                          type: string
+                      required:
+                      - type
+                      - with
+                      type: object
+                    type: array
+                type: object
+              severity:
+                description: severity is the impact level assigned to smells emitted
+                  by this pattern.
+                enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+                - CRITICAL
+                type: string
+              target:
+                description: target identifies the resource kind this pattern evaluates.
+                properties:
+                  apiVersion:
+                    description: apiVersion is the group/version of the target resource
+                      (e.g. apps/v1).
+                    pattern: ^[a-zA-Z0-9.-]+/v[a-zA-Z0-9]+$
+                    type: string
+                  emitOnEmpty:
+                    default: false
+                    description: |-
+                      emitOnEmpty causes a synthetic smell to be emitted when no target
+                      candidates are found in the cluster (absence patterns).
+                    type: boolean
+                  filters:
+                    description: filters narrow which target candidates are evaluated.
+                    properties:
+                      matchAll:
+                        description: matchAll requires every condition to hold (AND).
+                        items:
+                          description: FilterCondition is a single predicate evaluated
+                            against a candidate resource.
+                          properties:
+                            operator:
+                              description: operator is the comparison applied at path.
+                              enum:
+                              - EQUALS
+                              - IS_EMPTY
+                              - EXISTS
+                              - GREATER_THAN
+                              - GREATER_OR_EQUAL
+                              - LESS_THAN
+                              - LESS_OR_EQUAL
+                              - ARRAY_SIZE_EQUALS
+                              - ARRAY_SIZE_GREATER_THAN
+                              - ARRAY_SIZE_GREATER_OR_EQUAL
+                              - ARRAY_SIZE_LESS_THAN
+                              - ARRAY_SIZE_LESS_OR_EQUAL
+                              type: string
+                            path:
+                              description: path is a dot-separated path into the candidate
+                                resource (e.g. spec.replicas).
+                              minLength: 1
+                              type: string
+                            values:
+                              description: |-
+                                values are the operands compared against path. Required for every operator
+                                except EXISTS and IS_EMPTY, which must not set it.
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - operator
+                          - path
+                          type: object
+                        type: array
+                      matchAny:
+                        description: matchAny requires at least one condition to hold
+                          (OR).
+                        items:
+                          description: FilterCondition is a single predicate evaluated
+                            against a candidate resource.
+                          properties:
+                            operator:
+                              description: operator is the comparison applied at path.
+                              enum:
+                              - EQUALS
+                              - IS_EMPTY
+                              - EXISTS
+                              - GREATER_THAN
+                              - GREATER_OR_EQUAL
+                              - LESS_THAN
+                              - LESS_OR_EQUAL
+                              - ARRAY_SIZE_EQUALS
+                              - ARRAY_SIZE_GREATER_THAN
+                              - ARRAY_SIZE_GREATER_OR_EQUAL
+                              - ARRAY_SIZE_LESS_THAN
+                              - ARRAY_SIZE_LESS_OR_EQUAL
+                              type: string
+                            path:
+                              description: path is a dot-separated path into the candidate
+                                resource (e.g. spec.replicas).
+                              minLength: 1
+                              type: string
+                            values:
+                              description: |-
+                                values are the operands compared against path. Required for every operator
+                                except EXISTS and IS_EMPTY, which must not set it.
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - operator
+                          - path
+                          type: object
+                        type: array
+                      matchNone:
+                        description: matchNone requires no condition to hold (NOT).
+                        items:
+                          description: FilterCondition is a single predicate evaluated
+                            against a candidate resource.
+                          properties:
+                            operator:
+                              description: operator is the comparison applied at path.
+                              enum:
+                              - EQUALS
+                              - IS_EMPTY
+                              - EXISTS
+                              - GREATER_THAN
+                              - GREATER_OR_EQUAL
+                              - LESS_THAN
+                              - LESS_OR_EQUAL
+                              - ARRAY_SIZE_EQUALS
+                              - ARRAY_SIZE_GREATER_THAN
+                              - ARRAY_SIZE_GREATER_OR_EQUAL
+                              - ARRAY_SIZE_LESS_THAN
+                              - ARRAY_SIZE_LESS_OR_EQUAL
+                              type: string
+                            path:
+                              description: path is a dot-separated path into the candidate
+                                resource (e.g. spec.replicas).
+                              minLength: 1
+                              type: string
+                            values:
+                              description: |-
+                                values are the operands compared against path. Required for every operator
+                                except EXISTS and IS_EMPTY, which must not set it.
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - operator
+                          - path
+                          type: object
+                        type: array
+                    type: object
+                  kind:
+                    description: kind is the Kubernetes Kind of the target resource
+                      (e.g. Pod, Deployment).
+                    minLength: 1
+                    type: string
+                  plural:
+                    description: plural is the plural resource name used to list the
+                      target (e.g. deployments).
+                    minLength: 1
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - plural
+                type: object
+            required:
+            - category
+            - displayName
+            - message
+            - severity
+            - target
+            type: object
+          status:
+            description: status defines the observed state of Pattern
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the Pattern resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,7 +1,7 @@
 # This rule is not used by the project kubepattern-go itself.
 # It is provided to allow the cluster admin to help manage permissions for users.
 #
-# Grants read-only access to kubepattern.kubepattern.dev resources.
+# Grants read-only access to kubepattern.dev resources.
 # This role is intended for users who need visibility into these resources
 # without permissions to modify them. It is ideal for monitoring purposes and limited-access viewing.
 
@@ -14,7 +14,7 @@ metadata:
   name: smell-viewer-role
 rules:
 - apiGroups:
-  - kubepattern.kubepattern.dev
+  - kubepattern.dev
   resources:
   - smells
   verbs:
@@ -22,7 +22,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - kubepattern.kubepattern.dev
+  - kubepattern.dev
   resources:
   - smells/status
   verbs:

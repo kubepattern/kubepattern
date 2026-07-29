@@ -3,7 +3,7 @@
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
 cliVersion: 4.15.0
-domain: kubepattern.dev
+domain: dev
 layout:
 - go.kubebuilder.io/v4
 projectName: kubepattern-go
@@ -11,9 +11,9 @@ repo: kubepattern-go
 resources:
 - api:
     crdVersion: v1
-    namespaced: true
+    namespaced: false
   controller: true
-  domain: kubepattern.dev
+  domain: dev
   group: kubepattern
   kind: Pattern
   path: kubepattern-go/api/v1
@@ -21,7 +21,7 @@ resources:
 - api:
     crdVersion: v1
     namespaced: true
-  domain: kubepattern.dev
+  domain: dev
   group: kubepattern
   kind: Smell
   path: kubepattern-go/api/v1

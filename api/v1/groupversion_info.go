@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package v1 contains API Schema definitions for the kubepattern v1 API group.
 // +kubebuilder:object:generate=true
-// +groupName=kubepattern.kubepattern.dev
+// +groupName=kubepattern.dev
 package v1
 
 import (
@@ -28,7 +28,7 @@ import (
 var (
 	// SchemeGroupVersion is group version used to register these objects.
 	// This name is used by applyconfiguration generators (e.g. controller-gen).
-	SchemeGroupVersion = schema.GroupVersion{Group: "kubepattern.kubepattern.dev", Version: "v1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "kubepattern.dev", Version: "v1"}
 
 	// GroupVersion is an alias for SchemeGroupVersion, for backward compatibility.
 	GroupVersion = SchemeGroupVersion
