@@ -8,20 +8,26 @@ import (
 	kubepatternv1 "kubepattern-go/api/v1"
 )
 
+const (
+	testAppsAPIVersion = "apps/v1"
+	testKindRS         = "ReplicaSet"
+	testRSDepName      = "my-rs-dep"
+)
+
 func TestEvaluateRelationships(t *testing.T) {
 	// 1. Set up mock resources
 	podObj := &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": "v1",
-			"kind":       "Pod",
-			"metadata": map[string]any{
-				"name": "my-dep-b458fd6bb4-twq66",
+			testFieldAPIVersion: testAPIVersion,
+			testFieldKind:       testKindPod,
+			testFieldMeta: map[string]any{
+				testFieldName: "my-dep-b458fd6bb4-twq66",
 				"ownerReferences": []any{
 					map[string]any{
-						"apiVersion": "apps/v1",
-						"kind":       "ReplicaSet",
-						"name":       "my-dep-b458fd6bb4",
-						"uid":        "fake-uid-1234",
+						testFieldAPIVersion: testAppsAPIVersion,
+						testFieldKind:       testKindRS,
+						testFieldName:       "my-dep-b458fd6bb4",
+						"uid":               "fake-uid-1234",
 					},
 				},
 			},
@@ -30,32 +36,32 @@ func TestEvaluateRelationships(t *testing.T) {
 
 	validRS := &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": "apps/v1",
-			"kind":       "ReplicaSet",
-			"metadata": map[string]any{
-				"name": "my-dep-b458fd6bb4",
+			testFieldAPIVersion: testAppsAPIVersion,
+			testFieldKind:       testKindRS,
+			testFieldMeta: map[string]any{
+				testFieldName: "my-dep-b458fd6bb4",
 			},
 		},
 	}
 
 	invalidRS := &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": "apps/v1",
-			"kind":       "ReplicaSet",
-			"metadata": map[string]any{
-				"name": "another-rs-9999",
+			testFieldAPIVersion: testAppsAPIVersion,
+			testFieldKind:       testKindRS,
+			testFieldMeta: map[string]any{
+				testFieldName: "another-rs-9999",
 			},
 		},
 	}
 
 	// 2. Set up the relationship rule (Custom EQUALS on ownerReferences)
 	customRelRule := kubepatternv1.Relationship{
-		With: "my-rs-dep",
+		With: testRSDepName,
 		Type: kubepatternv1.RelationshipCustom,
 		Criteria: []kubepatternv1.Criteria{
 			{
 				TargetPath:     "metadata.ownerReferences[*].name",
-				DependencyPath: "metadata.name",
+				DependencyPath: pathMetadataName,
 				Operator:       kubepatternv1.CriteriaEquals,
 			},
 		},
@@ -73,7 +79,7 @@ func TestEvaluateRelationships(t *testing.T) {
 			name:   "MatchAll - Success with valid ReplicaSet",
 			target: podObj,
 			deps: map[string][]*unstructured.Unstructured{
-				"my-rs-dep": {validRS},
+				testRSDepName: {validRS},
 			},
 			relationships: kubepatternv1.Relationships{
 				MatchAll: []kubepatternv1.Relationship{customRelRule},
@@ -84,7 +90,7 @@ func TestEvaluateRelationships(t *testing.T) {
 			name:   "MatchAll - Failure with invalid ReplicaSet",
 			target: podObj,
 			deps: map[string][]*unstructured.Unstructured{
-				"my-rs-dep": {invalidRS},
+				testRSDepName: {invalidRS},
 			},
 			relationships: kubepatternv1.Relationships{
 				MatchAll: []kubepatternv1.Relationship{customRelRule},
@@ -95,7 +101,7 @@ func TestEvaluateRelationships(t *testing.T) {
 			name:   "MatchNone - Success when ReplicaSet does NOT match",
 			target: podObj,
 			deps: map[string][]*unstructured.Unstructured{
-				"my-rs-dep": {invalidRS},
+				testRSDepName: {invalidRS},
 			},
 			relationships: kubepatternv1.Relationships{
 				MatchNone: []kubepatternv1.Relationship{customRelRule},
@@ -106,7 +112,7 @@ func TestEvaluateRelationships(t *testing.T) {
 			name:   "MatchNone - Failure when ReplicaSet matches",
 			target: podObj,
 			deps: map[string][]*unstructured.Unstructured{
-				"my-rs-dep": {validRS},
+				testRSDepName: {validRS},
 			},
 			relationships: kubepatternv1.Relationships{
 				MatchNone: []kubepatternv1.Relationship{customRelRule},
@@ -117,7 +123,7 @@ func TestEvaluateRelationships(t *testing.T) {
 			name:   "Empty dependencies array - Should fail for MatchAll",
 			target: podObj,
 			deps: map[string][]*unstructured.Unstructured{
-				"my-rs-dep": {}, // No candidates found in the cluster
+				testRSDepName: {}, // No candidates found in the cluster
 			},
 			relationships: kubepatternv1.Relationships{
 				MatchAll: []kubepatternv1.Relationship{customRelRule},

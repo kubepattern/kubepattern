@@ -10,15 +10,29 @@ import (
 	kubepatternv1 "kubepattern-go/api/v1"
 )
 
+const (
+	testAPIVersion      = "v1"
+	testKindPod         = "Pod"
+	testPodName         = "test-pod"
+	testFieldName       = "name"
+	testFieldMeta       = "metadata"
+	testFieldAPIVersion = "apiVersion"
+	testFieldKind       = "kind"
+	testSidecarName     = "sidecar"
+	pathMetadataName    = "metadata.name"
+	pathSpecReplicas    = "spec.replicas"
+	pathSpecContainers  = "spec.containers"
+)
+
 // createMockPod returns a mock Unstructured object for testing purposes.
 func createMockPod() *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": "v1",
-			"kind":       "Pod",
-			"metadata": map[string]any{
-				"name":      "test-pod",
-				"namespace": "default",
+			testFieldAPIVersion: testAPIVersion,
+			testFieldKind:       testKindPod,
+			testFieldMeta: map[string]any{
+				testFieldName: testPodName,
+				"namespace":   "default",
 				"labels": map[string]any{
 					"app":  "frontend",
 					"tier": "web",
@@ -32,16 +46,16 @@ func createMockPod() *unstructured.Unstructured {
 				"serviceAccountName": "", // Used to test IS_EMPTY
 				"containers": []any{
 					map[string]any{
-						"name":  "nginx",
-						"image": "nginx:1.24",
+						testFieldName: "nginx",
+						"image":       "nginx:1.24",
 						"ports": []any{
 							map[string]any{"containerPort": 80},
 							map[string]any{"containerPort": 443},
 						},
 					},
 					map[string]any{
-						"name":  "sidecar",
-						"image": "fluentd:v1",
+						testFieldName: testSidecarName,
+						"image":       "fluentd:v1",
 					},
 				},
 			},
@@ -60,7 +74,7 @@ func TestEvalCondition(t *testing.T) {
 		// --- Operator: EXISTS ---
 		{
 			name:     "EXISTS - field exists",
-			cond:     kubepatternv1.FilterCondition{Path: "metadata.name", Operator: kubepatternv1.FilterExists},
+			cond:     kubepatternv1.FilterCondition{Path: pathMetadataName, Operator: kubepatternv1.FilterExists},
 			expected: true,
 		},
 		{
@@ -82,7 +96,7 @@ func TestEvalCondition(t *testing.T) {
 		},
 		{
 			name:     "IS_EMPTY - field exists and has a value",
-			cond:     kubepatternv1.FilterCondition{Path: "metadata.name", Operator: kubepatternv1.FilterIsEmpty},
+			cond:     kubepatternv1.FilterCondition{Path: pathMetadataName, Operator: kubepatternv1.FilterIsEmpty},
 			expected: false,
 		},
 
@@ -99,36 +113,36 @@ func TestEvalCondition(t *testing.T) {
 		},
 		{
 			name:     "EQUALS - array match with wildcard (finds 'sidecar')",
-			cond:     kubepatternv1.FilterCondition{Path: "spec.containers[*].name", Operator: kubepatternv1.FilterEquals, Values: []string{"sidecar"}},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.containers[*].name", Operator: kubepatternv1.FilterEquals, Values: []string{testSidecarName}},
 			expected: true,
 		},
 
 		// --- Numeric Operators ---
 		{
 			name:     "GREATER_THAN - match",
-			cond:     kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterGreaterThan, Values: []string{"2"}},
+			cond:     kubepatternv1.FilterCondition{Path: pathSpecReplicas, Operator: kubepatternv1.FilterGreaterThan, Values: []string{"2"}},
 			expected: true,
 		},
 		{
 			name:     "LESS_THAN - match",
-			cond:     kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterLessThan, Values: []string{"5"}},
+			cond:     kubepatternv1.FilterCondition{Path: pathSpecReplicas, Operator: kubepatternv1.FilterLessThan, Values: []string{"5"}},
 			expected: true,
 		},
 
 		// --- Array Size Operators ---
 		{
 			name:     "ARRAY_SIZE_EQUALS - array has 2 elements",
-			cond:     kubepatternv1.FilterCondition{Path: "spec.containers", Operator: kubepatternv1.FilterArraySizeEquals, Values: []string{"2"}},
+			cond:     kubepatternv1.FilterCondition{Path: pathSpecContainers, Operator: kubepatternv1.FilterArraySizeEquals, Values: []string{"2"}},
 			expected: true,
 		},
 		{
 			name:     "ARRAY_SIZE_GREATER_THAN - array has more than 1 element",
-			cond:     kubepatternv1.FilterCondition{Path: "spec.containers", Operator: kubepatternv1.FilterArraySizeGreaterThan, Values: []string{"1"}},
+			cond:     kubepatternv1.FilterCondition{Path: pathSpecContainers, Operator: kubepatternv1.FilterArraySizeGreaterThan, Values: []string{"1"}},
 			expected: true,
 		},
 		{
 			name:     "ARRAY_SIZE_EQUALS - fail, array does not have 3 elements",
-			cond:     kubepatternv1.FilterCondition{Path: "spec.containers", Operator: kubepatternv1.FilterArraySizeEquals, Values: []string{"3"}},
+			cond:     kubepatternv1.FilterCondition{Path: pathSpecContainers, Operator: kubepatternv1.FilterArraySizeEquals, Values: []string{"3"}},
 			expected: false,
 		},
 	}
@@ -156,10 +170,10 @@ func TestGetFieldValues(t *testing.T) {
 	}{
 		{
 			name:          "Simple path",
-			path:          "metadata.name",
+			path:          pathMetadataName,
 			expectedFound: true,
 			expectedLen:   1,
-			expectedVals:  []any{"test-pod"},
+			expectedVals:  []any{testPodName},
 		},
 		{
 			name:          "Non-existent path",
@@ -173,7 +187,7 @@ func TestGetFieldValues(t *testing.T) {
 			path:          "spec.containers[*].name",
 			expectedFound: true,
 			expectedLen:   2,
-			expectedVals:  []any{"nginx", "sidecar"},
+			expectedVals:  []any{"nginx", testSidecarName},
 		},
 		{
 			name:          "Path with double wildcard (container ports)",
@@ -211,13 +225,13 @@ func TestFilterResources(t *testing.T) {
 	pod1 := createMockPod() // Kind: Pod, Name: test-pod
 
 	pod2 := createMockPod()
-	pod2.Object["metadata"].(map[string]any)["name"] = "another-pod"
+	pod2.Object[testFieldMeta].(map[string]any)[testFieldName] = "another-pod"
 
 	svc1 := &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": "v1",
-			"kind":       "Service",
-			"metadata":   map[string]any{"name": "my-svc"},
+			testFieldAPIVersion: testAPIVersion,
+			testFieldKind:       "Service",
+			testFieldMeta:       map[string]any{testFieldName: "my-svc"},
 		},
 	}
 
@@ -236,7 +250,7 @@ func TestFilterResources(t *testing.T) {
 	}{
 		{
 			name:       "Filter only by Kind (Pod) - finds 2",
-			kind:       "Pod",
+			kind:       testKindPod,
 			apiVersion: "v1",
 			filters:    kubepatternv1.Filters{},
 			wantCount:  2,
@@ -250,46 +264,46 @@ func TestFilterResources(t *testing.T) {
 		},
 		{
 			name:       "MatchAll - find only one pod1",
-			kind:       "Pod",
+			kind:       testKindPod,
 			apiVersion: "v1",
 			filters: kubepatternv1.Filters{
 				MatchAll: []kubepatternv1.FilterCondition{
-					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"test-pod"}},
+					{Path: pathMetadataName, Operator: kubepatternv1.FilterEquals, Values: []string{testPodName}},
 				},
 			},
 			wantCount: 1,
 		},
 		{
 			name:       "MatchNone - exclude pod1, find pod2",
-			kind:       "Pod",
+			kind:       testKindPod,
 			apiVersion: "v1",
 			filters: kubepatternv1.Filters{
 				MatchNone: []kubepatternv1.FilterCondition{
-					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"test-pod"}},
+					{Path: pathMetadataName, Operator: kubepatternv1.FilterEquals, Values: []string{testPodName}},
 				},
 			},
 			wantCount: 1,
 		},
 		{
 			name:       "MatchAny - one true and one false condition - finds pod1",
-			kind:       "Pod",
+			kind:       testKindPod,
 			apiVersion: "v1",
 			filters: kubepatternv1.Filters{
 				MatchAny: []kubepatternv1.FilterCondition{
-					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"test-pod"}},
-					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"does-not-exist"}},
+					{Path: pathMetadataName, Operator: kubepatternv1.FilterEquals, Values: []string{testPodName}},
+					{Path: pathMetadataName, Operator: kubepatternv1.FilterEquals, Values: []string{"does-not-exist"}},
 				},
 			},
 			wantCount: 1,
 		},
 		{
 			name:       "MatchAny - all false conditions - finds 0",
-			kind:       "Pod",
+			kind:       testKindPod,
 			apiVersion: "v1",
 			filters: kubepatternv1.Filters{
 				MatchAny: []kubepatternv1.FilterCondition{
-					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"foo"}},
-					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"bar"}},
+					{Path: pathMetadataName, Operator: kubepatternv1.FilterEquals, Values: []string{"foo"}},
+					{Path: pathMetadataName, Operator: kubepatternv1.FilterEquals, Values: []string{"bar"}},
 				},
 			},
 			wantCount: 0,
@@ -330,12 +344,12 @@ func TestCompareErrors(t *testing.T) {
 func TestMoreOperators(t *testing.T) {
 	obj := createMockPod()
 
-	condGreaterOrEqual := kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterGreaterOrEqual, Values: []string{"3"}}
+	condGreaterOrEqual := kubepatternv1.FilterCondition{Path: pathSpecReplicas, Operator: kubepatternv1.FilterGreaterOrEqual, Values: []string{"3"}}
 	if !evalCondition(obj, condGreaterOrEqual) {
 		t.Errorf("FilterGreaterOrEqual failed (3 >= 3 should be true)")
 	}
 
-	condLessOrEqual := kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterLessOrEqual, Values: []string{"3"}}
+	condLessOrEqual := kubepatternv1.FilterCondition{Path: pathSpecReplicas, Operator: kubepatternv1.FilterLessOrEqual, Values: []string{"3"}}
 	if !evalCondition(obj, condLessOrEqual) {
 		t.Errorf("FilterLessOrEqual failed (3 <= 3 should be true)")
 	}

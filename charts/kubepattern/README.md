@@ -2,14 +2,15 @@
 
 **KubePattern** is a cloud-native framework designed to spot violations between Kubernetes Custom Resources interactions. By using a graph-based approach, it retrieves complex relationships between resources and spots violations such as zombie resources and bad configurations.
 
-This chart deploys the KubePattern engine (written in Go) as an in-cluster analyzer. It runs as a lightweight `CronJob`, periodically scanning the cluster without consuming idle resources. 
+This chart deploys the KubePattern engine (written in Go) as an in-cluster analyzer. It runs as a long-lived controller `Deployment` that continuously re-evaluates each installed Pattern against the current cluster state.
 
-Additionally, this chart automatically installs the necessary Custom Resource Definitions (CRDs) and RBAC permissions.
+Additionally, this chart automatically installs the necessary Custom Resource Definitions (CRDs), RBAC permissions, and the Pattern validating webhook.
 
 ## Prerequisites
 
 * Kubernetes 1.16+
 * Helm 3.8.0+ (for native OCI registry support)
+* [cert-manager](https://cert-manager.io) already installed in the cluster — it provisions the TLS certificate the Pattern validating webhook uses.
 
 ## Installation
 
@@ -26,9 +27,9 @@ helm upgrade --install kubepattern oci://ghcr.io/kubepattern/charts/kubepattern 
 
 ## How It Works
 
-Once installed, KubePattern evaluates the cluster against the Pattern as Code definitions (`patterns.kubepattern.dev`) applied to the cluster. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry).
+Once installed, KubePattern evaluates the cluster against the Pattern as Code definitions (`patterns.kubepattern.dev`) applied to the cluster. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry). A validating webhook rejects malformed Pattern definitions on `kubectl apply`.
 
-After the CronJob completes a run, the engine generates and manages `Smell` Custom Resources (`smells.kubepattern.dev`) to persist analysis results directly inside the cluster.
+As the controller re-evaluates each Pattern, it generates and manages `Smell` Custom Resources (`smells.kubepattern.dev`) to persist analysis results directly inside the cluster.
 
 ### Viewing Results
 
@@ -44,26 +45,30 @@ kubectl describe smell <smell-name> -n <namespace>
 
 ## Configuration
 
-The CronJob behavior and resource allocation can be customized via the `values.yaml` file.
+The controller's behavior and resource allocation can be customized via the `values.yaml` file.
 
-By default, the analysis runs every hour. You can easily override the schedule during installation:
+By default, each Pattern is re-evaluated every hour. You can override the interval during installation:
 
 ```bash
---set schedule="*/30 * * * *"
+--set analysis.requeueInterval=30m
 ```
 
 ### Main Parameters (Values)
 
 | Parameter | Description | Default Value |
 |-----------|-------------|-------------------|
-| `schedule` | Cron expression for analysis scheduling. | `"0 * * * *"` |
-| `suspend` | Temporarily suspends the CronJob execution. | `false` |
+| `replicaCount` | Number of controller manager replicas. | `1` |
+| `analysis.requeueInterval` | How often each installed Pattern is re-evaluated against the current cluster state. | `1h` |
+| `analysis.saveInNamespace` | Save each Smell in the namespace of the involved resource. | `true` |
+| `analysis.targetNamespace` | Output namespace for Smells when `saveInNamespace` is `false`, or for cluster-scoped resources. | `kubepattern-analysis-ns` |
 | `image.repository` | The Docker image repository. | `ghcr.io/kubepattern/kubepattern` |
-| `image.tag` | The image tag to use. | `latest` |
+| `image.tag` | The image tag to use. | The chart's `AppVersion` |
 | `resources.requests` | Requested resources (CPU/Memory) for the pod. | `cpu: 200m, memory: 256Mi` |
 | `resources.limits` | Maximum resource limits for the pod. | `cpu: 1000m, memory: 1Gi` |
-| `affinity` | Node scheduling affinity rules. | Preference for worker nodes (`weight: 1`) |
-| `tolerations` | Tolerations to allow scheduling on tainted nodes. | Toleration for `workload=critical` |
+| `affinity` | Node scheduling affinity rules. | `{}` |
+| `tolerations` | Tolerations to allow scheduling on tainted nodes. | `{}` |
+| `RBAC.rules` | RBAC rules granted to the controller for scanning cluster resources. | `get/list/watch` on all groups/resources |
+| `example.enabled` | Deploy an example Pattern and matching Pod to try KubePattern out. | `true` |
 
 *(For advanced configurations, please refer to the `values.yaml` file included in the chart).*
 

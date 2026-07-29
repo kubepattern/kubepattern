@@ -40,6 +40,7 @@ var _ = Describe("Pattern Controller", func() {
 			resourceName = "test-resource"
 			deployName   = "test-deployment"
 			namespace    = "default"
+			appLabel     = "app"
 		)
 
 		ctx := context.Background()
@@ -61,15 +62,15 @@ var _ = Describe("Pattern Controller", func() {
 				Spec: appsv1.DeploymentSpec{
 					Replicas: &replicas,
 					Selector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{"app": deployName},
+						MatchLabels: map[string]string{appLabel: deployName},
 					},
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels: map[string]string{"app": deployName},
+							Labels: map[string]string{appLabel: deployName},
 						},
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{{
-								Name:  "app",
+								Name:  appLabel,
 								Image: "nginx:latest",
 							}},
 						},

@@ -55,7 +55,7 @@ KubePattern is packaged and distributed as an OCI Helm chart via the GitHub Cont
 >   ```
 ## Viewing Results
 
-Once the CronJob completes a run, KubePattern saves the detected architectural issues as `Smell` resources. You can inspect them using standard `kubectl` commands:
+As the controller re-evaluates each Pattern, KubePattern saves the detected architectural issues as `Smell` resources. You can inspect them using standard `kubectl` commands:
 
 ```bash
 # List all detected smells across the cluster

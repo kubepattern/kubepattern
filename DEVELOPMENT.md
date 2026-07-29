@@ -35,9 +35,14 @@ Our CI/CD pipeline is powered by GitHub Actions and relies on the GitHub Contain
     * `:sha-<short-hash>` (An immutable tag tied to the exact Git commit).
 
 ### 3. Publish Helm Chart
-* **File:** `.github/workflows/helm-publish.yml`
+* **File:** `.github/workflows/helm.yaml`
 * **Trigger:** Pushing a tag starting with `chart/v*` (e.g., `chart/v1.0.5`).
 * **Action:** Packages the `charts/kubepattern` directory into a `.tgz` Helm package and publishes it as an OCI artifact to GHCR.
+
+### 4. Lint, Tests & E2E Tests
+* **Files:** `.github/workflows/lint.yml`, `.github/workflows/test.yml`, `.github/workflows/test-e2e.yml`
+* **Trigger:** Every push and pull request, regardless of branch.
+* **Action:** `lint.yml` runs `make lint`; `test.yml` runs the unit/integration suite via `make test` (envtest); `test-e2e.yml` spins up a [Kind](https://kind.sigs.k8s.io/) cluster and runs `make test-e2e`. All three must pass before merging.
 
 ---
 

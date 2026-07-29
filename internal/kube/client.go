@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -132,12 +133,7 @@ func isSubresource(name string) bool {
 
 // canList reports whether the resource supports the "list" verb.
 func canList(verbs []string) bool {
-	for _, v := range verbs {
-		if v == "list" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(verbs, "list")
 }
 
 type Resource struct {

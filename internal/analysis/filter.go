@@ -3,6 +3,7 @@ package analysis
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -126,10 +127,8 @@ func evalCondition(node *unstructured.Unstructured, cond kubepatternv1.FilterCon
 			if !ok {
 				continue
 			}
-			for _, expected := range cond.Values {
-				if str == expected {
-					return true
-				}
+			if slices.Contains(cond.Values, str) {
+				return true
 			}
 		}
 		return false
@@ -257,9 +256,7 @@ func navigatePath(current any, parts []string) []any {
 	rest := parts[1:]
 
 	// Segment with array wildcard, e.g., "volumes[*]" or "items[*]"
-	if strings.HasSuffix(part, "[*]") {
-		fieldName := strings.TrimSuffix(part, "[*]")
-
+	if fieldName, ok := strings.CutSuffix(part, "[*]"); ok {
 		m, ok := current.(map[string]any)
 		if !ok {
 			return nil
