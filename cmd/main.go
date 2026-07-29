@@ -37,6 +37,7 @@ import (
 
 	kubepatternv1 "kubepattern-go/api/v1"
 	"kubepattern-go/internal/controller"
+	webhookv1 "kubepattern-go/internal/webhook/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -184,6 +185,13 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "pattern")
 		os.Exit(1)
+	}
+	// nolint:goconst
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err := webhookv1.SetupPatternWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "Failed to create webhook", "webhook", "Pattern")
+			os.Exit(1)
+		}
 	}
 	// +kubebuilder:scaffold:builder
 
