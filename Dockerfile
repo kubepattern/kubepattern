@@ -1,5 +1,5 @@
 # Stage 1: Build the binary
-FROM golang:1.25.8-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 LABEL authors="gabrielegroppo"
 WORKDIR /app
@@ -13,7 +13,7 @@ RUN go mod download
 
 COPY . .
 # Build a static binary, stripping debug info (-w -s) for a smaller footprint
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o kubepattern ./cmd/kubepattern/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o manager ./cmd/main.go
 
 # Stage 2: Final zero-CVE image
 FROM scratch
@@ -23,11 +23,12 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 ENV ZONEINFO=/usr/share/zoneinfo
-WORKDIR /app
 
-COPY --from=builder /app/kubepattern .
+# Placed at the root to match config/manager/manager.yaml and the Helm chart's
+# `command: [/manager]`, both written against the upstream Kubebuilder convention.
+COPY --from=builder /app/manager /manager
 
 # Run as non-root user (UID 65532) for Kubernetes security compliance
 USER 65532:65532
 
-ENTRYPOINT ["./kubepattern"]
+ENTRYPOINT ["/manager"]
