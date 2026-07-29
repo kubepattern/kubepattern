@@ -1,11 +1,14 @@
-# Target image for the Go-based KubePattern analyzer
+# NOTE: this chart requires cert-manager (https://cert-manager.io) to be installed in
+# the cluster beforehand. It provisions the TLS certificate the Pattern validating
+# webhook server presents — cert-manager is not bundled as a chart dependency here.
+
+# Target image for the Go-based KubePattern operator
 image:
   repository: ghcr.io/kubepattern/kubepattern
   pullPolicy: IfNotPresent
   tag: 0.0.5
-# CronJob scheduling configuration
-schedule: "0 * * * *" # Runs every hour by default
-suspend: false        # Set to true to temporarily suspend the CronJob
+
+replicaCount: 1
 
 resources:
   requests:
@@ -32,6 +35,8 @@ analysis:
   saveInNamespace: true
   # Default output namespace if saveInNamespace == false or for cluster-scoped resources
   targetNamespace: kubepattern-analysis-ns
+  # How often each installed Pattern is re-evaluated against the current cluster state
+  requeueInterval: 1h
 
 # Deploy example resources to test KubePattern (a Pattern CRD and a matching Pod)
 example:

@@ -27,17 +27,20 @@
 The KubePattern (Go engine) operates as an in-cluster analyzer.
 By using a graph-based approach, it retrieves complex relationships between resources and spot violations such as zombie resources and bad configurations.
 
-* **Pattern CRD**: KubePattern evaluates the cluster against the Pattern as Code definitions (`patterns.kubepattern.dev`) applied to the cluster. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry).
+* **Pattern CRD**: KubePattern evaluates the cluster against the Pattern as Code definitions (`patterns.kubepattern.dev`) applied to the cluster. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry). A validating webhook rejects malformed Pattern definitions on `kubectl apply`.
 * **Smell CRD**: The engine generates and manages `Smell` Custom Resources (`smells.kubepattern.dev`) to persist analysis results directly inside the cluster.
-* **Execution**: Deployed via Helm, it runs as a lightweight `CronJob`, periodically scanning the cluster without consuming idle resources.
+* **Execution**: Deployed via Helm as a Kubernetes operator, it runs as a long-lived controller that continuously re-evaluates each installed Pattern against the current cluster state, rather than as a periodic batch job.
 
 ---
 
 ## Installation
 
+> [!IMPORTANT]
+> The chart requires [cert-manager](https://cert-manager.io) to already be installed in the cluster — it provisions the TLS certificate the Pattern validating webhook uses.
+
 ### Using Helm (Recommended)
 
-KubePattern is packaged and distributed as an OCI Helm chart via the GitHub Container Registry (GHCR). This method automatically installs the necessary CRDs, RBAC permissions, and the analyzer CronJob.
+KubePattern is packaged and distributed as an OCI Helm chart via the GitHub Container Registry (GHCR). This method automatically installs the necessary CRDs, RBAC permissions, and the operator's controller manager.
    ```bash
    helm upgrade --install kubepattern oci://ghcr.io/kubepattern/charts/kubepattern \
      --version <VERSION> \
@@ -45,10 +48,10 @@ KubePattern is packaged and distributed as an OCI Helm chart via the GitHub Cont
      --create-namespace
    ```
 > [!TIP]
-> By default, the analysis runs every hour. You can override the schedule:
+> By default, each Pattern is re-evaluated every hour. You can override the interval:
 >
 >   ```bash
->   --set schedule="*/30 * * * *"
+>   --set analysis.requeueInterval=30m
 >   ```
 ## Viewing Results
 

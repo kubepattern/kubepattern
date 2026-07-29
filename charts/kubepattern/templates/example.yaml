@@ -25,5 +25,4 @@ spec:
       matchAny:
         - path: "kind"
           operator: EXISTS
-          value: []
 {{- end}}
