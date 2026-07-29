@@ -25,6 +25,11 @@ import (
 	kubepatternv1 "kubepattern-go/api/v1"
 )
 
+const (
+	testDepID        = "dep1"
+	pathMetadataName = "metadata.name"
+)
+
 // validTestPattern returns a Pattern that satisfies every cross-field rule
 // checked by validatePattern, so individual tests can mutate a single field
 // to trigger exactly one violation.
@@ -42,11 +47,11 @@ func validTestPattern() *kubepatternv1.Pattern {
 				PluralName: "deployments",
 			},
 			Dependencies: []kubepatternv1.Dependency{
-				{ID: "dep1", Kind: "Service", APIVersion: "v1", PluralName: "services"},
+				{ID: testDepID, Kind: "Service", APIVersion: "v1", PluralName: "services"},
 			},
 			Relationships: kubepatternv1.Relationships{
 				MatchAll: []kubepatternv1.Relationship{
-					{With: "dep1", Type: kubepatternv1.RelationshipSelectedBy},
+					{With: testDepID, Type: kubepatternv1.RelationshipSelectedBy},
 				},
 			},
 		},
@@ -68,7 +73,7 @@ var _ = Describe("Pattern Webhook", func() {
 		It("should deny duplicate dependency ids", func() {
 			obj := validTestPattern()
 			obj.Spec.Dependencies = append(obj.Spec.Dependencies, kubepatternv1.Dependency{
-				ID: "dep1", Kind: "ConfigMap", APIVersion: "v1", PluralName: "configmaps",
+				ID: testDepID, Kind: "ConfigMap", APIVersion: "v1", PluralName: "configmaps",
 			})
 			Expect(validator.ValidateCreate(ctx, obj)).Error().To(MatchError(ContainSubstring("Duplicate value")))
 		})
@@ -88,7 +93,7 @@ var _ = Describe("Pattern Webhook", func() {
 		It("should deny a standardized relationship with unexpected criteria", func() {
 			obj := validTestPattern()
 			obj.Spec.Relationships.MatchAll[0].Criteria = []kubepatternv1.Criteria{
-				{TargetPath: "metadata.name", DependencyPath: "metadata.name", Operator: kubepatternv1.CriteriaEquals},
+				{TargetPath: pathMetadataName, DependencyPath: pathMetadataName, Operator: kubepatternv1.CriteriaEquals},
 			}
 			Expect(validator.ValidateCreate(ctx, obj)).Error().To(MatchError(ContainSubstring("must not be set for relationship type")))
 		})
@@ -96,7 +101,7 @@ var _ = Describe("Pattern Webhook", func() {
 		It("should deny an EQUALS filter without values", func() {
 			obj := validTestPattern()
 			obj.Spec.Target.Filters.MatchAll = []kubepatternv1.FilterCondition{
-				{Path: "metadata.name", Operator: kubepatternv1.FilterEquals},
+				{Path: pathMetadataName, Operator: kubepatternv1.FilterEquals},
 			}
 			Expect(validator.ValidateCreate(ctx, obj)).Error().To(MatchError(ContainSubstring("must not be empty for operator EQUALS")))
 		})
@@ -104,7 +109,7 @@ var _ = Describe("Pattern Webhook", func() {
 		It("should deny an EXISTS filter with values", func() {
 			obj := validTestPattern()
 			obj.Spec.Target.Filters.MatchAll = []kubepatternv1.FilterCondition{
-				{Path: "metadata.name", Operator: kubepatternv1.FilterExists, Values: []string{"unexpected"}},
+				{Path: pathMetadataName, Operator: kubepatternv1.FilterExists, Values: []string{"unexpected"}},
 			}
 			Expect(validator.ValidateCreate(ctx, obj)).Error().To(MatchError(ContainSubstring("must be empty for operator EXISTS")))
 		})
@@ -113,7 +118,7 @@ var _ = Describe("Pattern Webhook", func() {
 			oldObj := validTestPattern()
 			newObj := validTestPattern()
 			newObj.Spec.Dependencies = append(newObj.Spec.Dependencies, kubepatternv1.Dependency{
-				ID: "dep1", Kind: "ConfigMap", APIVersion: "v1", PluralName: "configmaps",
+				ID: testDepID, Kind: "ConfigMap", APIVersion: "v1", PluralName: "configmaps",
 			})
 			Expect(validator.ValidateUpdate(ctx, oldObj, newObj)).Error().To(HaveOccurred())
 		})

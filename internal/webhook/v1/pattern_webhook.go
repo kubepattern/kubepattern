@@ -113,7 +113,7 @@ func validatePattern(p *kubepatternv1.Pattern) error {
 // validateFilters checks the operator/values pairing of every FilterCondition
 // across a Filters' matchAll/matchAny/matchNone groups.
 func validateFilters(path *field.Path, f kubepatternv1.Filters) field.ErrorList {
-	var allErrs field.ErrorList
+	allErrs := make(field.ErrorList, 0, len(f.MatchAll)+len(f.MatchAny)+len(f.MatchNone))
 	allErrs = append(allErrs, validateFilterConditions(path.Child("matchAll"), f.MatchAll)...)
 	allErrs = append(allErrs, validateFilterConditions(path.Child("matchAny"), f.MatchAny)...)
 	allErrs = append(allErrs, validateFilterConditions(path.Child("matchNone"), f.MatchNone)...)

@@ -22,6 +22,8 @@ const (
 	// it, so a Reconcile for one Pattern can prune its own stale smells without
 	// touching smells owned by any other Pattern.
 	patternUIDLabel = "kubepattern.dev/pattern-uid"
+
+	fieldName = "name"
 )
 
 var smellGVR = schema.GroupVersionResource{
@@ -123,7 +125,7 @@ func (w *SmellWriter) Prune(ctx context.Context, patternUID string, keep map[str
 			continue
 		}
 		if err := dynClient.Resource(smellGVR).Namespace(obj.GetNamespace()).Delete(ctx, obj.GetName(), metav1.DeleteOptions{}); err != nil {
-			slog.Error("Failed to delete stale smell", "name", obj.GetName(), "error", err)
+			slog.Error("Failed to delete stale smell", fieldName, obj.GetName(), "error", err)
 			errs = append(errs, fmt.Sprintf("%s: %v", obj.GetName(), err))
 		}
 	}
@@ -141,24 +143,24 @@ func toUnstructured(smell analysis.Smell, namespace string) *unstructured.Unstru
 			"apiVersion": smellGroup + "/" + smellVersion,
 			"kind":       "Smell",
 			"metadata": map[string]any{
-				"name":      smell.CRDName,
+				fieldName:   smell.CRDName,
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"name":      smell.Name,
+				fieldName:   smell.Name,
 				"category":  smell.Category,
 				"message":   smell.Message,
 				"severity":  string(smell.Severity),
 				"reference": smell.Reference,
 				"suppress":  smell.Suppress,
 				"pattern": map[string]any{
-					"name":    smell.PatternName,
+					fieldName: smell.PatternName,
 					"version": smell.PatternVersion,
 				},
 				"target": map[string]any{
 					"apiVersion": smell.Target.APIVersion,
 					"kind":       smell.Target.Kind,
-					"name":       smell.Target.Name,
+					fieldName:    smell.Target.Name,
 					"namespace":  smell.Target.Namespace,
 					"uid":        smell.Target.UID,
 				},
