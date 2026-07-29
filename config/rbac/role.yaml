@@ -5,9 +5,18 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - kubepattern.dev
   resources:
   - patterns
+  - smells
   verbs:
   - create
   - delete

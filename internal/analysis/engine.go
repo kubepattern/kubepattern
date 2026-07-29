@@ -9,8 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
+	kubepatternv1 "kubepattern-go/api/v1"
 	"kubepattern-go/internal/cluster"
-	"kubepattern-go/internal/linter"
 )
 
 // Engine orchestrates the full analysis lifecycle for a single pattern.
@@ -22,7 +22,11 @@ type Engine struct {
 // SmellWriter is the interface that report/ will implement to persist smells on the cluster.
 type SmellWriter interface {
 	Write(ctx context.Context, smell Smell) error
-	CleanOldScans()
+	// Prune deletes every Smell owned by the pattern identified by patternUID whose
+	// CRDName is not in keep. It is called once per Reconcile, after every live
+	// smell for that pattern has been written, so it only ever removes smells that
+	// are no longer produced by the current state of the cluster.
+	Prune(ctx context.Context, patternUID string, keep map[string]struct{}) error
 }
 
 // NewEngine creates an Engine with the given graph and smell writer.
@@ -39,10 +43,12 @@ func NewEngine(graph *cluster.Graph, writer SmellWriter) *Engine {
 //  3. Filter targets by their filters
 //  4. Filter targets by their relationships against the dependencies
 //  5. Create and write a Smell for each target that failed the relationship check
-func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
-	slog.Info("running pattern", "pattern", pattern.Metadata.Name)
+//  6. Prune smells previously emitted by this pattern that are no longer live
+func (e *Engine) Run(ctx context.Context, pattern *kubepatternv1.Pattern) error {
+	slog.Info("running pattern", "pattern", pattern.Name)
 
 	nodes := e.graph.GetNodes()
+	live := make(map[string]struct{})
 
 	// --- Step 1 & 3: fetch and filter target candidates ---
 	targets := FilterResources(
@@ -54,20 +60,21 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 
 	if len(targets) == 0 {
 		if !pattern.Spec.Target.EmitOnEmpty {
-			slog.Info("no target candidates found, skipping pattern", "pattern", pattern.Metadata.Name)
-			return nil
+			slog.Info("no target candidates found, skipping pattern", "pattern", pattern.Name)
+			return e.writer.Prune(ctx, string(pattern.GetUID()), live)
 		}
 
 		// Absence Patterns
-		slog.Info("no targets found, emitting synthetic smell", "pattern", pattern.Metadata.Name)
+		slog.Info("no targets found, emitting synthetic smell", "pattern", pattern.Name)
 		smell := buildSyntheticSmell(pattern)
+		live[smell.CRDName] = struct{}{}
 		if err := e.writer.Write(ctx, smell); err != nil {
 			slog.Error("failed to write synthetic smell",
-				"pattern", pattern.Metadata.Name,
+				"pattern", pattern.Name,
 				"error", err,
 			)
 		}
-		return nil
+		return e.writer.Prune(ctx, string(pattern.GetUID()), live)
 	}
 
 	// --- Step 2 & 3: fetch and filter dependency candidates ---
@@ -83,9 +90,10 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 		}
 
 		smell := buildSmell(pattern, target)
+		live[smell.CRDName] = struct{}{}
 		if err := e.writer.Write(ctx, smell); err != nil {
 			slog.Error("failed to write smell",
-				"pattern", pattern.Metadata.Name,
+				"pattern", pattern.Name,
 				"target", target.GetName(),
 				"error", err,
 			)
@@ -93,33 +101,15 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 		}
 	}
 
-	return nil
-}
-
-// RunAll runs the analysis pipeline for a slice of patterns.
-func (e *Engine) RunAll(ctx context.Context, patterns []*linter.PatternAsCode) error {
-	var errs []string
-
-	for _, pattern := range patterns {
-		if err := e.Run(ctx, pattern); err != nil {
-			errs = append(errs, fmt.Sprintf("pattern %s: %v", pattern.Metadata.Name, err))
-		}
-	}
-
-	if len(errs) > 0 {
-		return fmt.Errorf("analysis completed with errors:\n%s", strings.Join(errs, "\n"))
-	}
-
-	e.writer.CleanOldScans()
-
-	return nil
+	// --- Step 6: remove smells this pattern is no longer producing ---
+	return e.writer.Prune(ctx, string(pattern.GetUID()), live)
 }
 
 // buildDependencies fetches and filters all dependency candidates from the graph.
 // Returns a map of depID → filtered candidates.
 func (e *Engine) buildDependencies(
 	nodes map[types.UID]*unstructured.Unstructured,
-	dependencies []linter.Dependency,
+	dependencies []kubepatternv1.Dependency,
 ) map[string][]*unstructured.Unstructured {
 
 	deps := make(map[string][]*unstructured.Unstructured, len(dependencies))
@@ -138,12 +128,13 @@ func (e *Engine) buildDependencies(
 }
 
 // buildSmell constructs a Smell from the pattern metadata and the failing target.
-func buildSmell(pattern *linter.PatternAsCode, target *unstructured.Unstructured) Smell {
+func buildSmell(pattern *kubepatternv1.Pattern, target *unstructured.Unstructured) Smell {
 	return Smell{
-		CRDName:        smellCRDName(pattern.Metadata.Name, target.GetUID()),
-		PatternName:    pattern.Metadata.Name,
-		PatternVersion: pattern.APIVersion,
-		Name:           pattern.Metadata.Name,
+		CRDName:        smellCRDName(pattern.Name, target.GetUID()),
+		PatternName:    pattern.Name,
+		PatternUID:     string(pattern.GetUID()),
+		PatternVersion: kubepatternv1.GroupVersion.String(),
+		Name:           pattern.Name,
 		Category:       pattern.Spec.Category,
 		Severity:       pattern.Spec.Severity,
 		Message:        interpolateMessage(pattern.Spec.Message, target),
@@ -161,12 +152,13 @@ func buildSmell(pattern *linter.PatternAsCode, target *unstructured.Unstructured
 
 // buildSyntheticSmell builds a Smell without a real target,
 // invoked when emitOnEmpty is true, and there are no suitable resources in Cluster.
-func buildSyntheticSmell(pattern *linter.PatternAsCode) Smell {
+func buildSyntheticSmell(pattern *kubepatternv1.Pattern) Smell {
 	return Smell{
-		CRDName:        fmt.Sprintf("%s-empty", pattern.Metadata.Name),
-		PatternName:    pattern.Metadata.Name,
-		PatternVersion: pattern.APIVersion,
-		Name:           pattern.Metadata.Name,
+		CRDName:        fmt.Sprintf("%s-empty", pattern.Name),
+		PatternName:    pattern.Name,
+		PatternUID:     string(pattern.GetUID()),
+		PatternVersion: kubepatternv1.GroupVersion.String(),
+		Name:           pattern.Name,
 		Category:       pattern.Spec.Category,
 		Severity:       pattern.Spec.Severity,
 		Message:        pattern.Spec.Message,

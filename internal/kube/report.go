@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kubepattern-go/internal/analysis"
 	"log/slog"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,11 @@ const (
 	smellGroup    = "kubepattern.dev"
 	smellVersion  = "v1"
 	smellResource = "smells"
+
+	// patternUIDLabel tags every Smell with the UID of the Pattern that produced
+	// it, so a Reconcile for one Pattern can prune its own stale smells without
+	// touching smells owned by any other Pattern.
+	patternUIDLabel = "kubepattern.dev/pattern-uid"
 )
 
 var smellGVR = schema.GroupVersionResource{
@@ -29,16 +35,14 @@ type SmellWriter struct {
 	client          *Client
 	saveInNamespace bool
 	targetNamespace string
-	scanId          string
 }
 
 // NewSmellWriter creates a SmellWriter using the existing kube.Client and namespace preferences.
-func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace, scanId string) *SmellWriter {
+func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace string) *SmellWriter {
 	return &SmellWriter{
 		client:          client,
 		saveInNamespace: saveInNamespace,
 		targetNamespace: targetNamespace,
-		scanId:          scanId,
 	}
 }
 
@@ -68,7 +72,7 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// 2a. Smell does not exist yet — create it.
-			obj.SetLabels(map[string]string{"lastScan": w.scanId})
+			obj.SetLabels(map[string]string{patternUIDLabel: smell.PatternUID})
 			_, err = dynClient.Resource(smellGVR).Namespace(namespace).Create(ctx, obj, metav1.CreateOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to create smell %q: %w", smell.CRDName, err)
@@ -87,7 +91,7 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 		labels = map[string]string{}
 	}
 
-	labels["lastScan"] = w.scanId
+	labels[patternUIDLabel] = smell.PatternUID
 	obj.SetLabels(labels)
 
 	_, err = dynClient.Resource(smellGVR).Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
@@ -98,29 +102,36 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	return nil
 }
 
-// CleanOldScans removes smells that have been solved or their pattern is no longer installed
-func (w *SmellWriter) CleanOldScans() {
-	res := w.client.dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    smellGroup,
-		Version:  smellVersion,
-		Resource: smellResource,
-	})
+// Prune deletes every Smell labeled as owned by patternUID whose name is not in
+// keep. It is called once per Reconcile, after every live smell for that
+// pattern has been written, so a Pattern's reconcile only ever removes smells
+// that it previously produced and is no longer producing — smells owned by
+// other patterns are untouched.
+func (w *SmellWriter) Prune(ctx context.Context, patternUID string, keep map[string]struct{}) error {
+	dynClient := w.client.DynamicClient()
 
-	list, err := res.List(context.Background(), metav1.ListOptions{})
+	list, err := dynClient.Resource(smellGVR).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", patternUIDLabel, patternUID),
+	})
 	if err != nil {
-		return
+		return fmt.Errorf("failed to list smells for pattern %q: %w", patternUID, err)
 	}
 
+	var errs []string
 	for _, obj := range list.Items {
-		labels := obj.GetLabels()
-
-		if labels == nil || labels["lastScan"] != w.scanId {
-			err := res.Namespace(obj.GetNamespace()).Delete(context.Background(), obj.GetName(), metav1.DeleteOptions{})
-			if err != nil {
-				slog.Error("Failed to delete old smell", "name", obj.GetName(), "error", err)
-			}
+		if _, ok := keep[obj.GetName()]; ok {
+			continue
+		}
+		if err := dynClient.Resource(smellGVR).Namespace(obj.GetNamespace()).Delete(ctx, obj.GetName(), metav1.DeleteOptions{}); err != nil {
+			slog.Error("Failed to delete stale smell", "name", obj.GetName(), "error", err)
+			errs = append(errs, fmt.Sprintf("%s: %v", obj.GetName(), err))
 		}
 	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to prune %d stale smell(s): %s", len(errs), strings.Join(errs, "; "))
+	}
+	return nil
 }
 
 // toUnstructured converts a Smell into an unstructured Kubernetes object

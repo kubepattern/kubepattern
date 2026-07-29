@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"kubepattern-go/internal/linter"
+	kubepatternv1 "kubepattern-go/api/v1"
 )
 
 // FilterResources returns the graph nodes that match the kind,
@@ -19,7 +19,7 @@ func FilterResources(
 	nodes map[types.UID]*unstructured.Unstructured,
 	kind string,
 	apiVersion string,
-	filters linter.Filters,
+	filters kubepatternv1.Filters,
 ) []*unstructured.Unstructured {
 	slog.Info("Filtering resources")
 	// Using the zero-value slice here is perfectly idiomatic in Go
@@ -50,7 +50,7 @@ func matchKind(node *unstructured.Unstructured, kind string, apiVersion string) 
 }
 
 // matchFilters applies matchAll, matchAny, and matchNone conditions to the node.
-func matchFilters(node *unstructured.Unstructured, filters linter.Filters) bool {
+func matchFilters(node *unstructured.Unstructured, filters kubepatternv1.Filters) bool {
 	// matchAll — every condition must be true
 	for _, cond := range filters.MatchAll {
 		if !evalCondition(node, cond) {
@@ -83,15 +83,15 @@ func matchFilters(node *unstructured.Unstructured, filters linter.Filters) bool 
 }
 
 // evalCondition evaluates a single FilterCondition against the node.
-func evalCondition(node *unstructured.Unstructured, cond linter.FilterCondition) bool {
+func evalCondition(node *unstructured.Unstructured, cond kubepatternv1.FilterCondition) bool {
 	values, found := getFieldValues(node.Object, cond.Path)
 
 	switch cond.Operator {
 
-	case linter.FilterExists:
+	case kubepatternv1.FilterExists:
 		return found && len(values) > 0
 
-	case linter.FilterIsEmpty:
+	case kubepatternv1.FilterIsEmpty:
 		if !found || len(values) == 0 {
 			return true
 		}
@@ -117,7 +117,7 @@ func evalCondition(node *unstructured.Unstructured, cond linter.FilterCondition)
 		}
 		return true
 
-	case linter.FilterEquals:
+	case kubepatternv1.FilterEquals:
 		if !found {
 			return false
 		}
@@ -134,31 +134,31 @@ func evalCondition(node *unstructured.Unstructured, cond linter.FilterCondition)
 		}
 		return false
 
-	case linter.FilterGreaterThan:
+	case kubepatternv1.FilterGreaterThan:
 		return compareNumeric(values, cond.Values, func(a, b int) bool { return a > b })
 
-	case linter.FilterGreaterOrEqual:
+	case kubepatternv1.FilterGreaterOrEqual:
 		return compareNumeric(values, cond.Values, func(a, b int) bool { return a >= b })
 
-	case linter.FilterLessThan:
+	case kubepatternv1.FilterLessThan:
 		return compareNumeric(values, cond.Values, func(a, b int) bool { return a < b })
 
-	case linter.FilterLessOrEqual:
+	case kubepatternv1.FilterLessOrEqual:
 		return compareNumeric(values, cond.Values, func(a, b int) bool { return a <= b })
 
-	case linter.FilterArraySizeEquals:
+	case kubepatternv1.FilterArraySizeEquals:
 		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a == b })
 
-	case linter.FilterArraySizeGreaterThan:
+	case kubepatternv1.FilterArraySizeGreaterThan:
 		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a > b })
 
-	case linter.FilterArraySizeGreaterOrEqual:
+	case kubepatternv1.FilterArraySizeGreaterOrEqual:
 		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a >= b })
 
-	case linter.FilterArraySizeLessThan:
+	case kubepatternv1.FilterArraySizeLessThan:
 		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a < b })
 
-	case linter.FilterArraySizeLessOrEqual:
+	case kubepatternv1.FilterArraySizeLessOrEqual:
 		return compareArraySize(node.Object, cond.Path, cond.Values, func(a, b int) bool { return a <= b })
 	}
 
