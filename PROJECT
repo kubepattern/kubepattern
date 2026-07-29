@@ -11,13 +11,15 @@ repo: kubepattern-go
 resources:
 - api:
     crdVersion: v1
-    namespaced: false
   controller: true
   domain: dev
   group: kubepattern
   kind: Pattern
   path: kubepattern-go/api/v1
   version: v1
+  webhooks:
+    validation: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
