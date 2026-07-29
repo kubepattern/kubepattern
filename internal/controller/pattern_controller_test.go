@@ -33,15 +33,13 @@ import (
 var _ = Describe("Pattern Controller", func() {
 	Context("When reconciling a resource", func() {
 		const (
-			resourceName      = "test-resource"
-			resourceNamespace = "default"
+			resourceName = "test-resource"
 		)
 
 		ctx := context.Background()
 
 		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: resourceNamespace,
+			Name: resourceName,
 		}
 		pattern := &kubepatternv1.Pattern{}
 
@@ -51,10 +49,19 @@ var _ = Describe("Pattern Controller", func() {
 			if err != nil && errors.IsNotFound(err) {
 				resource := &kubepatternv1.Pattern{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: resourceNamespace,
+						Name: resourceName,
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: kubepatternv1.PatternSpec{
+						DisplayName: "Test Pattern",
+						Category:    "test-category",
+						Severity:    kubepatternv1.SeverityLow,
+						Message:     "test message",
+						Target: kubepatternv1.Target{
+							Kind:       "Deployment",
+							APIVersion: "apps/v1",
+							PluralName: "deployments",
+						},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}

@@ -30,3 +30,8 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Local envtest toolchain (downloaded by `make test`, platform-specific)
+/bin/k8s/
+/bin/setup-envtest
+/bin/setup-envtest-*

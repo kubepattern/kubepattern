@@ -24,16 +24,76 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// SmellPatternRef identifies the Pattern that produced a Smell.
+type SmellPatternRef struct {
+	// name is the name of the Pattern that produced this smell.
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// version is the apiVersion of the Pattern that produced this smell.
+	// +optional
+	Version string `json:"version,omitempty"`
+}
+
+// SmellTarget identifies the resource that triggered a Smell.
+type SmellTarget struct {
+	// apiVersion is the group/version of the target resource.
+	// +required
+	APIVersion string `json:"apiVersion"`
+
+	// kind is the Kind of the target resource.
+	// +required
+	Kind string `json:"kind"`
+
+	// name is the name of the target resource.
+	// +required
+	Name string `json:"name"`
+
+	// namespace is the namespace of the target resource, empty for cluster-scoped resources.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// uid is the UID of the target resource.
+	// +required
+	UID string `json:"uid"`
+}
+
 // SmellSpec defines the desired state of Smell
 type SmellSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	// The following markers will use OpenAPI v3 schema to validate the value
-	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
+	// name is the smell name.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
 
-	// foo is an example field of Smell. Edit smell_types.go to remove/update
+	// category groups related smells (e.g. "zombie-resources", "misconfiguration").
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	Category string `json:"category"`
+
+	// reference points to external documentation for this smell.
 	// +optional
-	Foo *string `json:"foo,omitempty"`
+	Reference string `json:"reference,omitempty"`
+
+	// pattern identifies the Pattern that produced this smell.
+	// +optional
+	Pattern SmellPatternRef `json:"pattern,omitempty"`
+
+	// message is the human-readable description of the detected issue.
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// severity is the impact level of the detected smell.
+	// +optional
+	Severity Severity `json:"severity,omitempty"`
+
+	// suppress marks this smell as a known false positive to be ignored.
+	// +optional
+	// +kubebuilder:default=false
+	Suppress bool `json:"suppress,omitempty"`
+
+	// target identifies the resource that triggered this smell.
+	// +required
+	Target SmellTarget `json:"target"`
 }
 
 // SmellStatus defines the observed state of Smell.
@@ -61,6 +121,13 @@ type SmellStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=smell
+// +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".spec.severity",description="Smell severity (LOW, MEDIUM, HIGH, CRITICAL)"
+// +kubebuilder:printcolumn:name="Target Kind",type="string",JSONPath=".spec.target.kind",description="Kind of the target resource"
+// +kubebuilder:printcolumn:name="Target Name",type="string",JSONPath=".spec.target.name",description="Name of the target resource"
+// +kubebuilder:printcolumn:name="Target Namespace",type="string",JSONPath=".spec.target.namespace",description="Namespace of the target resource",priority=1
+// +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".spec.message",description="Smell message",priority=1
+// +kubebuilder:printcolumn:name="Suppressed",type="boolean",JSONPath=".spec.suppress",description="Indicates if the smell is ignored",priority=1
 
 // Smell is the Schema for the smells API
 type Smell struct {
