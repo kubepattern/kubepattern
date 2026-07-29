@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -37,6 +38,7 @@ import (
 
 	kubepatternv1 "kubepattern-go/api/v1"
 	"kubepattern-go/internal/controller"
+	"kubepattern-go/internal/kube"
 	webhookv1 "kubepattern-go/internal/webhook/v1"
 	// +kubebuilder:scaffold:imports
 )
@@ -63,6 +65,9 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
+	var saveInNamespace bool
+	var targetNamespace string
+	var requeueInterval time.Duration
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -80,6 +85,13 @@ func main() {
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.BoolVar(&saveInNamespace, "save-in-namespace", true,
+		"Save each Smell in the namespace of the resource that triggered it. "+
+			"Cluster-scoped resources and, when false, all resources fall back to --target-namespace.")
+	flag.StringVar(&targetNamespace, "target-namespace", "default",
+		"Fallback namespace used for Smells when --save-in-namespace is false or the target resource is cluster-scoped.")
+	flag.DurationVar(&requeueInterval, "requeue-interval", time.Hour,
+		"How often each Pattern is re-evaluated against the current cluster state.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -179,9 +191,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	kubeClient, err := kube.NewClient(mgr.GetConfig())
+	if err != nil {
+		setupLog.Error(err, "Failed to create Kubernetes discovery/dynamic client")
+		os.Exit(1)
+	}
+
 	if err := (&controller.PatternReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		KubeClient:      kubeClient,
+		SaveInNamespace: saveInNamespace,
+		TargetNamespace: targetNamespace,
+		RequeueInterval: requeueInterval,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "pattern")
 		os.Exit(1)

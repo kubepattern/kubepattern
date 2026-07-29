@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"kubepattern-go/internal/linter" // Adjust if your module path is different
+	kubepatternv1 "kubepattern-go/api/v1"
 )
 
 func TestEvaluateRelationships(t *testing.T) {
@@ -49,14 +49,14 @@ func TestEvaluateRelationships(t *testing.T) {
 	}
 
 	// 2. Set up the relationship rule (Custom EQUALS on ownerReferences)
-	customRelRule := linter.Relationship{
+	customRelRule := kubepatternv1.Relationship{
 		With: "my-rs-dep",
-		Type: linter.RelationshipCustom,
-		Criteria: []linter.Criteria{
+		Type: kubepatternv1.RelationshipCustom,
+		Criteria: []kubepatternv1.Criteria{
 			{
 				TargetPath:     "metadata.ownerReferences[*].name",
 				DependencyPath: "metadata.name",
-				Operator:       linter.CriteriaEquals,
+				Operator:       kubepatternv1.CriteriaEquals,
 			},
 		},
 	}
@@ -66,7 +66,7 @@ func TestEvaluateRelationships(t *testing.T) {
 		name          string
 		target        *unstructured.Unstructured
 		deps          map[string][]*unstructured.Unstructured
-		relationships linter.Relationships
+		relationships kubepatternv1.Relationships
 		want          bool
 	}{
 		{
@@ -75,8 +75,8 @@ func TestEvaluateRelationships(t *testing.T) {
 			deps: map[string][]*unstructured.Unstructured{
 				"my-rs-dep": {validRS},
 			},
-			relationships: linter.Relationships{
-				MatchAll: []linter.Relationship{customRelRule},
+			relationships: kubepatternv1.Relationships{
+				MatchAll: []kubepatternv1.Relationship{customRelRule},
 			},
 			want: true,
 		},
@@ -86,8 +86,8 @@ func TestEvaluateRelationships(t *testing.T) {
 			deps: map[string][]*unstructured.Unstructured{
 				"my-rs-dep": {invalidRS},
 			},
-			relationships: linter.Relationships{
-				MatchAll: []linter.Relationship{customRelRule},
+			relationships: kubepatternv1.Relationships{
+				MatchAll: []kubepatternv1.Relationship{customRelRule},
 			},
 			want: false,
 		},
@@ -97,8 +97,8 @@ func TestEvaluateRelationships(t *testing.T) {
 			deps: map[string][]*unstructured.Unstructured{
 				"my-rs-dep": {invalidRS},
 			},
-			relationships: linter.Relationships{
-				MatchNone: []linter.Relationship{customRelRule},
+			relationships: kubepatternv1.Relationships{
+				MatchNone: []kubepatternv1.Relationship{customRelRule},
 			},
 			want: true, // It wants NONE to match, and indeed it doesn't, so relationships are satisfied
 		},
@@ -108,8 +108,8 @@ func TestEvaluateRelationships(t *testing.T) {
 			deps: map[string][]*unstructured.Unstructured{
 				"my-rs-dep": {validRS},
 			},
-			relationships: linter.Relationships{
-				MatchNone: []linter.Relationship{customRelRule},
+			relationships: kubepatternv1.Relationships{
+				MatchNone: []kubepatternv1.Relationship{customRelRule},
 			},
 			want: false, // It wants NONE to match, but it DOES match, so relationships fail
 		},
@@ -119,8 +119,8 @@ func TestEvaluateRelationships(t *testing.T) {
 			deps: map[string][]*unstructured.Unstructured{
 				"my-rs-dep": {}, // No candidates found in the cluster
 			},
-			relationships: linter.Relationships{
-				MatchAll: []linter.Relationship{customRelRule},
+			relationships: kubepatternv1.Relationships{
+				MatchAll: []kubepatternv1.Relationship{customRelRule},
 			},
 			want: false,
 		},

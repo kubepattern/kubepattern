@@ -21,7 +21,6 @@ type Client struct {
 	discoveryClient discovery.DiscoveryInterface
 	dynamicClient   dynamic.Interface
 	mapper          meta.RESTMapper
-	cached          []schema.GroupVersionResource
 }
 
 func NewClient(config *rest.Config) (*Client, error) {
@@ -147,17 +146,8 @@ type Resource struct {
 	Resource   string
 }
 
-func (c *Client) cachedGVR(gvr schema.GroupVersionResource) bool {
-	for _, r := range c.cached {
-		if gvr.Group == r.Group && gvr.Version == r.Version && gvr.Resource == r.Resource {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (c *Client) FetchSelected(resources []Resource, ctx context.Context) ([]unstructured.Unstructured, error) {
+	seen := make(map[schema.GroupVersionResource]struct{}, len(resources))
 	var allObjects []unstructured.Unstructured
 	for _, resource := range resources {
 		gvk := schema.FromAPIVersionAndKind(resource.APIVersion, resource.Kind)
@@ -168,9 +158,10 @@ func (c *Client) FetchSelected(resources []Resource, ctx context.Context) ([]uns
 			Resource: resource.Resource,
 		}
 
-		if c.cachedGVR(gvr) {
+		if _, ok := seen[gvr]; ok {
 			continue
 		}
+		seen[gvr] = struct{}{}
 
 		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 
@@ -195,7 +186,21 @@ func (c *Client) GetGVR(gvk schema.GroupVersionKind) (schema.GroupVersionResourc
 
 // FetchSelectedWithInheritance retrieves the specified resources and recursively
 // fetches their owners (e.g., Pod -> ReplicaSet -> Deployment) to build a full dependency graph.
+//
+// The de-dup cache is scoped to a single top-level call (not to the Client), so
+// repeated calls on a long-lived Client — as happens under periodic
+// reconciliation — always see the current state of the cluster instead of
+// silently reusing GVRs fetched by a previous, unrelated call.
 func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.Context) ([]unstructured.Unstructured, error) {
+	seen := make(map[schema.GroupVersionResource]struct{})
+	return c.fetchSelectedWithInheritance(resources, ctx, seen)
+}
+
+func (c *Client) fetchSelectedWithInheritance(
+	resources []Resource,
+	ctx context.Context,
+	seen map[schema.GroupVersionResource]struct{},
+) ([]unstructured.Unstructured, error) {
 	var allObjects []unstructured.Unstructured
 
 	for _, resource := range resources {
@@ -216,13 +221,13 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 			}
 		}
 
-		// Skip if we have already fetched this resource type.
-		if c.cachedGVR(gvr) {
+		// Skip if we have already fetched this resource type in this call.
+		if _, ok := seen[gvr]; ok {
 			continue
 		}
 
-		// Add to cache before listing to prevent circular dependencies or redundant calls.
-		c.cached = append(c.cached, gvr)
+		// Mark as seen before listing to prevent circular dependencies or redundant calls.
+		seen[gvr] = struct{}{}
 
 		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 		if err != nil {
@@ -242,8 +247,8 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 					continue
 				}
 
-				// Queue the owner for the next fetch cycle if not cached yet.
-				if !c.cachedGVR(ownerGVR) {
+				// Queue the owner for the next fetch cycle if not seen yet.
+				if _, ok := seen[ownerGVR]; !ok {
 					inherited = append(inherited, Resource{
 						APIVersion: owner.APIVersion,
 						Kind:       owner.Kind,
@@ -255,7 +260,7 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 
 		// Recursively fetch newly discovered owner resource types.
 		if len(inherited) > 0 {
-			fetched, err := c.FetchSelectedWithInheritance(inherited, ctx)
+			fetched, err := c.fetchSelectedWithInheritance(inherited, ctx, seen)
 			if err != nil {
 				return allObjects, err
 			}

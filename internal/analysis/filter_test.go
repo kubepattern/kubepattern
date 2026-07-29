@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"kubepattern-go/internal/linter"
+	kubepatternv1 "kubepattern-go/api/v1"
 )
 
 // createMockPod returns a mock Unstructured object for testing purposes.
@@ -54,81 +54,81 @@ func TestEvalCondition(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		cond     linter.FilterCondition
+		cond     kubepatternv1.FilterCondition
 		expected bool
 	}{
 		// --- Operator: EXISTS ---
 		{
 			name:     "EXISTS - field exists",
-			cond:     linter.FilterCondition{Path: "metadata.name", Operator: linter.FilterExists},
+			cond:     kubepatternv1.FilterCondition{Path: "metadata.name", Operator: kubepatternv1.FilterExists},
 			expected: true,
 		},
 		{
 			name:     "EXISTS - field does not exist",
-			cond:     linter.FilterCondition{Path: "metadata.creationTimestamp", Operator: linter.FilterExists},
+			cond:     kubepatternv1.FilterCondition{Path: "metadata.creationTimestamp", Operator: kubepatternv1.FilterExists},
 			expected: false,
 		},
 
 		// --- Operator: IS_EMPTY ---
 		{
 			name:     "IS_EMPTY - field does not exist (considered empty)",
-			cond:     linter.FilterCondition{Path: "spec.nodeName", Operator: linter.FilterIsEmpty},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.nodeName", Operator: kubepatternv1.FilterIsEmpty},
 			expected: true,
 		},
 		{
 			name:     "IS_EMPTY - field exists but string is empty",
-			cond:     linter.FilterCondition{Path: "spec.serviceAccountName", Operator: linter.FilterIsEmpty},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.serviceAccountName", Operator: kubepatternv1.FilterIsEmpty},
 			expected: true,
 		},
 		{
 			name:     "IS_EMPTY - field exists and has a value",
-			cond:     linter.FilterCondition{Path: "metadata.name", Operator: linter.FilterIsEmpty},
+			cond:     kubepatternv1.FilterCondition{Path: "metadata.name", Operator: kubepatternv1.FilterIsEmpty},
 			expected: false,
 		},
 
 		// --- Operator: EQUALS ---
 		{
 			name:     "EQUALS - exact string match",
-			cond:     linter.FilterCondition{Path: "metadata.labels.app", Operator: linter.FilterEquals, Values: []string{"frontend"}},
+			cond:     kubepatternv1.FilterCondition{Path: "metadata.labels.app", Operator: kubepatternv1.FilterEquals, Values: []string{"frontend"}},
 			expected: true,
 		},
 		{
 			name:     "EQUALS - string mismatch",
-			cond:     linter.FilterCondition{Path: "metadata.labels.app", Operator: linter.FilterEquals, Values: []string{"backend"}},
+			cond:     kubepatternv1.FilterCondition{Path: "metadata.labels.app", Operator: kubepatternv1.FilterEquals, Values: []string{"backend"}},
 			expected: false,
 		},
 		{
 			name:     "EQUALS - array match with wildcard (finds 'sidecar')",
-			cond:     linter.FilterCondition{Path: "spec.containers[*].name", Operator: linter.FilterEquals, Values: []string{"sidecar"}},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.containers[*].name", Operator: kubepatternv1.FilterEquals, Values: []string{"sidecar"}},
 			expected: true,
 		},
 
 		// --- Numeric Operators ---
 		{
 			name:     "GREATER_THAN - match",
-			cond:     linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterGreaterThan, Values: []string{"2"}},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterGreaterThan, Values: []string{"2"}},
 			expected: true,
 		},
 		{
 			name:     "LESS_THAN - match",
-			cond:     linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterLessThan, Values: []string{"5"}},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterLessThan, Values: []string{"5"}},
 			expected: true,
 		},
 
 		// --- Array Size Operators ---
 		{
 			name:     "ARRAY_SIZE_EQUALS - array has 2 elements",
-			cond:     linter.FilterCondition{Path: "spec.containers", Operator: linter.FilterArraySizeEquals, Values: []string{"2"}},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.containers", Operator: kubepatternv1.FilterArraySizeEquals, Values: []string{"2"}},
 			expected: true,
 		},
 		{
 			name:     "ARRAY_SIZE_GREATER_THAN - array has more than 1 element",
-			cond:     linter.FilterCondition{Path: "spec.containers", Operator: linter.FilterArraySizeGreaterThan, Values: []string{"1"}},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.containers", Operator: kubepatternv1.FilterArraySizeGreaterThan, Values: []string{"1"}},
 			expected: true,
 		},
 		{
 			name:     "ARRAY_SIZE_EQUALS - fail, array does not have 3 elements",
-			cond:     linter.FilterCondition{Path: "spec.containers", Operator: linter.FilterArraySizeEquals, Values: []string{"3"}},
+			cond:     kubepatternv1.FilterCondition{Path: "spec.containers", Operator: kubepatternv1.FilterArraySizeEquals, Values: []string{"3"}},
 			expected: false,
 		},
 	}
@@ -231,30 +231,30 @@ func TestFilterResources(t *testing.T) {
 		name       string
 		kind       string
 		apiVersion string
-		filters    linter.Filters
+		filters    kubepatternv1.Filters
 		wantCount  int
 	}{
 		{
 			name:       "Filter only by Kind (Pod) - finds 2",
 			kind:       "Pod",
 			apiVersion: "v1",
-			filters:    linter.Filters{},
+			filters:    kubepatternv1.Filters{},
 			wantCount:  2,
 		},
 		{
 			name:       "Filter by different Kind (Service) - finds 1",
 			kind:       "Service",
 			apiVersion: "v1",
-			filters:    linter.Filters{},
+			filters:    kubepatternv1.Filters{},
 			wantCount:  1,
 		},
 		{
 			name:       "MatchAll - find only one pod1",
 			kind:       "Pod",
 			apiVersion: "v1",
-			filters: linter.Filters{
-				MatchAll: []linter.FilterCondition{
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"test-pod"}},
+			filters: kubepatternv1.Filters{
+				MatchAll: []kubepatternv1.FilterCondition{
+					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"test-pod"}},
 				},
 			},
 			wantCount: 1,
@@ -263,9 +263,9 @@ func TestFilterResources(t *testing.T) {
 			name:       "MatchNone - exclude pod1, find pod2",
 			kind:       "Pod",
 			apiVersion: "v1",
-			filters: linter.Filters{
-				MatchNone: []linter.FilterCondition{
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"test-pod"}},
+			filters: kubepatternv1.Filters{
+				MatchNone: []kubepatternv1.FilterCondition{
+					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"test-pod"}},
 				},
 			},
 			wantCount: 1,
@@ -274,10 +274,10 @@ func TestFilterResources(t *testing.T) {
 			name:       "MatchAny - one true and one false condition - finds pod1",
 			kind:       "Pod",
 			apiVersion: "v1",
-			filters: linter.Filters{
-				MatchAny: []linter.FilterCondition{
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"test-pod"}},
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"does-not-exist"}},
+			filters: kubepatternv1.Filters{
+				MatchAny: []kubepatternv1.FilterCondition{
+					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"test-pod"}},
+					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"does-not-exist"}},
 				},
 			},
 			wantCount: 1,
@@ -286,10 +286,10 @@ func TestFilterResources(t *testing.T) {
 			name:       "MatchAny - all false conditions - finds 0",
 			kind:       "Pod",
 			apiVersion: "v1",
-			filters: linter.Filters{
-				MatchAny: []linter.FilterCondition{
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"foo"}},
-					{Path: "metadata.name", Operator: linter.FilterEquals, Values: []string{"bar"}},
+			filters: kubepatternv1.Filters{
+				MatchAny: []kubepatternv1.FilterCondition{
+					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"foo"}},
+					{Path: "metadata.name", Operator: kubepatternv1.FilterEquals, Values: []string{"bar"}},
 				},
 			},
 			wantCount: 0,
@@ -330,12 +330,12 @@ func TestCompareErrors(t *testing.T) {
 func TestMoreOperators(t *testing.T) {
 	obj := createMockPod()
 
-	condGreaterOrEqual := linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterGreaterOrEqual, Values: []string{"3"}}
+	condGreaterOrEqual := kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterGreaterOrEqual, Values: []string{"3"}}
 	if !evalCondition(obj, condGreaterOrEqual) {
 		t.Errorf("FilterGreaterOrEqual failed (3 >= 3 should be true)")
 	}
 
-	condLessOrEqual := linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterLessOrEqual, Values: []string{"3"}}
+	condLessOrEqual := kubepatternv1.FilterCondition{Path: "spec.replicas", Operator: kubepatternv1.FilterLessOrEqual, Values: []string{"3"}}
 	if !evalCondition(obj, condLessOrEqual) {
 		t.Errorf("FilterLessOrEqual failed (3 <= 3 should be true)")
 	}

@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"kubepattern-go/internal/linter" // Adjust the import path to your module
+	kubepatternv1 "kubepattern-go/api/v1"
 )
 
 // GraphReader defines an interface for retrieving unstructured objects from a graph by their unique identifier.
@@ -20,7 +20,7 @@ type GraphReader interface {
 func EvaluateRelationships(
 	target *unstructured.Unstructured,
 	deps map[string][]*unstructured.Unstructured,
-	rels linter.Relationships,
+	rels kubepatternv1.Relationships,
 	g GraphReader, // <-- Uso l'interfaccia!
 ) bool {
 	slog.Info("Evaluating relationships")
@@ -58,7 +58,7 @@ func EvaluateRelationships(
 }
 
 // evalRelationshipConfig evaluates a single relationship configuration
-func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*unstructured.Unstructured, rel linter.Relationship, g GraphReader) bool { // <-- Aggiunto g alla firma
+func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*unstructured.Unstructured, rel kubepatternv1.Relationship, g GraphReader) bool { // <-- Aggiunto g alla firma
 	// If there are no candidates for this dependency, the relationship cannot exist
 	if len(depCandidates) == 0 {
 		return false
@@ -75,15 +75,15 @@ func evalRelationshipConfig(target *unstructured.Unstructured, depCandidates []*
 }
 
 // matchRelationship routes the logic based on the relationship type (custom vs. k8s native)
-func matchRelationship(target, dep *unstructured.Unstructured, rel linter.Relationship, g GraphReader) bool {
+func matchRelationship(target, dep *unstructured.Unstructured, rel kubepatternv1.Relationship, g GraphReader) bool {
 	switch rel.Type {
-	case linter.RelationshipCustom:
+	case kubepatternv1.RelationshipCustom:
 		return evalCustomCriteria(target, dep, rel.Criteria)
 
-	case linter.RelationshipOwns:
+	case kubepatternv1.RelationshipOwns:
 		return evalOwns(target, dep, g)
 
-	case linter.RelationshipOwnedBy:
+	case kubepatternv1.RelationshipOwnedBy:
 		return evalOwnedBy(target, dep, g)
 
 	default:
@@ -109,7 +109,7 @@ func evalOwnedBy(target, dep *unstructured.Unstructured, g GraphReader) bool {
 
 // evalCustomCriteria evaluates the list of custom criteria.
 // For the custom relationship to be valid between target and dep, ALL criteria must be satisfied.
-func evalCustomCriteria(target, dep *unstructured.Unstructured, criteria []linter.Criteria) bool {
+func evalCustomCriteria(target, dep *unstructured.Unstructured, criteria []kubepatternv1.Criteria) bool {
 	for _, c := range criteria {
 		if !evalSingleCriterion(target, dep, c) {
 			return false
@@ -118,7 +118,7 @@ func evalCustomCriteria(target, dep *unstructured.Unstructured, criteria []linte
 	return true
 }
 
-func evalSingleCriterion(target, dep *unstructured.Unstructured, c linter.Criteria) bool {
+func evalSingleCriterion(target, dep *unstructured.Unstructured, c kubepatternv1.Criteria) bool {
 	// Uses the getFieldValues function already written in filters.go
 	targetVals, tFound := getFieldValues(target.Object, c.TargetPath)
 	depVals, dFound := getFieldValues(dep.Object, c.DependencyPath)
@@ -129,7 +129,7 @@ func evalSingleCriterion(target, dep *unstructured.Unstructured, c linter.Criter
 	}
 
 	switch c.Operator {
-	case linter.CriteriaEquals:
+	case kubepatternv1.CriteriaEquals:
 		return evalOperatorEquals(targetVals, depVals)
 	// You can easily add CONTAINS and LABEL_SELECTOR here in the future
 	default:
