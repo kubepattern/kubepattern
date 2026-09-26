@@ -1,5 +1,3 @@
-{{- if .Values.example.enabled }}
-# 1. Example Pattern
 apiVersion: kubepattern.dev/v1
 kind: Pattern
 metadata:
@@ -23,8 +21,7 @@ spec:
         - path: "metadata.name"
           operator: EQUALS
           values:
-          - "no-pattern-applied"
+            - "no-pattern-applied"
       matchAny:
         - path: "kind"
           operator: EXISTS
-{{- end}}
