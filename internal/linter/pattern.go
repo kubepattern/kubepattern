@@ -68,6 +68,8 @@ type PatternAsCode struct {
 
 type Metadata struct {
 	Name string `yaml:"name"`
+	// UID is set by the API server; it links every Smell to the Pattern that produced it.
+	UID string `yaml:"uid,omitempty"`
 }
 
 type Spec struct {

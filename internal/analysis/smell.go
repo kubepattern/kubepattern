@@ -7,6 +7,7 @@ type Smell struct {
 	// CRDName is the deterministic Kubernetes resource name: {pattern-name}-{target-uid}
 	CRDName        string
 	PatternName    string
+	PatternUID     string
 	PatternVersion string
 	Name           string
 	Category       string
