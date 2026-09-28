@@ -74,6 +74,22 @@ func main() {
 
 	slog.Info("patterns fetched successfully", "count", len(rawPatterns))
 
+	smellWriter := kube.NewSmellWriter(
+		kubeClient,
+		appCfg.SaveInNamespace,
+		appCfg.TargetNamespace,
+		string(uuid.NewUUID()),
+	)
+
+	// Smells of Patterns that are no longer installed are removed at the end of every run,
+	// including the runs that exit early. Smells of installed but skipped patterns are kept.
+	installed := kube.InstalledPatternUIDs(rawPatterns)
+	pruneOrphans := func() {
+		if err := smellWriter.PruneOrphans(ctx, installed); err != nil {
+			slog.Warn("failed to prune orphaned smells", "error", err)
+		}
+	}
+
 	// --- Step 2: lint patterns ---
 	var patterns []*linter.PatternAsCode
 	for filename, data := range rawPatterns {
@@ -89,6 +105,7 @@ func main() {
 
 	if len(patterns) == 0 {
 		slog.Warn("no valid patterns found, exiting")
+		pruneOrphans()
 		os.Exit(0)
 	}
 
@@ -136,6 +153,7 @@ func main() {
 
 	if len(patterns) == 0 {
 		slog.Warn("no patterns can be evaluated due to missing resource access, exiting")
+		pruneOrphans()
 		os.Exit(0)
 	}
 
@@ -145,22 +163,14 @@ func main() {
 	graph.Build(allResources)
 	slog.Info("graph built", "nodes", len(graph.GetNodes()))
 
-	id := string(uuid.NewUUID())
-
-	// --- Step 4: run analysis ---
-	smellWriter := kube.NewSmellWriter(
-		kubeClient,
-		appCfg.SaveInNamespace,
-		appCfg.TargetNamespace,
-		id,
-	)
-
+	// --- Step 4: run analysis (each pattern prunes its own stale smells) ---
 	engine := analysis.NewEngine(graph, smellWriter)
 	if err := engine.RunAll(ctx, patterns); err != nil {
 		// RunAll collects partial errors — log but do not exit with failure
 		// since some patterns may have succeeded.
 		slog.Warn("analysis completed with some errors", "error", err)
 	}
+	pruneOrphans()
 
 	slog.Info("analysis complete")
 }

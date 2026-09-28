@@ -22,7 +22,10 @@ type Engine struct {
 // SmellWriter is the interface that report/ will implement to persist smells on the cluster.
 type SmellWriter interface {
 	Write(ctx context.Context, smell Smell) error
-	CleanOldScans()
+	// Prune deletes the smells previously produced by the pattern identified by patternUID
+	// whose name is not in keep. It is called once per pattern, after the pattern has been
+	// evaluated, so a pattern only ever removes smells it no longer produces.
+	Prune(ctx context.Context, patternUID string, keep map[string]struct{}) error
 }
 
 // NewEngine creates an Engine with the given graph and smell writer.
@@ -38,11 +41,15 @@ func NewEngine(graph *cluster.Graph, writer SmellWriter) *Engine {
 //  2. Fetch dependency candidates from the graph
 //  3. Filter targets by their filters
 //  4. Filter targets by their relationships against the dependencies
-//  5. Create and write a Smell for each target that failed the relationship check
+//  5. Create and write a Smell for each target that satisfies the relationships
+//  6. Prune smells previously emitted by this pattern that are no longer live
 func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 	slog.Info("running pattern", "pattern", pattern.Metadata.Name)
 
 	nodes := e.graph.GetNodes()
+	// live holds every smell this pattern produces in this run, whether or not its write
+	// succeeded: a failed write must never cause a still-valid smell to be pruned.
+	live := make(map[string]struct{})
 
 	// --- Step 1 & 3: fetch and filter target candidates ---
 	targets := FilterResources(
@@ -55,19 +62,20 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 	if len(targets) == 0 {
 		if !pattern.Spec.Target.EmitOnEmpty {
 			slog.Info("no target candidates found, skipping pattern", "pattern", pattern.Metadata.Name)
-			return nil
+			return e.prune(ctx, pattern, live)
 		}
 
 		// Absence Patterns
 		slog.Info("no targets found, emitting synthetic smell", "pattern", pattern.Metadata.Name)
 		smell := buildSyntheticSmell(pattern)
+		live[smell.CRDName] = struct{}{}
 		if err := e.writer.Write(ctx, smell); err != nil {
 			slog.Error("failed to write synthetic smell",
 				"pattern", pattern.Metadata.Name,
 				"error", err,
 			)
 		}
-		return nil
+		return e.prune(ctx, pattern, live)
 	}
 
 	// --- Step 2 & 3: fetch and filter dependency candidates ---
@@ -83,6 +91,7 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 		}
 
 		smell := buildSmell(pattern, target)
+		live[smell.CRDName] = struct{}{}
 		if err := e.writer.Write(ctx, smell); err != nil {
 			slog.Error("failed to write smell",
 				"pattern", pattern.Metadata.Name,
@@ -93,7 +102,18 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 		}
 	}
 
-	return nil
+	// --- Step 6: remove smells this pattern is no longer producing ---
+	return e.prune(ctx, pattern, live)
+}
+
+// prune removes the stale smells of a pattern. A pattern without a UID cannot be matched
+// to its smells, so nothing is deleted for it.
+func (e *Engine) prune(ctx context.Context, pattern *linter.PatternAsCode, live map[string]struct{}) error {
+	if pattern.Metadata.UID == "" {
+		slog.Warn("pattern has no UID, skipping prune", "pattern", pattern.Metadata.Name)
+		return nil
+	}
+	return e.writer.Prune(ctx, pattern.Metadata.UID, live)
 }
 
 // RunAll runs the analysis pipeline for a slice of patterns.
@@ -109,8 +129,6 @@ func (e *Engine) RunAll(ctx context.Context, patterns []*linter.PatternAsCode) e
 	if len(errs) > 0 {
 		return fmt.Errorf("analysis completed with errors:\n%s", strings.Join(errs, "\n"))
 	}
-
-	e.writer.CleanOldScans()
 
 	return nil
 }
@@ -142,6 +160,7 @@ func buildSmell(pattern *linter.PatternAsCode, target *unstructured.Unstructured
 	return Smell{
 		CRDName:        smellCRDName(pattern.Metadata.Name, target.GetUID()),
 		PatternName:    pattern.Metadata.Name,
+		PatternUID:     pattern.Metadata.UID,
 		PatternVersion: pattern.APIVersion,
 		Name:           pattern.Metadata.Name,
 		Category:       pattern.Spec.Category,
@@ -165,6 +184,7 @@ func buildSyntheticSmell(pattern *linter.PatternAsCode) Smell {
 	return Smell{
 		CRDName:        fmt.Sprintf("%s-empty", pattern.Metadata.Name),
 		PatternName:    pattern.Metadata.Name,
+		PatternUID:     pattern.Metadata.UID,
 		PatternVersion: pattern.APIVersion,
 		Name:           pattern.Metadata.Name,
 		Category:       pattern.Spec.Category,
