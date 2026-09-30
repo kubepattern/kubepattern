@@ -1,0 +1,45 @@
+# 1:1 translation of patterns/panel-not-referenced.yaml (PortalBlueprintPage read at v1-0-9, as in the adapted Pattern).
+# Referrers are matched by name only, as in the given Pattern.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: panel-not-referenced
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["widgets.templates.krateo.io"]
+        apiVersions: ["v1beta1"]
+        resources: ["panels"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: not-krateo-system
+      expression: object.metadata.namespace != 'krateo-system'
+  variables:
+    - name: panels
+      expression: globalContext.Get("panels.widgets.templates.krateo.io", "")
+    - name: columns
+      expression: globalContext.Get("columns.widgets.templates.krateo.io", "")
+    - name: rows
+      expression: globalContext.Get("rows.widgets.templates.krateo.io", "")
+    - name: tablists
+      expression: globalContext.Get("tablists.widgets.templates.krateo.io", "")
+    - name: pages
+      expression: globalContext.Get("pages.widgets.templates.krateo.io", "")
+    - name: datagrids
+      expression: globalContext.Get("datagrids.widgets.templates.krateo.io", "")
+    - name: portalblueprintpages
+      expression: globalContext.Get("portalblueprintpages.composition.krateo.io", "")
+  validations:
+    - expression: >-
+        [variables.panels, variables.columns, variables.rows, variables.tablists, variables.pages, variables.datagrids]
+          .exists(l, dyn(l).exists(d,
+            d.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?name.orValue('') == object.metadata.name)))
+        || dyn(variables.portalblueprintpages).exists(d,
+             d.?status.?managed.orValue([]).exists(m, m.?name.orValue('') == object.metadata.name))
+      messageExpression: >-
+        'Panel ' + object.metadata.name + ' in namespace ' + object.metadata.namespace +
+        ' is not included in any layout (Row, Column, TabList or Panel).'

@@ -1,0 +1,202 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+krateo-compositiondefinition-unused,CompositionDefinition,demo-system,springboot-app-4zdz9fdz,clean,clean,negative,natural
+krateo-compositiondefinition-unused,CompositionDefinition,kp-krateo-a,github-scaffolding-with-composition-page,smell,smell,positive,seed
+krateo-compositiondefinition-unused,CompositionDefinition,kp-krateo-a,portal-composition-page-generic,clean,smell,probe-G6,"seed; 1 composition(s) of PortalCompositionPageGeneric, a kind not enumerated in the Pattern"
+krateo-compositiondefinition-unused,CompositionDefinition,krateo-system,portal-blueprint-page,clean,clean,negative,natural
+krateo-navmenuitem-page-missing,NavMenuItem,demo-app,demo-app-nav-menu-item,clean,clean,negative,natural
+krateo-navmenuitem-page-missing,NavMenuItem,demo-app-2,demo-app-2-nav-menu-item,clean,clean,negative,natural
+krateo-navmenuitem-page-missing,NavMenuItem,kp-krateo-a,nav-missing,smell,smell,positive,seed
+krateo-navmenuitem-page-missing,NavMenuItem,kp-krateo-a,nav-page,clean,clean,negative,seed
+krateo-navmenuitem-page-missing,NavMenuItem,kp-krateo-a,nav-two,smell,clean,probe-G1,seed; resourceRefId names a missing Page; another ref names an existing one
+krateo-navmenuitem-page-missing,NavMenuItem,kp-krateo-b,nav-cross,smell,smell,positive,seed
+krateo-navmenuitem-page-missing,NavMenuItem,kp-krateo-b,nav-cross-ok,clean,clean,near-miss,seed
+krateo-navmenuitem-page-missing,NavMenuItem,krateo-system,nav-menu-item-blueprints,clean,clean,negative,natural
+krateo-navmenuitem-page-missing,NavMenuItem,krateo-system,nav-menu-item-compositions,clean,clean,negative,natural
+krateo-navmenuitem-page-missing,NavMenuItem,krateo-system,nav-menu-item-dashboard,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,demo-app,demo-app-backend-86ccc4747f-gzc4v-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-endpoint-missing,RESTAction,demo-app,demo-app-frontend-557b899867-8dkbp-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-endpoint-missing,RESTAction,demo-app,demo-app-mysql-db-5f6f758d4b-zhxtl-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-endpoint-missing,RESTAction,demo-app-2,demo-app-2-api-7d9f8b6c5d-x2k4q-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-endpoint-missing,RESTAction,demo-app-2,demo-app-2-postgres-0-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-endpoint-missing,RESTAction,demo-system,springboot-app-4zdz9fdz-restaction-schema-override-allows-ns,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-events,clean,clean,negative,seed
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-values,clean,clean,negative,seed
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-a,ra-caller,clean,clean,negative,seed
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-a,ra-ep-g1,smell,clean,probe-G1,seed; name and namespace of different entries match a Secret
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-a,ra-ep-missing,smell,smell,positive,seed
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-a,ra-ep-mixed,smell,clean,probe-G2,seed; one of several endpoints is missing
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-a,ra-ep-ok,clean,clean,negative,seed
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-b,ra-ep-cross,clean,clean,near-miss,seed
+krateo-restaction-endpoint-missing,RESTAction,kp-krateo-b,ra-ep-wrong-ns,smell,smell,positive,seed
+krateo-restaction-endpoint-missing,RESTAction,krateo-system,all-routes,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,krateo-system,blueprints-list,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,krateo-system,blueprints-panels,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,krateo-system,compositions-list,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,krateo-system,compositions-panels,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,krateo-system,sidebar-nav-menu-items,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,tenant-a,springbootapp-demo-app-composition-events,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,tenant-a,springbootapp-demo-app-composition-values,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,tenant-b,springbootapp-demo-app-2-composition-events,clean,clean,negative,natural
+krateo-restaction-endpoint-missing,RESTAction,tenant-b,springbootapp-demo-app-2-composition-values,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,demo-app,cve-table,smell,smell,positive,natural
+krateo-restaction-not-used,RESTAction,demo-app,demo-app-backend-86ccc4747f-gzc4v-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-not-used,RESTAction,demo-app,demo-app-frontend-557b899867-8dkbp-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-not-used,RESTAction,demo-app,demo-app-mysql-db-5f6f758d4b-zhxtl-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-not-used,RESTAction,demo-app,replicaset-demo-app-backend-86ccc4747f-demo-app,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,demo-app,replicaset-demo-app-frontend-557b899867-demo-app,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,demo-app,replicaset-demo-app-mysql-db-5f6f758d4b-mysql,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,demo-app-2,demo-app-2-api-7d9f8b6c5d-x2k4q-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-not-used,RESTAction,demo-app-2,demo-app-2-postgres-0-get-pod-resources,smell,smell,positive,natural
+krateo-restaction-not-used,RESTAction,demo-app-2,replicaset-demo-app-2-api-7d9f8b6c5d-api,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,demo-system,springboot-app-4zdz9fdz-restaction-compositiondefinition-schema-ns,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,demo-system,springboot-app-4zdz9fdz-restaction-schema-override-allows-ns,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-events,clean,clean,negative,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-resources,clean,clean,negative,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-schema,clean,clean,negative,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-values,clean,clean,negative,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-called,clean,smell,probe-G4,seed; called only through another RESTAction's /call path
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-caller,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-ep-g1,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-ep-missing,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-ep-mixed,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-ep-ok,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-kmanaged-missing,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-kmanaged-ok,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-ok,clean,clean,negative,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-a,ra-unused,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-b,ra-ep-cross,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-b,ra-ep-wrong-ns,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,kp-krateo-b,ra-ok,smell,smell,positive,seed
+krateo-restaction-not-used,RESTAction,tenant-a,springbootapp-demo-app-composition-events,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,tenant-a,springbootapp-demo-app-composition-resources,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,tenant-a,springbootapp-demo-app-composition-schema,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,tenant-a,springbootapp-demo-app-composition-values,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,tenant-b,springbootapp-demo-app-2-composition-events,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,tenant-b,springbootapp-demo-app-2-composition-resources,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,tenant-b,springbootapp-demo-app-2-composition-schema,clean,clean,negative,natural
+krateo-restaction-not-used,RESTAction,tenant-b,springbootapp-demo-app-2-composition-values,clean,clean,negative,natural
+krateo-rolebinding-clusterrole-missing,RoleBinding,demo-app,platform-devs-tenant-a-vulnerabilityreport-clusterrole,smell,smell,positive,natural
+krateo-rolebinding-clusterrole-missing,RoleBinding,demo-app-2,platform-devs-tenant-b-vulnerabilityreport-clusterrole,smell,smell,positive,natural
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-a,rb-cr-missing,smell,smell,positive,seed
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-a,rb-cr-ok,clean,clean,negative,seed
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-a,rb-sa-g1,clean,clean,negative,seed
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-a,rb-sa-missing,clean,clean,negative,seed
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-a,rb-sa-mixed,clean,clean,negative,seed
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-a,rb-sa-ok,clean,clean,negative,seed
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-b,rb-sa-cross,clean,clean,negative,seed
+krateo-rolebinding-clusterrole-missing,RoleBinding,kp-krateo-b,rb-sa-cross-ok,clean,clean,negative,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app,ai-cve-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app,ai-cve-summary-get-vulnerabilityreport-binding-springbootapp-demo-app,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app,ai-cve-tech-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app,demo-app-c2429vv9,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app-2,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-summary-get-vulnerabilityreport-binding-springbootapp-demo-app-2,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-tech-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app-2,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,demo-app-2-68bw8758,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-system,springboot-app-4zdz9fdz,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-system,springbootapps-v1-0-0,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-system,springbootapps-v1-0-0-secret,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-a,githubscaffoldingwithcompositionpages-v1-2-5,clean,clean,negative,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-a,page-generic-a-8vfvb976,clean,clean,negative,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-a,portalcompositionpagegenerics-v1-4-3,clean,clean,negative,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-a,rb-sa-g1,smell,clean,probe-G1,seed; a Group subject is named like an existing ServiceAccount
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-a,rb-sa-missing,smell,smell,positive,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-a,rb-sa-mixed,smell,clean,probe-G2,seed; one of several ServiceAccounts is missing
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-a,rb-sa-ok,clean,clean,negative,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-b,rb-sa-cross,smell,smell,positive,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,kp-krateo-b,rb-sa-cross-ok,clean,clean,near-miss,seed
+krateo-rolebinding-subject-sa-missing,RoleBinding,krateo-system,authn,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,krateo-system,events-presenter-events,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,krateo-system,pg-cluster,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,krateo-system,portalblueprintpages-v1-0-9,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,krateo-system,resources-presenter-secrets,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-public,system:controller:bootstrap-signer,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-system,metrics-server-auth-reader,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-system,system::leader-locking-kube-controller-manager,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-system,system::leader-locking-kube-scheduler,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-system,system:controller:bootstrap-signer,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-system,system:controller:cloud-provider,smell,smell,positive,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-system,system:controller:token-cleaner,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kube-system,system:persistent-volume-provisioner,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kyverno,kyverno:admission-controller,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kyverno,kyverno:background-controller,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kyverno,kyverno:cleanup-controller,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,kyverno,kyverno:reports-controller,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,tenant-a,demo-app-c2429vv9,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,tenant-b,demo-app-2-68bw8758,clean,clean,negative,natural
+krateo-widget-manager-missing,Markdown,demo-app,cve-2021-3449,clean,clean,negative,natural
+krateo-widget-manager-missing,Markdown,demo-app,cve-2022-37434,clean,clean,negative,natural
+krateo-widget-manager-missing,Markdown,demo-app,cve-2023-4806,clean,clean,negative,natural
+krateo-widget-manager-missing,Markdown,demo-app,cve-2024-2961,clean,clean,negative,natural
+krateo-widget-manager-missing,Markdown,demo-app,cve-2025-4673,clean,clean,negative,natural
+krateo-widget-manager-missing,RESTAction,demo-app,replicaset-demo-app-backend-86ccc4747f-demo-app,smell,clean,probe-G6,natural; RESTAction is not a target: one kind per Pattern
+krateo-widget-manager-missing,RESTAction,demo-app,replicaset-demo-app-frontend-557b899867-demo-app,smell,clean,probe-G6,natural; RESTAction is not a target: one kind per Pattern
+krateo-widget-manager-missing,RESTAction,demo-app,replicaset-demo-app-mysql-db-5f6f758d4b-mysql,smell,clean,probe-G6,natural; RESTAction is not a target: one kind per Pattern
+krateo-widget-manager-missing,YamlViewer,demo-app,replicaset-demo-app-backend-86ccc4747f-demo-app,smell,clean,probe-G6,natural; YamlViewer is not a target: one kind per Pattern
+krateo-widget-manager-missing,YamlViewer,demo-app,replicaset-demo-app-frontend-557b899867-demo-app,smell,clean,probe-G6,natural; YamlViewer is not a target: one kind per Pattern
+krateo-widget-manager-missing,YamlViewer,demo-app,replicaset-demo-app-mysql-db-5f6f758d4b-mysql,smell,clean,probe-G6,natural; YamlViewer is not a target: one kind per Pattern
+krateo-widget-manager-missing,Markdown,demo-app-2,cve-2023-44487,smell,smell,positive,natural
+krateo-widget-manager-missing,Markdown,demo-app-2,cve-2024-6387,smell,smell,positive,natural
+krateo-widget-manager-missing,RESTAction,demo-app-2,replicaset-demo-app-2-api-7d9f8b6c5d-api,smell,clean,probe-G6,natural; RESTAction is not a target: one kind per Pattern
+krateo-widget-manager-missing,YamlViewer,demo-app-2,replicaset-demo-app-2-api-7d9f8b6c5d-api,smell,clean,probe-G6,natural; YamlViewer is not a target: one kind per Pattern
+krateo-widget-manager-missing,YamlViewer,demo-app-2,replicaset-demo-app-2-postgres-6c8d5f7b9-postgres,smell,clean,probe-G6,natural; YamlViewer is not a target: one kind per Pattern
+krateo-widget-manager-missing,Markdown,kp-krateo-a,md-managed-missing,smell,smell,positive,seed
+krateo-widget-manager-missing,Markdown,kp-krateo-a,md-managed-ok,clean,clean,negative,seed
+krateo-widget-manager-missing,Markdown,kp-krateo-a,md-managed-table,clean,clean,near-miss,seed
+krateo-widget-manager-missing,YamlViewer,kp-krateo-a,yv-managed-missing,smell,clean,probe-G6,seed; YamlViewer is not a target: one kind per Pattern
+krateo-widget-manager-missing,Markdown,kp-krateo-b,md-managed-cross,smell,smell,positive,seed
+krateo-yamlviewer-apiref-dangling,YamlViewer,demo-app,replicaset-demo-app-backend-86ccc4747f-demo-app,clean,clean,negative,natural
+krateo-yamlviewer-apiref-dangling,YamlViewer,demo-app,replicaset-demo-app-frontend-557b899867-demo-app,clean,clean,negative,natural
+krateo-yamlviewer-apiref-dangling,YamlViewer,demo-app,replicaset-demo-app-mysql-db-5f6f758d4b-mysql,clean,clean,negative,natural
+krateo-yamlviewer-apiref-dangling,YamlViewer,demo-app-2,replicaset-demo-app-2-api-7d9f8b6c5d-api,clean,clean,negative,natural
+krateo-yamlviewer-apiref-dangling,YamlViewer,demo-app-2,replicaset-demo-app-2-postgres-6c8d5f7b9-postgres,smell,smell,positive,natural
+krateo-yamlviewer-apiref-dangling,YamlViewer,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-values-panel-yamlviewer,clean,clean,negative,seed
+krateo-yamlviewer-apiref-dangling,YamlViewer,kp-krateo-a,yv-dangling,smell,smell,positive,seed
+krateo-yamlviewer-apiref-dangling,YamlViewer,kp-krateo-a,yv-managed-missing,clean,clean,negative,seed
+krateo-yamlviewer-apiref-dangling,YamlViewer,kp-krateo-a,yv-ok,clean,clean,negative,seed
+krateo-yamlviewer-apiref-dangling,YamlViewer,kp-krateo-b,yv-cross,smell,smell,positive,seed
+krateo-yamlviewer-apiref-dangling,YamlViewer,kp-krateo-b,yv-cross-ok,clean,clean,near-miss,seed
+krateo-yamlviewer-apiref-dangling,YamlViewer,tenant-a,springbootapp-demo-app-composition-values-panel-yamlviewer,clean,clean,negative,natural
+krateo-yamlviewer-apiref-dangling,YamlViewer,tenant-b,springbootapp-demo-app-2-composition-values-panel-yamlviewer,clean,clean,negative,natural
+page-not-referenced,Page,demo-app,demo-app-page,clean,clean,negative,natural
+page-not-referenced,Page,demo-app-2,demo-app-2-page,clean,clean,negative,natural
+page-not-referenced,Page,kp-krateo-a,page-g1,smell,clean,probe-G1,seed
+page-not-referenced,Page,kp-krateo-a,page-nav,clean,clean,negative,seed
+page-not-referenced,Page,kp-krateo-a,page-orphan,smell,smell,positive,seed
+page-not-referenced,Page,kp-krateo-a,page-panel,clean,clean,near-miss,seed
+page-not-referenced,Page,kp-krateo-a,page-route,clean,smell,probe-scope,seed; referenced only by a Route
+page-not-referenced,Page,kp-krateo-b,page-nav,smell,smell,positive,seed
+panel-not-referenced,Panel,demo-app,demo-app-cve-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,demo-app,demo-app-overview-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,demo-app,demo-app-sbom-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,demo-app-2,demo-app-2-cve-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,demo-app-2,demo-app-2-overview-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,demo-app-2,demo-app-2-sbom-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,demo-system,springboot-app-4zdz9fdz-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,kp-krateo-a,panel-g1,smell,smell,positive,seed
+panel-not-referenced,Panel,kp-krateo-a,panel-in-tab,clean,clean,near-miss,seed
+panel-not-referenced,Panel,kp-krateo-a,panel-kind,smell,clean,probe-scope,seed; its name is referenced only for another namespace or resource
+panel-not-referenced,Panel,kp-krateo-a,panel-links,clean,clean,negative,seed
+panel-not-referenced,Panel,kp-krateo-a,panel-orphan,smell,smell,positive,seed
+panel-not-referenced,Panel,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-events-panel,clean,clean,negative,seed
+panel-not-referenced,Panel,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-panel,clean,smell,probe-G7,seed; listed by the portal through its krateo.io/portal-page label
+panel-not-referenced,Panel,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-status-panel,clean,clean,negative,seed
+panel-not-referenced,Panel,kp-krateo-a,portalcompositionpagegeneric-page-generic-a-composition-values-panel,clean,clean,negative,seed
+panel-not-referenced,Panel,kp-krateo-b,panel-links,smell,clean,probe-scope,seed; its name is referenced only for another namespace or resource
+panel-not-referenced,Panel,tenant-a,springbootapp-demo-app-composition-events-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,tenant-a,springbootapp-demo-app-composition-panel,clean,smell,probe-G7,natural; listed by the portal through its krateo.io/portal-page label
+panel-not-referenced,Panel,tenant-a,springbootapp-demo-app-composition-status-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,tenant-a,springbootapp-demo-app-composition-values-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,tenant-b,springbootapp-demo-app-2-composition-events-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,tenant-b,springbootapp-demo-app-2-composition-panel,clean,smell,probe-G7,natural; listed by the portal through its krateo.io/portal-page label
+panel-not-referenced,Panel,tenant-b,springbootapp-demo-app-2-composition-status-panel,clean,clean,negative,natural
+panel-not-referenced,Panel,tenant-b,springbootapp-demo-app-2-composition-values-panel,clean,clean,negative,natural
+paragraph-not-referenced,Paragraph,demo-app,demo-app-description,clean,clean,negative,natural
+paragraph-not-referenced,Paragraph,demo-app,demo-app-release-notes,smell,smell,positive,natural
+paragraph-not-referenced,Paragraph,demo-app-2,demo-app-2-description,clean,clean,negative,natural
+paragraph-not-referenced,Paragraph,demo-app-2,demo-app-2-release-notes,clean,clean,negative,natural
+paragraph-not-referenced,Paragraph,kp-krateo-a,para-a,clean,clean,negative,seed
+paragraph-not-referenced,Paragraph,kp-krateo-a,para-col,clean,clean,near-miss,seed
+paragraph-not-referenced,Paragraph,kp-krateo-a,para-g1,smell,clean,probe-G1,seed
+paragraph-not-referenced,Paragraph,kp-krateo-a,para-orphan,smell,smell,positive,seed
+paragraph-not-referenced,Paragraph,kp-krateo-b,para-a,smell,smell,positive,seed

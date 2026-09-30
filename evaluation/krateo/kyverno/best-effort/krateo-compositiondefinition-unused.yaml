@@ -1,0 +1,26 @@
+# Best-effort variant of equivalent/krateo-compositiondefinition-unused.yaml.
+# G6: the instances are listed live from the GVR in the definition's status (resource.List), so no kind is enumerated.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-compositiondefinition-unused
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["core.krateo.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["compositiondefinitions"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: generated
+      expression: object.?status.?apiVersion.hasValue() && object.?status.?resource.hasValue()
+  validations:
+    - expression: >-
+        size(resource.List(object.status.apiVersion, object.status.resource, "").items) > 0
+      messageExpression: >-
+        'CompositionDefinition ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' has no composition of the kind it generates, but keeps a CRD and a composition-dynamic-controller running.'

@@ -1,0 +1,25 @@
+# Controlled cases for krateo-compositiondefinition-unused (official marketplace blueprints).
+# - github-scaffolding-with-composition-page: no composition of its kind (positive);
+# - portal-composition-page-generic: one composition, but its kind is not enumerated in the Pattern (probe-G6).
+# The composition is applied by env/install/60-seeds.sh once the generated CRD exists.
+apiVersion: core.krateo.io/v1alpha1
+kind: CompositionDefinition
+metadata:
+  name: github-scaffolding-with-composition-page
+  namespace: kp-krateo-a
+spec:
+  chart:
+    repo: github-scaffolding-with-composition-page
+    url: https://marketplace.krateo.io
+    version: 1.2.5
+---
+apiVersion: core.krateo.io/v1alpha1
+kind: CompositionDefinition
+metadata:
+  name: portal-composition-page-generic
+  namespace: kp-krateo-a
+spec:
+  chart:
+    repo: portal-composition-page-generic
+    url: https://marketplace.krateo.io
+    version: 1.4.3

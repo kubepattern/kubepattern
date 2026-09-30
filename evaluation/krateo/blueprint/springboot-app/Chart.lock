@@ -1,0 +1,6 @@
+dependencies:
+- name: portal-composition-page-generic
+  repository: https://marketplace.krateo.io
+  version: 1.4.3
+digest: sha256:fc7733f48b99fc91b307ba60c6de5d22516bab90b1920ad6cc1bfc0c7857ec87
+generated: "2026-09-30T12:30:22.487876958+02:00"

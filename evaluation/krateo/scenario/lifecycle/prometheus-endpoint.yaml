@@ -1,0 +1,8 @@
+# L4: the monitoring endpoint the pod-resources RESTActions call (fix).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prometheus-endpoint
+  namespace: krateo-system
+stringData:
+  server-url: http://prometheus.monitoring.svc:9090

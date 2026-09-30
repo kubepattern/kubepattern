@@ -1,0 +1,10 @@
+# Informer-cached list of every springbootapps.composition.krateo.io (v1-0-0), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: springbootapps.composition.krateo.io
+spec:
+  kubernetesResource:
+    group: composition.krateo.io
+    version: v1-0-0
+    resource: springbootapps
