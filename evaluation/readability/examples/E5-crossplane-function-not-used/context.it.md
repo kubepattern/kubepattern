@@ -1,0 +1,1 @@
+In Crossplane una `Function` è un'estensione installata nel cluster che gira come Pod. Le `Composition`, le `Operation`, le `CronOperation` (operazioni pianificate) e le `WatchOperation` (operazioni attivate da eventi) eseguono una pipeline di passi, e ogni passo invoca una Function.

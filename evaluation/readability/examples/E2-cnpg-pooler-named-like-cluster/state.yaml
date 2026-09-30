@@ -1,0 +1,59 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-live
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-nobackup
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-typo
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-renamed-sb
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: db-nobackup
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: pool-orphan-name
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: db-renamed-sb
+  namespace: kp-db-b
+spec:
+  cluster:
+    name: db-live
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: db-typo
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live

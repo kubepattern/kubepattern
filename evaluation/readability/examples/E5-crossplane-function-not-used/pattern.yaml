@@ -1,0 +1,57 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: crossplane-function-not-used
+spec:
+  displayName: Crossplane Function Not Used
+  category: Cost
+  severity: MEDIUM
+  message: "Function {{target.metadata.name}} runs a Pod but is not referenced by any Composition or Operation pipeline step."
+  reference: "https://docs.crossplane.io/latest/packages/functions/"
+  target:
+    kind: Function
+    apiVersion: pkg.crossplane.io/v1
+    plural: functions
+  dependencies:
+    - id: composition
+      kind: Composition
+      apiVersion: apiextensions.crossplane.io/v1
+      plural: compositions
+    - id: operation
+      kind: Operation
+      apiVersion: ops.crossplane.io/v1alpha1
+      plural: operations
+    - id: cronoperation
+      kind: CronOperation
+      apiVersion: ops.crossplane.io/v1alpha1
+      plural: cronoperations
+    - id: watchoperation
+      kind: WatchOperation
+      apiVersion: ops.crossplane.io/v1alpha1
+      plural: watchoperations
+  relationships:
+    matchNone:
+      - with: composition
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.pipeline[*].functionRef.name"
+            operator: EQUALS
+      - with: operation
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.pipeline[*].functionRef.name"
+            operator: EQUALS
+      - with: cronoperation
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.operationTemplate.spec.pipeline[*].functionRef.name"
+            operator: EQUALS
+      - with: watchoperation
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.operationTemplate.spec.pipeline[*].functionRef.name"
+            operator: EQUALS

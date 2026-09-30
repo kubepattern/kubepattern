@@ -1,0 +1,46 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: rule-e4
+spec:
+  displayName: Rule E4
+  category: General
+  severity: MEDIUM
+  message: "Finding on {{target.metadata.name}}"
+  target:
+    kind: ClusterIssuer
+    apiVersion: cert-manager.io/v1
+    plural: clusterissuers
+  dependencies:
+    - id: certificate
+      kind: Certificate
+      apiVersion: cert-manager.io/v1
+      plural: certificates
+      filters:
+        matchAll:
+          - path: "spec.issuerRef.kind"
+            operator: EQUALS
+            values: ["ClusterIssuer"]
+    - id: request
+      kind: CertificateRequest
+      apiVersion: cert-manager.io/v1
+      plural: certificaterequests
+      filters:
+        matchAll:
+          - path: "spec.issuerRef.kind"
+            operator: EQUALS
+            values: ["ClusterIssuer"]
+  relationships:
+    matchNone:
+      - with: certificate
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.issuerRef.name"
+            operator: EQUALS
+      - with: request
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.issuerRef.name"
+            operator: EQUALS

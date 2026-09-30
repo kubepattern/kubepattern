@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-empty-list
+  namespace: argocd
+  uid: 7c1e0a52-0001-4000-8000-000000000001
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-list-1
+  namespace: argocd
+  uid: 7c1e0a52-0002-4000-8000-000000000002
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-cluster-none
+  namespace: argocd
+  uid: 7c1e0a52-0003-4000-8000-000000000003
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: as-list-1-solo
+  namespace: argocd
+  ownerReferences:
+    - apiVersion: argoproj.io/v1alpha1
+      kind: ApplicationSet
+      name: as-list-1
+      uid: 7c1e0a52-0002-4000-8000-000000000002

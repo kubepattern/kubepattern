@@ -1,0 +1,23 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: rule-e3
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["argoproj.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["applicationsets"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: applications
+      expression: globalContext.Get("applications.argoproj.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.applications).exists(d,
+          d.metadata.?ownerReferences.orValue([]).exists(o, o.uid == object.metadata.uid))
+      messageExpression: "'Finding on ' + object.metadata.name"

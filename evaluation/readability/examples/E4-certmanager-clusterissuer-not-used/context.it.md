@@ -1,0 +1,1 @@
+cert-manager emette certificati TLS. Un `ClusterIssuer` è un'autorità di emissione valida in tutto il cluster (la variante limitata a un namespace si chiama `Issuer`); un `Certificate` descrive un certificato da ottenere; una `CertificateRequest` è una singola richiesta di firma.

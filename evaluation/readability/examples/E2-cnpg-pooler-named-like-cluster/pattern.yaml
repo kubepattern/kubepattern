@@ -1,0 +1,30 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: cnpg-pooler-name-clashes-with-cluster
+spec:
+  displayName: Pooler Named Like a Cluster
+  category: Misconfiguration
+  severity: HIGH
+  message: "Pooler {{target.metadata.namespace}}/{{target.metadata.name}} has the same name as a CNPG Cluster in the same namespace (forbidden by the Pooler API contract)."
+  reference: "https://cloudnative-pg.io/documentation/current/connection_pooling/"
+  target:
+    kind: Pooler
+    apiVersion: postgresql.cnpg.io/v1
+    plural: poolers
+  dependencies:
+    - id: cluster
+      kind: Cluster
+      apiVersion: postgresql.cnpg.io/v1
+      plural: clusters
+  relationships:
+    matchAll:
+      - with: cluster
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "metadata.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS
