@@ -1,0 +1,10 @@
+# Informer-cached list of every kubeadmcontrolplanes.controlplane.cluster.x-k8s.io (v1beta2), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: kubeadmcontrolplanes.controlplane.cluster.x-k8s.io
+spec:
+  kubernetesResource:
+    group: controlplane.cluster.x-k8s.io
+    version: v1beta2
+    resource: kubeadmcontrolplanes

@@ -1,0 +1,26 @@
+# 1:1 translation of patterns/kargo/warehouse-not-requested.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: kargo-warehouse-not-requested
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["kargo.akuity.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["warehouses"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: stages
+      expression: globalContext.Get("stages.kargo.akuity.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.stages).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.?requestedFreight.orValue([]).exists(f, f.origin.name == object.metadata.name))
+      messageExpression: >-
+        'Warehouse ' + object.metadata.name + ' in project ' + object.metadata.namespace +
+        ' keeps discovering artifacts, but no Stage requests its Freight.'

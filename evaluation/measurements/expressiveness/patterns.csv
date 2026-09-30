@@ -1,0 +1,15 @@
+platform,pattern,loc,dependencies,relationship_entries,criteria,filters,wildcard_paths,nested_wildcards,types,groups
+argocd,argocd-applicationset-generates-nothing,26,1,1,0,0,0,0,owns,matchNone
+argocd,argocd-appproject-empty,35,1,1,1,1,0,0,custom,matchNone
+capi,capi-machinetemplate-orphan,96,4,5,15,0,2,0,custom,matchNone
+cert-manager,certmanager-clusterissuer-not-used,50,2,2,2,2,0,0,custom,matchNone
+cnpg,cnpg-cluster-without-scheduledbackup,33,1,1,2,0,0,0,custom,matchNone
+cnpg,cnpg-pooler-name-clashes-with-cluster,33,1,1,2,0,0,0,custom,matchAll
+crossplane,crossplane-composition-without-xrd,30,1,1,1,0,0,0,custom,matchNone
+crossplane,crossplane-function-not-used,60,4,4,4,0,4,0,custom,matchNone
+external-secrets,eso-clustersecretstore-not-used,60,3,3,3,2,1,0,custom,matchNone
+external-secrets,eso-secretstore-not-used,73,3,4,8,1,3,0,custom,matchNone
+flux,flux-ocirepository-not-used,52,2,2,6,0,0,0,custom,matchNone
+kargo,kargo-warehouse-not-requested,33,1,1,2,0,1,0,custom,matchNone
+kubevela,kubevela-componentdefinition-not-used,38,1,1,2,1,1,0,custom,matchNone
+kubevela,kubevela-traitdefinition-not-used,38,1,1,2,1,1,1,custom,matchNone

@@ -1,0 +1,28 @@
+# Best-effort variant of equivalent/cnpg-cluster-without-scheduledbackup.yaml.
+# G10: a suspended ScheduledBackup (boolean spec.suspend) does not count.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: cnpg-cluster-without-scheduledbackup
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["postgresql.cnpg.io"]
+        apiVersions: ["v1"]
+        resources: ["clusters"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: schedules
+      expression: globalContext.Get("scheduledbackups.postgresql.cnpg.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.schedules).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.cluster.name == object.metadata.name
+          && !d.spec.?suspend.orValue(false))
+      messageExpression: >-
+        'CNPG Cluster ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' has no ScheduledBackup in its namespace.'

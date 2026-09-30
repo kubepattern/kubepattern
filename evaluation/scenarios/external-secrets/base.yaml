@@ -1,0 +1,73 @@
+# External Secrets scenario, base state: stores in normal use (fake provider, no external system).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-secrets-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-secrets-b
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-app
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: css-shared
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: app
+  namespace: kp-secrets-a
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: ss-app, kind: SecretStore}
+  target: {name: app}
+  data:
+    - secretKey: password
+      remoteRef: {key: db-password}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: shared
+  namespace: kp-secrets-a
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: css-shared, kind: ClusterSecretStore}
+  target: {name: shared}
+  data:
+    - secretKey: password
+      remoteRef: {key: db-password}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: shared
+  namespace: kp-secrets-b
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: css-shared, kind: ClusterSecretStore}
+  target: {name: shared}
+  data:
+    - secretKey: password
+      remoteRef: {key: db-password}

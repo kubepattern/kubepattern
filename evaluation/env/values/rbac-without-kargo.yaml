@@ -1,0 +1,21 @@
+# RQ5 event: read access narrowed to the groups the evaluated patterns need, minus kargo.akuity.io.
+RBAC:
+  rules:
+    - apiGroups:
+        - kubepattern.dev
+        - apiextensions.crossplane.io
+        - argoproj.io
+        - cert-manager.io
+        - cluster.x-k8s.io
+        - controlplane.cluster.x-k8s.io
+        - core.oam.dev
+        - external-secrets.io
+        - helm.toolkit.fluxcd.io
+        - infrastructure.cluster.x-k8s.io
+        - kustomize.toolkit.fluxcd.io
+        - ops.crossplane.io
+        - pkg.crossplane.io
+        - postgresql.cnpg.io
+        - source.toolkit.fluxcd.io
+      resources: ["*"]
+      verbs: ["get", "list", "watch"]

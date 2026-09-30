@@ -1,0 +1,52 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: flux-ocirepository-not-used
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: flux
+spec:
+  displayName: OCIRepository Not Consumed
+  category: Cost
+  severity: LOW
+  message: "OCIRepository {{target.metadata.namespace}}/{{target.metadata.name}} is polled by source-controller but no HelmRelease or Kustomization in its namespace consumes it."
+  reference: "https://fluxcd.io/flux/components/source/ocirepositories/"
+  target:
+    kind: OCIRepository
+    apiVersion: source.toolkit.fluxcd.io/v1
+    plural: ocirepositories
+  dependencies:
+    - id: helmrelease
+      kind: HelmRelease
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      plural: helmreleases
+    - id: kustomization
+      kind: Kustomization
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      plural: kustomizations
+  relationships:
+    matchNone:
+      - with: helmrelease
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.chartRef.name"
+            operator: EQUALS
+          - targetPath: "kind"
+            dependencyPath: "spec.chartRef.kind"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS
+      - with: kustomization
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.sourceRef.name"
+            operator: EQUALS
+          - targetPath: "kind"
+            dependencyPath: "spec.sourceRef.kind"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

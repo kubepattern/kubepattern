@@ -1,0 +1,30 @@
+# Best-effort variant of equivalent/kubevela-componentdefinition-not-used.yaml.
+# G4: a pinned definition revision (type name@vN) refers to the definition name.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: kubevela-componentdefinition-not-used
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["core.oam.dev"]
+        apiVersions: ["v1beta1"]
+        resources: ["componentdefinitions"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: team-owned
+      expression: object.metadata.namespace != 'vela-system'
+  variables:
+    - name: applications
+      expression: globalContext.Get("applications.core.oam.dev", "")
+  validations:
+    - expression: >-
+        dyn(variables.applications).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.components.exists(c, c.type.split('@')[0] == object.metadata.name))
+      messageExpression: >-
+        'ComponentDefinition ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' is not used by any Application that can resolve it.'

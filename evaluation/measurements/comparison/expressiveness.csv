@@ -1,0 +1,15 @@
+platform,pattern,kyverno_verdict,kp_loc,kp_logic_loc,kp_primitives,kyv_loc,kyv_logic_loc,kyv_loc_with_gce,loc_ratio,lookups,cel_expressions,cel_predicates,comprehensions,optional_hops,cel_chars,probes,best_effort_loc,best_effort_delta,best_effort_predicates,gce
+argocd,argocd-applicationset-generates-nothing,partial,26,13,0,25,13,34,0.96,1,3,1,2,1,118,,,,,applications.argoproj.io
+argocd,argocd-appproject-empty,expressible,35,22,2,27,15,36,0.77,1,4,2,1,1,124,,,,,applications.argoproj.io
+capi,capi-machinetemplate-orphan,expressible,96,83,15,46,34,82,0.48,4,6,15,7,30,1419,G1,45,-1,15,clusterclasses.cluster.x-k8s.io+kubeadmcontrolplanes.controlplane.cluster.x-k8s.io+machinedeployments.cluster.x-k8s.io+machinesets.cluster.x-k8s.io
+cert-manager,certmanager-clusterissuer-not-used,expressible,50,37,4,29,17,47,0.58,2,4,4,2,2,282,G4+G8,35,6,8,certificaterequests.cert-manager.io+certificates.cert-manager.io
+cnpg,cnpg-cluster-without-scheduledbackup,expressible,33,20,2,25,13,34,0.76,1,3,2,1,0,132,G10,26,1,2,scheduledbackups.postgresql.cnpg.io
+cnpg,cnpg-pooler-name-clashes-with-cluster,expressible,33,20,2,25,13,34,0.76,1,3,2,1,0,128,,,,,clusters.postgresql.cnpg.io
+crossplane,crossplane-composition-without-xrd,expressible,30,17,1,24,12,33,0.8,1,3,1,1,0,85,G4,25,1,2,compositeresourcedefinitions.apiextensions.crossplane.io
+crossplane,crossplane-function-not-used,expressible,60,47,4,37,25,73,0.62,4,6,4,8,1,506,,,,,compositions.apiextensions.crossplane.io+cronoperations.ops.crossplane.io+operations.ops.crossplane.io+watchoperations.ops.crossplane.io
+external-secrets,eso-clustersecretstore-not-used,expressible,60,47,5,33,21,51,0.55,2,4,5,4,12,543,G1,34,1,6,clusterexternalsecrets.external-secrets.io+externalsecrets.external-secrets.io
+external-secrets,eso-secretstore-not-used,expressible,73,60,9,34,22,52,0.47,2,4,9,7,14,814,G1+G7,47,13,23,externalsecrets.external-secrets.io+pushsecrets.external-secrets.io
+flux,flux-ocirepository-not-used,expressible,52,39,6,31,19,49,0.6,2,4,6,2,4,386,G3,33,2,6,helmreleases.helm.toolkit.fluxcd.io+kustomizations.kustomize.toolkit.fluxcd.io
+kargo,kargo-warehouse-not-requested,expressible,33,20,2,25,13,34,0.76,1,3,2,2,1,171,,,,,stages.kargo.akuity.io
+kubevela,kubevela-componentdefinition-not-used,expressible,38,25,3,28,16,37,0.74,1,4,3,2,0,194,G4,28,0,3,applications.core.oam.dev
+kubevela,kubevela-traitdefinition-not-used,expressible,38,25,3,28,16,37,0.74,1,4,3,3,1,227,,,,,applications.core.oam.dev

@@ -1,0 +1,31 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: crossplane-composition-without-xrd
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: crossplane
+spec:
+  displayName: Composition Targets an Undefined Composite Kind
+  category: Architecture
+  severity: HIGH
+  message: "Composition {{target.metadata.name}} composes a kind that no CompositeResourceDefinition defines: it can never be selected."
+  reference: "https://docs.crossplane.io/latest/composition/compositions/"
+  target:
+    kind: Composition
+    apiVersion: apiextensions.crossplane.io/v1
+    plural: compositions
+  dependencies:
+    # XRDs are read through the v2 API only (a kind read at two versions would share UIDs in the graph).
+    - id: xrd
+      kind: CompositeResourceDefinition
+      apiVersion: apiextensions.crossplane.io/v2
+      plural: compositeresourcedefinitions
+  relationships:
+    matchNone:
+      - with: xrd
+        type: custom
+        criteria:
+          - targetPath: "spec.compositeTypeRef.kind"
+            dependencyPath: "spec.names.kind"
+            operator: EQUALS

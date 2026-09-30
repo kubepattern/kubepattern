@@ -1,0 +1,10 @@
+# Informer-cached list of every scheduledbackups.postgresql.cnpg.io (v1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: scheduledbackups.postgresql.cnpg.io
+spec:
+  kubernetesResource:
+    group: postgresql.cnpg.io
+    version: v1
+    resource: scheduledbackups
