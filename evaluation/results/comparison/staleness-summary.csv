@@ -1,0 +1,5 @@
+tool,direction,n,median_s,min_s,max_s,mean_s,max_over_period
+kubepattern,appear,5,148.6,62.1,320.0,167.5,1.07
+kubepattern,disappear,5,138.1,108.3,313.4,199.0,1.04
+kyverno,appear,5,105.9,55.5,290.4,148.3,0.97
+kyverno,disappear,5,162.3,46.5,179.3,121.9,0.6

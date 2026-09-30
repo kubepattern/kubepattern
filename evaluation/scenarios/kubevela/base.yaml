@@ -1,0 +1,86 @@
+# KubeVela scenario, base state: team definitions and Applications in kp-vela-a, plus built-in usage.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-vela-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-vela-b
+---
+apiVersion: core.oam.dev/v1beta1
+kind: ComponentDefinition
+metadata:
+  name: kp-configmap
+  namespace: kp-vela-a
+spec:
+  workload:
+    definition: {apiVersion: v1, kind: ConfigMap}
+  schematic:
+    cue:
+      template: |
+        output: {
+          apiVersion: "v1"
+          kind:       "ConfigMap"
+          metadata: name: context.name
+          data: msg: parameter.msg
+        }
+        parameter: msg: *"hello" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: TraitDefinition
+metadata:
+  name: kp-team-label
+  namespace: kp-vela-a
+spec:
+  appliesToWorkloads: ["*"]
+  schematic:
+    cue:
+      template: |
+        patch: metadata: labels: "kp-team-label": parameter.value
+        parameter: value: *"true" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: a1
+  namespace: kp-vela-a
+spec:
+  components:
+    - name: a1-config
+      type: kp-configmap
+      properties: {msg: a1}
+      traits:
+        - type: kp-team-label
+---
+# Built-in catalogue usage (natural findings): k8s-objects + labels, webservice + scaler + annotations.
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: builtins
+  namespace: kp-vela-a
+spec:
+  components:
+    - name: raw
+      type: k8s-objects
+      properties:
+        objects:
+          - apiVersion: v1
+            kind: ConfigMap
+            metadata: {name: kp-raw}
+            data: {origin: k8s-objects}
+      traits:
+        - type: labels
+          properties: {team: a}
+    - name: web
+      type: webservice
+      properties:
+        image: nginx:1.27-alpine
+        ports: [{port: 80, expose: false}]
+      traits:
+        - type: scaler
+          properties: {replicas: 1}
+        - type: annotations
+          properties: {owner: team-a}

@@ -1,0 +1,29 @@
+# Cost variant of equivalent/ (same semantics): live resource.List calls instead of GlobalContextEntries.
+# Translation of patterns/argocd/appproject-empty.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: argocd-appproject-empty
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["argoproj.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["appprojects"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: not-default
+      expression: object.metadata.name != 'default'
+  variables:
+    - name: applications
+      expression: resource.List("argoproj.io/v1alpha1", "applications", "").items
+  validations:
+    - expression: >-
+        dyn(variables.applications).exists(d, d.spec.?project.orValue('') == object.metadata.name)
+      messageExpression: >-
+        'AppProject ' + object.metadata.name +
+        ' grants source/destination permissions but no Application uses it.'

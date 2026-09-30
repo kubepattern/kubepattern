@@ -1,0 +1,2 @@
+overlapping runs at 69d4ffd: 12 smells after both finished
+  positive kubevela-traitdefinition-not-used/TraitDefinition/kp-vela-a/kp-b-trait: truth=smell expected=smell observed=clean

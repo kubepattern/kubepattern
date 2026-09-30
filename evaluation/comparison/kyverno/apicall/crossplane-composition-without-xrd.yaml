@@ -1,0 +1,26 @@
+# Cost variant of equivalent/ (same semantics): live resource.List calls instead of GlobalContextEntries.
+# Translation of patterns/crossplane/composition-without-xrd.yaml (XRDs read through v2 only).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: crossplane-composition-without-xrd
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["apiextensions.crossplane.io"]
+        apiVersions: ["v1"]
+        resources: ["compositions"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: xrds
+      expression: resource.List("apiextensions.crossplane.io/v2", "compositeresourcedefinitions", "").items
+  validations:
+    - expression: >-
+        dyn(variables.xrds).exists(d, d.spec.names.kind == object.spec.compositeTypeRef.kind)
+      messageExpression: >-
+        'Composition ' + object.metadata.name +
+        ' composes a kind that no CompositeResourceDefinition defines: it can never be selected.'

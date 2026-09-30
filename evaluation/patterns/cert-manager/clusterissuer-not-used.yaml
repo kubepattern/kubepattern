@@ -1,0 +1,51 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: certmanager-clusterissuer-not-used
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: cert-manager
+spec:
+  displayName: ClusterIssuer Not Used
+  category: Security
+  severity: LOW
+  message: "ClusterIssuer {{target.metadata.name}} is not referenced by any Certificate or CertificateRequest; it still holds signing material."
+  reference: "https://cert-manager.io/docs/usage/certificate/"
+  target:
+    kind: ClusterIssuer
+    apiVersion: cert-manager.io/v1
+    plural: clusterissuers
+  dependencies:
+    # Only references that explicitly name a ClusterIssuer count (an omitted kind means a namespaced Issuer).
+    - id: certificate
+      kind: Certificate
+      apiVersion: cert-manager.io/v1
+      plural: certificates
+      filters:
+        matchAll:
+          - path: "spec.issuerRef.kind"
+            operator: EQUALS
+            values: ["ClusterIssuer"]
+    - id: request
+      kind: CertificateRequest
+      apiVersion: cert-manager.io/v1
+      plural: certificaterequests
+      filters:
+        matchAll:
+          - path: "spec.issuerRef.kind"
+            operator: EQUALS
+            values: ["ClusterIssuer"]
+  relationships:
+    matchNone:
+      - with: certificate
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.issuerRef.name"
+            operator: EQUALS
+      - with: request
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.issuerRef.name"
+            operator: EQUALS

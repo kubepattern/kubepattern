@@ -1,0 +1,33 @@
+# R1b: the dependency CRD (Kratix Promise) is not installed; the target kind exists.
+# KubePattern skips a pattern whose dependency GVR cannot be listed.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: promises.platform.kratix.io
+spec:
+  kubernetesResource:
+    group: platform.kratix.io
+    version: v1alpha1
+    resource: promises
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: robustness-missing-dependency
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["cert-manager.io"]
+        apiVersions: ["v1"]
+        resources: ["clusterissuers"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: promises
+      expression: globalContext.Get("promises.platform.kratix.io", "")
+  validations:
+    - expression: dyn(variables.promises).exists(d, d.metadata.name == object.metadata.name)
+      messageExpression: "'ClusterIssuer ' + object.metadata.name + ' is not named like any Promise.'"

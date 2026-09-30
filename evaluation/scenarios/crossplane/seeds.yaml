@@ -1,0 +1,120 @@
+# Crossplane v2 scenario, seeds (see ground-truth.csv).
+# --- crossplane-function-not-used
+# near-misses: Functions referenced only by Operations (alpha, enabled with --enable-operations).
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-go-templating
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-go-templating:v0.13.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-cel-filter
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-cel-filter:v0.2.0
+---
+apiVersion: ops.crossplane.io/v1alpha1
+kind: CronOperation
+metadata:
+  name: yearly-report
+spec:
+  schedule: "0 0 1 1 *"
+  operationTemplate:
+    spec:
+      mode: Pipeline
+      pipeline:
+        - step: render
+          functionRef: {name: function-go-templating}
+---
+apiVersion: ops.crossplane.io/v1alpha1
+kind: WatchOperation
+metadata:
+  name: on-flagged-configmap
+spec:
+  watch:
+    apiVersion: v1
+    kind: ConfigMap
+    namespace: kp-xp
+    matchLabels: {kp-watch: "true"}
+  operationTemplate:
+    spec:
+      mode: Pipeline
+      pipeline:
+        - step: filter
+          functionRef: {name: function-cel-filter}
+# positives: installed (one Pod each) but never referenced.
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-kcl
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-kcl:v0.12.3
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-environment-configs
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-environment-configs:v0.8.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-sequencer
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-sequencer:v0.6.0
+# --- crossplane-composition-without-xrd
+# positives: composite kind with no XRD (missing, typo, XRD of a package that was never installed).
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: queue-default
+spec:
+  compositeTypeRef: {apiVersion: eval.kubepattern.dev/v1alpha1, kind: XQueue}
+  mode: Pipeline
+  pipeline:
+    - step: resources
+      functionRef: {name: function-patch-and-transform}
+      input: {apiVersion: pt.fn.crossplane.io/v1beta1, kind: Resources, resources: []}
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: app-typo
+spec:
+  compositeTypeRef: {apiVersion: eval.kubepattern.dev/v1alpha1, kind: XAppp}
+  mode: Pipeline
+  pipeline:
+    - step: resources
+      functionRef: {name: function-patch-and-transform}
+      input: {apiVersion: pt.fn.crossplane.io/v1beta1, kind: Resources, resources: []}
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: database-from-package
+spec:
+  compositeTypeRef: {apiVersion: eval.kubepattern.dev/v1alpha1, kind: XDatabase}
+  mode: Pipeline
+  pipeline:
+    - step: resources
+      functionRef: {name: function-patch-and-transform}
+      input: {apiVersion: pt.fn.crossplane.io/v1beta1, kind: Resources, resources: []}
+# probe G4: kind XApp exists, but in another API group; the group is encoded in the compositeTypeRef.apiVersion string.
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: app-foreign-group
+spec:
+  compositeTypeRef: {apiVersion: other.example.org/v1, kind: XApp}
+  mode: Pipeline
+  pipeline:
+    - step: resources
+      functionRef: {name: function-patch-and-transform}
+      input: {apiVersion: pt.fn.crossplane.io/v1beta1, kind: Resources, resources: []}
