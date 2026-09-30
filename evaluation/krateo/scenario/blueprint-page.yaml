@@ -1,0 +1,44 @@
+# The portal's own way to publish a blueprint: a PortalBlueprintPage composition templates the
+# CompositionDefinition of springboot-app and its card (Panel labelled krateo.io/portal-page: blueprints)
+# on the portal's Blueprints page. Placeholders are filled by env/install/30-blueprint.sh.
+#
+# Workarounds for portal-blueprint-page 1.0.9 / core-provider 1.0.0 (observed, see README):
+# - without credentials the chart renders `credentials: {passwordRef: null}`, which the CompositionDefinition
+#   CRD rejects (the Helm release fails while the composition still reports Ready=True); dummy credentials
+#   are therefore set (the in-cluster nginx repository ignores them);
+# - the krateo.io/release-name annotation is not honoured: the CompositionDefinition is named
+#   springboot-app-<random suffix>, so scripts look it up by spec.chart.repo.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: chart-repo-creds
+  namespace: demo-system
+stringData:
+  password: unused
+---
+apiVersion: composition.krateo.io/v${PBP_CRD_VERSION}
+kind: PortalBlueprintPage
+metadata:
+  name: ${BLUEPRINT_NAME}
+  namespace: demo-system
+  annotations:
+    # stable Helm release name, hence a CompositionDefinition named springboot-app
+    krateo.io/release-name: ${BLUEPRINT_NAME}
+spec:
+  blueprint:
+    repo: ${BLUEPRINT_NAME}
+    url: ${CHART_REPO_URL}
+    version: ${BLUEPRINT_VERSION}
+    hasPage: true
+    credentials:
+      username: kp-eval
+      passwordRef:
+        key: password
+        name: chart-repo-creds
+        namespace: demo-system
+  form:
+    alphabeticalOrder: false
+  panel:
+    title: Spring Boot App
+    icon:
+      name: fa-leaf

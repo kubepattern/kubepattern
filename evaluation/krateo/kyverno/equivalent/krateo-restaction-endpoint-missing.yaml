@@ -1,0 +1,31 @@
+# 1:1 translation of patterns/krateo-restaction-endpoint-missing.yaml.
+# Name and namespace of spec.api[*].endpointRef are checked independently (not per entry), as in KubePattern.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-restaction-endpoint-missing
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["templates.krateo.io"]
+        apiVersions: ["v1"]
+        resources: ["restactions"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: has-endpointref
+      expression: object.spec.?api.orValue([]).exists(a, a.?endpointRef.?name.hasValue())
+  variables:
+    - name: secrets
+      expression: globalContext.Get("secrets.core", "refs")
+  validations:
+    - expression: >-
+        dyn(variables.secrets).exists(s,
+             object.spec.api.exists(a, a.?endpointRef.?name.orValue('') == s.name)
+          && object.spec.api.exists(a, a.?endpointRef.?namespace.orValue('') == s.namespace))
+      messageExpression: >-
+        'RESTAction ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' calls an endpoint whose Secret (spec.api[*].endpointRef) does not exist: snowplow stops resolving it and the widgets render empty, without an error.'

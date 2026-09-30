@@ -1,0 +1,52 @@
+# Two compositions of the springboot-app blueprint.
+# demo-app mirrors the dump (fixtures/files-clean.yaml); demo-app-2 is a second tenant with other values.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-b
+---
+apiVersion: composition.krateo.io/v1-0-0
+kind: SpringbootApp
+metadata:
+  name: demo-app
+  namespace: tenant-a
+spec:
+  tenant: tenant-a
+---
+apiVersion: composition.krateo.io/v1-0-0
+kind: SpringbootApp
+metadata:
+  name: demo-app-2
+  namespace: tenant-b
+spec:
+  tenant: tenant-b
+  app:
+    description: Second Spring Boot application of tenant-b (PostgreSQL backend).
+    pods:
+      - api-7d9f8b6c5d-x2k4q
+      - postgres-0
+  cve:
+    # the CVE Markdown widgets are rendered, their managing RESTAction is not
+    tableEnabled: false
+    ids:
+      - cve-2023-44487
+      - cve-2024-6387
+  sbom:
+    - replicaset: api-7d9f8b6c5d
+      container: api
+      scanned: true
+      displayed: true
+    - replicaset: postgres-6c8d5f7b9
+      container: postgres
+      scanned: false   # no SbomReport yet: the viewer's RESTAction is not rendered
+      displayed: true
+  page:
+    order: 110
+    releaseNotes:
+      rendered: true
+      listed: true

@@ -1,0 +1,516 @@
+# Controlled cases for the Krateo patterns (rows in ground-truth.csv, class in the comments).
+# kp-krateo-a is the main namespace; kp-krateo-b holds same-name objects for the namespace criteria.
+# Widgets are applied directly (as a platform developer would), not through a composition.
+apiVersion: v1
+kind: Namespace
+metadata: {name: kp-krateo-a}
+---
+apiVersion: v1
+kind: Namespace
+metadata: {name: kp-krateo-b}
+---
+# ---------------------------------------------------------------- endpoints, service accounts
+apiVersion: v1
+kind: Secret
+metadata: {name: ep-ok, namespace: kp-krateo-a}
+stringData: {server-url: "https://kubernetes.default.svc"}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: ep-b, namespace: kp-krateo-b}
+stringData: {server-url: "https://kubernetes.default.svc"}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: agent-a, namespace: kp-krateo-a}
+---
+# ---------------------------------------------------------------- RESTActions
+# ra-ok: in-cluster call (no endpointRef), used by yv-ok and yv-cross-ok, manager of md-managed-ok.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ok, namespace: kp-krateo-a}
+spec:
+  api:
+    - {name: pods, path: /api/v1/namespaces/kp-krateo-a/pods, verb: GET}
+---
+# N2 positive: nothing reads it.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-unused, namespace: kp-krateo-a}
+spec:
+  api:
+    - {name: pods, path: /api/v1/namespaces/kp-krateo-a/pods, verb: GET}
+---
+# N2 positive (namespace criterion): same name as a used RESTAction, other namespace.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ok, namespace: kp-krateo-b}
+spec:
+  api:
+    - {name: pods, path: /api/v1/namespaces/kp-krateo-b/pods, verb: GET}
+---
+# N2 probe-G4: called only through another RESTAction's /call path (string-encoded reference).
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-called, namespace: kp-krateo-a}
+spec:
+  api:
+    - {name: pods, path: /api/v1/namespaces/kp-krateo-a/pods, verb: GET}
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-caller, namespace: kp-krateo-a}
+spec:
+  api:
+    - name: called
+      path: "/call?apiVersion=templates.krateo.io%2Fv1&resource=restactions&name=ra-called&namespace=kp-krateo-a"
+      verb: GET
+      endpointRef: {name: ep-ok, namespace: kp-krateo-a}
+---
+# N3 positive: the endpoint Secret does not exist.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ep-missing, namespace: kp-krateo-a}
+spec:
+  api:
+    - {name: q, path: /api/v1/query, verb: GET, endpointRef: {name: prom-missing, namespace: kp-krateo-a}}
+---
+# N3 negative.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ep-ok, namespace: kp-krateo-a}
+spec:
+  api:
+    - {name: q, path: /api/v1/query, verb: GET, endpointRef: {name: ep-ok, namespace: kp-krateo-a}}
+---
+# N3 near-miss: endpoint Secret in another namespace (valid).
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ep-cross, namespace: kp-krateo-b}
+spec:
+  api:
+    - {name: q, path: /api/v1/query, verb: GET, endpointRef: {name: ep-ok, namespace: kp-krateo-a}}
+---
+# N3 positive: the Secret exists, but in another namespace than the one referenced.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ep-wrong-ns, namespace: kp-krateo-b}
+spec:
+  api:
+    - {name: q, path: /api/v1/query, verb: GET, endpointRef: {name: ep-ok, namespace: kp-krateo-b}}
+---
+# N3 probe-G2: one of two endpoints is missing (the other resolves).
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ep-mixed, namespace: kp-krateo-a}
+spec:
+  api:
+    - {name: ok, path: /api/v1/query, verb: GET, endpointRef: {name: ep-ok, namespace: kp-krateo-a}}
+    - {name: gone, path: /api/v1/query, verb: GET, endpointRef: {name: prom-missing, namespace: kp-krateo-a}}
+---
+# N3 probe-G1: both endpoints are missing, but the name of one and the namespace of the other match Secret kp-krateo-a/ep-ok.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata: {name: ra-ep-g1, namespace: kp-krateo-a}
+spec:
+  api:
+    - {name: first, path: /api/v1/query, verb: GET, endpointRef: {name: ep-ok, namespace: kp-krateo-b}}
+    - {name: second, path: /api/v1/query, verb: GET, endpointRef: {name: ep-b, namespace: kp-krateo-a}}
+---
+# Kyverno-only (G5): krateo.io/managed-by names a RESTAction that does not exist / exists.
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: ra-kmanaged-missing
+  namespace: kp-krateo-a
+  labels: {krateo.io/managed-by: ra-generator-gone}
+spec:
+  api:
+    - {name: pods, path: /api/v1/namespaces/kp-krateo-a/pods, verb: GET}
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: ra-kmanaged-ok
+  namespace: kp-krateo-a
+  labels: {krateo.io/managed-by: ra-ok}
+spec:
+  api:
+    - {name: pods, path: /api/v1/namespaces/kp-krateo-a/pods, verb: GET}
+---
+# ---------------------------------------------------------------- YamlViewers (apiRef)
+# N1 negative; makes ra-ok used (N2 negative).
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata: {name: yv-ok, namespace: kp-krateo-a}
+spec:
+  apiRef: {name: ra-ok, namespace: kp-krateo-a}
+  widgetData: {json: "{}"}
+---
+# N1 positive.
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata: {name: yv-dangling, namespace: kp-krateo-a}
+spec:
+  apiRef: {name: ra-missing, namespace: kp-krateo-a}
+  widgetData: {json: "{}"}
+---
+# N1 positive (namespace criterion): ra-unused exists only in kp-krateo-a.
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata: {name: yv-cross, namespace: kp-krateo-b}
+spec:
+  apiRef: {name: ra-unused, namespace: kp-krateo-b}
+  widgetData: {json: "{}"}
+---
+# N1 near-miss: cross-namespace apiRef (valid).
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata: {name: yv-cross-ok, namespace: kp-krateo-b}
+spec:
+  apiRef: {name: ra-ok, namespace: kp-krateo-a}
+  widgetData: {json: "{}"}
+---
+# N4 probe-G6: a YamlViewer whose managed-by RESTAction is missing (the Pattern targets Markdown only).
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata:
+  name: yv-managed-missing
+  namespace: kp-krateo-a
+  labels: {managed-by: ra-gone}
+spec:
+  apiRef: {name: ra-ok, namespace: kp-krateo-a}
+  widgetData: {json: "{}"}
+---
+# ---------------------------------------------------------------- Markdown (managed-by)
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: md-managed-missing   # N4 positive
+  namespace: kp-krateo-a
+  labels: {managed-by: ra-gone}
+spec:
+  widgetData: {markdown: "managed by a RESTAction that was deleted"}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: md-managed-ok        # N4 negative
+  namespace: kp-krateo-a
+  labels: {managed-by: ra-ok}
+spec:
+  widgetData: {markdown: "managed by ra-ok"}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: md-managed-table     # N4 near-miss: the manager is a Table widget
+  namespace: kp-krateo-a
+  labels: {managed-by: table-a}
+spec:
+  widgetData: {markdown: "managed by a Table"}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: md-managed-cross     # N4 positive (namespace criterion): ra-called exists only in kp-krateo-a
+  namespace: kp-krateo-b
+  labels: {managed-by: ra-called}
+spec:
+  widgetData: {markdown: "managed by a RESTAction of another namespace"}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: md-plain             # N4 negative (no managed-by label, filtered out)
+  namespace: kp-krateo-a
+spec:
+  widgetData: {markdown: "plain"}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Table
+metadata: {name: table-a, namespace: kp-krateo-a}
+spec:
+  widgetData:
+    allowedResources: []
+    pageSize: 10
+    columns:
+      - {title: Name, valueKey: name}
+    data: []
+---
+# ---------------------------------------------------------------- Pages, NavMenuItems, Routes
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Page
+metadata: {name: page-nav, namespace: kp-krateo-a}      # E1 negative (NavMenuItem nav-page)
+spec:
+  widgetData: {allowedResources: [panels], items: [{resourceRefId: panel-links}]}
+  resourcesRefs:
+    items:
+      - {id: panel-links, apiVersion: widgets.templates.krateo.io/v1beta1, resource: panels, name: panel-links, namespace: kp-krateo-a, verb: GET}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Page
+metadata: {name: page-nav, namespace: kp-krateo-b}      # E1 positive (same name, other namespace)
+spec:
+  widgetData: {allowedResources: [panels], items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Page
+metadata: {name: page-orphan, namespace: kp-krateo-a}   # E1 positive
+spec:
+  widgetData: {allowedResources: [panels], items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Page
+metadata: {name: page-panel, namespace: kp-krateo-a}    # E1 near-miss: referenced only by Panel panel-links
+spec:
+  widgetData: {allowedResources: [panels], items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Page
+metadata: {name: page-g1, namespace: kp-krateo-a}       # E1 probe-G1 (Panel panel-g1)
+spec:
+  widgetData: {allowedResources: [panels], items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Page
+metadata: {name: page-route, namespace: kp-krateo-a}    # E1 probe-scope: reachable only through a Route
+spec:
+  widgetData: {allowedResources: [panels], items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Route
+metadata: {name: route-a, namespace: kp-krateo-a}
+spec:
+  widgetData: {path: /kp/page-route, resourceRefId: page-route}
+  resourcesRefs:
+    items:
+      - {id: page-route, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-route, namespace: kp-krateo-a, verb: GET}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: NavMenuItem
+metadata: {name: nav-page, namespace: kp-krateo-a}      # N5 negative
+spec:
+  widgetData: {allowedResources: [pages], resourceRefId: page-nav, label: KP page, icon: fa-flask, path: /kp/page-nav, order: 900}
+  resourcesRefs:
+    items:
+      - {id: page-nav, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-nav, namespace: kp-krateo-a, verb: GET}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: NavMenuItem
+metadata: {name: nav-missing, namespace: kp-krateo-a}   # N5 positive
+spec:
+  widgetData: {allowedResources: [pages], resourceRefId: page-gone, label: KP missing, icon: fa-flask, path: /kp/page-gone, order: 901}
+  resourcesRefs:
+    items:
+      - {id: page-gone, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-gone, namespace: kp-krateo-a, verb: GET}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: NavMenuItem
+metadata: {name: nav-cross, namespace: kp-krateo-b}     # N5 positive: page-orphan exists only in kp-krateo-a
+spec:
+  widgetData: {allowedResources: [pages], resourceRefId: page-orphan, label: KP cross, icon: fa-flask, path: /kp/page-cross, order: 902}
+  resourcesRefs:
+    items:
+      - {id: page-orphan, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-orphan, namespace: kp-krateo-b, verb: GET}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: NavMenuItem
+metadata: {name: nav-cross-ok, namespace: kp-krateo-b}  # N5 near-miss: cross-namespace Page (valid)
+spec:
+  widgetData: {allowedResources: [pages], resourceRefId: page-nav, label: KP cross ok, icon: fa-flask, path: /kp/page-cross-ok, order: 903}
+  resourcesRefs:
+    items:
+      - {id: page-nav, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-nav, namespace: kp-krateo-a, verb: GET}
+---
+# N5 probe-G1: the page it opens (resourceRefId page-gone) is missing; a leftover ref names an existing Page.
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: NavMenuItem
+metadata: {name: nav-two, namespace: kp-krateo-a}
+spec:
+  widgetData: {allowedResources: [pages], resourceRefId: page-gone, label: KP two, icon: fa-flask, path: /kp/page-two, order: 904}
+  resourcesRefs:
+    items:
+      - {id: page-gone, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-gone, namespace: kp-krateo-a, verb: GET}
+      - {id: page-old, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-nav, namespace: kp-krateo-a, verb: GET}
+---
+# ---------------------------------------------------------------- Layout: Column, TabList, Panels, Paragraphs
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Column
+metadata: {name: col-a, namespace: kp-krateo-a}
+spec:
+  widgetData:
+    allowedResources: [panels, paragraphs]
+    items: [{resourceRefId: panel-links}, {resourceRefId: para-col}]
+  resourcesRefs:
+    items:
+      - {id: panel-links, apiVersion: widgets.templates.krateo.io/v1beta1, resource: panels, name: panel-links, namespace: kp-krateo-a, verb: GET}
+      - {id: para-col, apiVersion: widgets.templates.krateo.io/v1beta1, resource: paragraphs, name: para-col, namespace: kp-krateo-a, verb: GET}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: TabList
+metadata: {name: tabs-a, namespace: kp-krateo-a}
+spec:
+  widgetData:
+    allowedResources: [panels]
+    items: [{label: Tab, resourceRefId: panel-in-tab}]
+  resourcesRefs:
+    items:
+      - {id: panel-in-tab, apiVersion: widgets.templates.krateo.io/v1beta1, resource: panels, name: panel-in-tab, namespace: kp-krateo-a, verb: GET}
+---
+# E2 negative (Column col-a); references Page page-panel (E1 near-miss) and Paragraph para-a (E3 negative).
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Panel
+metadata: {name: panel-links, namespace: kp-krateo-a}
+spec:
+  widgetData:
+    title: Links
+    actions: {}
+    items: [{resourceRefId: page-panel}, {resourceRefId: para-a}]
+  resourcesRefs:
+    items:
+      - {id: page-panel, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-panel, namespace: kp-krateo-a, verb: GET}
+      - {id: para-a, apiVersion: widgets.templates.krateo.io/v1beta1, resource: paragraphs, name: para-a, namespace: kp-krateo-a, verb: GET}
+---
+# E2 probe-scope: same name as a referenced Panel of kp-krateo-a; the given Pattern matches names only.
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Panel
+metadata: {name: panel-links, namespace: kp-krateo-b}
+spec:
+  widgetData: {title: Links (b), actions: {}, items: []}
+  resourcesRefs: {items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Panel
+metadata: {name: panel-orphan, namespace: kp-krateo-a}  # E2 positive
+spec:
+  widgetData: {title: Orphan, actions: {}, items: []}
+  resourcesRefs: {items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Panel
+metadata: {name: panel-in-tab, namespace: kp-krateo-a}  # E2 near-miss: referenced only by TabList tabs-a
+spec:
+  widgetData: {title: In a tab, actions: {}, items: []}
+  resourcesRefs: {items: []}
+---
+# E2 probe-scope: its name appears only in a ref to a Markdown (resource: markdowns); the given Pattern ignores the resource.
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Panel
+metadata: {name: panel-kind, namespace: kp-krateo-a}
+spec:
+  widgetData: {title: Kind, actions: {}, items: []}
+  resourcesRefs: {items: []}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata: {name: panel-kind, namespace: kp-krateo-a}
+spec:
+  widgetData: {markdown: "a Markdown named like a Panel"}
+---
+# Orphan Panel that references panel-kind as a Markdown, and holds the G1 probes of E1 and E3:
+# items[0] names page-g1/para-g1 in kp-krateo-b, items[1] names another object in kp-krateo-a.
+# (panel-g1 itself is an E2 positive.)
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Panel
+metadata: {name: panel-g1, namespace: kp-krateo-a}
+spec:
+  widgetData:
+    title: G1
+    actions: {}
+    items: [{resourceRefId: r0}, {resourceRefId: r1}, {resourceRefId: r2}, {resourceRefId: r3}]
+  resourcesRefs:
+    items:
+      - {id: r0, apiVersion: widgets.templates.krateo.io/v1beta1, resource: pages, name: page-g1, namespace: kp-krateo-b, verb: GET}
+      - {id: r1, apiVersion: widgets.templates.krateo.io/v1beta1, resource: markdowns, name: panel-kind, namespace: kp-krateo-a, verb: GET}
+      - {id: r2, apiVersion: widgets.templates.krateo.io/v1beta1, resource: paragraphs, name: para-g1, namespace: kp-krateo-b, verb: GET}
+      - {id: r3, apiVersion: widgets.templates.krateo.io/v1beta1, resource: markdowns, name: md-plain, namespace: kp-krateo-a, verb: GET}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: para-a, namespace: kp-krateo-a}        # E3 negative (Panel panel-links)
+spec:
+  widgetData: {text: referenced}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: para-a, namespace: kp-krateo-b}        # E3 positive (same name, other namespace)
+spec:
+  widgetData: {text: not referenced}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: para-orphan, namespace: kp-krateo-a}   # E3 positive
+spec:
+  widgetData: {text: orphan}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: para-col, namespace: kp-krateo-a}      # E3 near-miss: referenced only by Column col-a
+spec:
+  widgetData: {text: in a column}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: para-g1, namespace: kp-krateo-a}       # E3 probe-G1 (Panel panel-g1)
+spec:
+  widgetData: {text: g1}
+---
+# ---------------------------------------------------------------- RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-cr-missing, namespace: kp-krateo-a}   # N6 positive
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: kp-missing-clusterrole}
+subjects: [{apiGroup: rbac.authorization.k8s.io, kind: Group, name: kp-devs}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-cr-ok, namespace: kp-krateo-a}        # N6 negative
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: view}
+subjects: [{apiGroup: rbac.authorization.k8s.io, kind: Group, name: kp-devs}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-role-view, namespace: kp-krateo-a}    # N6 near-miss: a Role named view (not a ClusterRole)
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: view}
+subjects: [{apiGroup: rbac.authorization.k8s.io, kind: Group, name: kp-devs}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-sa-missing, namespace: kp-krateo-a}   # N7 positive
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: view}
+subjects: [{kind: ServiceAccount, name: ghost, namespace: kp-krateo-a}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-sa-ok, namespace: kp-krateo-a}        # N7 negative
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: view}
+subjects: [{kind: ServiceAccount, name: agent-a, namespace: kp-krateo-a}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-sa-cross, namespace: kp-krateo-b}     # N7 positive: agent-a exists only in kp-krateo-a
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: view}
+subjects: [{kind: ServiceAccount, name: agent-a, namespace: kp-krateo-b}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-sa-cross-ok, namespace: kp-krateo-b}  # N7 near-miss: cross-namespace ServiceAccount (valid)
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: view}
+subjects: [{kind: ServiceAccount, name: agent-a, namespace: kp-krateo-a}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-sa-mixed, namespace: kp-krateo-a}     # N7 probe-G2: one of two ServiceAccounts is missing
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: view}
+subjects:
+  - {kind: ServiceAccount, name: agent-a, namespace: kp-krateo-a}
+  - {kind: ServiceAccount, name: ghost, namespace: kp-krateo-a}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: rb-sa-g1, namespace: kp-krateo-a}        # N7 probe-G1: the only ServiceAccount is missing; a Group is named like an existing one
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: view}
+subjects:
+  - {kind: ServiceAccount, name: ghost, namespace: kp-krateo-a}
+  - {apiGroup: rbac.authorization.k8s.io, kind: Group, name: agent-a}

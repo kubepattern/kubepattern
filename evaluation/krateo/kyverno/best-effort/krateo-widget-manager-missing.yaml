@@ -1,0 +1,38 @@
+# Best-effort variant of equivalent/krateo-widget-manager-missing.yaml.
+# G6: one policy covers every kind that carries the managed-by label (Markdown, YamlViewer, RESTAction).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-widget-manager-missing
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["widgets.templates.krateo.io"]
+        apiVersions: ["v1beta1"]
+        resources: ["markdowns", "yamlviewers"]
+        operations: ["CREATE", "UPDATE"]
+      - apiGroups: ["templates.krateo.io"]
+        apiVersions: ["v1"]
+        resources: ["restactions"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: has-manager
+      expression: "'managed-by' in object.metadata.?labels.orValue({})"
+  variables:
+    - name: manager
+      expression: object.metadata.labels['managed-by']
+    - name: restactions
+      expression: globalContext.Get("restactions.templates.krateo.io", "")
+    - name: tables
+      expression: globalContext.Get("tables.widgets.templates.krateo.io", "")
+  validations:
+    - expression: >-
+        [variables.restactions, variables.tables].exists(l, dyn(l).exists(d,
+          d.metadata.name == variables.manager && d.metadata.namespace == object.metadata.namespace))
+      messageExpression: >-
+        object.kind + ' ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' is labelled managed-by a RESTAction or Table that does not exist in its namespace: nothing keeps it up to date.'

@@ -1,0 +1,23 @@
+# Krateo case study: read access for the Kyverno controllers that evaluate the Krateo policies
+# (the API groups the KubePattern Patterns read). Aggregated into the chart's controller ClusterRoles
+# (label names as in comparison/kyverno/rbac.yaml, chart 3.9.1).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kp-krateo:kyverno-read-subjects
+  labels:
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+rules:
+  - apiGroups:
+      - widgets.templates.krateo.io
+      - templates.krateo.io
+      - core.krateo.io
+      - composition.krateo.io
+      - rbac.authorization.k8s.io
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets", "serviceaccounts"]
+    verbs: ["get", "list", "watch"]

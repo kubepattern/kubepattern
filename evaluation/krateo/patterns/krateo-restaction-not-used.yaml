@@ -1,0 +1,339 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-restaction-not-used
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: RESTAction Not Used
+  category: Architecture
+  severity: LOW
+  message: "RESTAction {{target.metadata.namespace}}/{{target.metadata.name}} is not read by any widget (spec.apiRef): its API calls are defined but never rendered."
+  reference: "https://docs.krateo.io/key-concepts/kcp/snowplow/rest-actions"
+  target:
+    kind: RESTAction
+    apiVersion: templates.krateo.io/v1
+    plural: restactions
+    filters:
+      matchNone:
+        - path: "metadata.namespace"
+          operator: EQUALS
+          values: ["krateo-system"]
+  # Every widget kind can read a RESTAction through spec.apiRef, and there is no kind wildcard (limitation G6):
+  # the 24 widget kinds of Krateo 3.0.2 are enumerated one by one.
+  dependencies:
+    - id: barcharts
+      kind: BarChart
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: barcharts
+    - id: buttons
+      kind: Button
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: buttons
+    - id: buttongroups
+      kind: ButtonGroup
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: buttongroups
+    - id: columns
+      kind: Column
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: columns
+    - id: datagrids
+      kind: DataGrid
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: datagrids
+    - id: eventlists
+      kind: EventList
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: eventlists
+    - id: filters
+      kind: Filters
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: filters
+    - id: flowcharts
+      kind: FlowChart
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: flowcharts
+    - id: forms
+      kind: Form
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: forms
+    - id: linecharts
+      kind: LineChart
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: linecharts
+    - id: markdowns
+      kind: Markdown
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: markdowns
+    - id: navmenus
+      kind: NavMenu
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: navmenus
+    - id: navmenuitems
+      kind: NavMenuItem
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: navmenuitems
+    - id: pages
+      kind: Page
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: pages
+    - id: panels
+      kind: Panel
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: panels
+    - id: paragraphs
+      kind: Paragraph
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: paragraphs
+    - id: piecharts
+      kind: PieChart
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: piecharts
+    - id: routes
+      kind: Route
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: routes
+    - id: routesloaders
+      kind: RoutesLoader
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: routesloaders
+    - id: rows
+      kind: Row
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: rows
+    - id: tablists
+      kind: TabList
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: tablists
+    - id: tables
+      kind: Table
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: tables
+    - id: themes
+      kind: Theme
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: themes
+    - id: yamlviewers
+      kind: YamlViewer
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: yamlviewers
+  relationships:
+    matchNone:
+      - with: barcharts
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: buttons
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: buttongroups
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: columns
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: datagrids
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: eventlists
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: filters
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: flowcharts
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: forms
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: linecharts
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: markdowns
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: navmenus
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: navmenuitems
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: pages
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: panels
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: paragraphs
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: piecharts
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: routes
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: routesloaders
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: rows
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: tablists
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: tables
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: themes
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS
+      - with: yamlviewers
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.apiRef.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.apiRef.namespace"
+            operator: EQUALS

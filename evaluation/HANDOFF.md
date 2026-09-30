@@ -1,4 +1,4 @@
-# Handoff: KubePattern evaluation (RQ1–RQ6 done)
+# Handoff: KubePattern evaluation (RQ1–RQ6 done, Krateo case study done)
 
 Read this first when you continue the work in a new session. RQ1–RQ5, the fix validation and the Kyverno comparison (RQ6, [`COMPARISON-PLAN.md`](COMPARISON-PLAN.md)) are done; results are in [`README.md`](README.md).
 
@@ -112,3 +112,31 @@ The assessment (strengths, weaknesses, positioning) and the roadmap are in `READ
 6. AI-assisted authoring with a natural-language `intent`: proposal in [`../docs/proposals/intent.md`](../docs/proposals/intent.md), with a candidate RQ7 (DSL vs CEL as an LLM generation target).
 
 Any of these that changes the engine is reported as a separate validation; RQ1–RQ6 stay on the existing engines. Optional RQ6 extensions, not run: the `apicall/` cost variant and the Kyverno S1 scale sweep.
+
+## 8. Krateo case study (2026-09-30, separate from RQ1–RQ6)
+Everything is in [`krateo/README.md`](krateo/README.md): setup, blueprint, Patterns, Kyverno policies, results and findings.
+
+**Question:** on a real Krateo platform, do KubePattern and Kyverno address the same types of smells?
+
+**Answer:**
+- **Static reference fields:** the two tools agree verdict for verdict, with P = R = 1.00 on 55 positives and 22/22 probes as predicted.
+- **Kyverno best-effort:** it resolves 22/22 engine-limitation probes (G1, G2, G4, G5, G6, G7). Coverage by smell type: KubePattern has 2 types expressible, 9 partial and 2 not; Kyverno has 11 expressible, 1 partial and 1 not.
+- **Shared limits:** neither tool models snowplow's dynamic references (G9), and both must enumerate the 24 widget kinds.
+- **Lifecycle:** 26/26 changes seen by both tools, over 6 mutations done through Krateo.
+
+**Cluster.**
+- **Profile `kp-krateo`:** kvm2, 12 vCPU, 16 GiB, Kubernetes v1.34.4, context `kp-krateo`. Installed: Krateo 3.0.2, blueprint `springboot-app` with 2 compositions, KubePattern `69d4ffd` (CronJob suspended), Kyverno 1.19.1 with the 1:1 policies applied.
+- **`kp-eval` is stopped** to free memory; its state is kept. Before using it again, run `minikube stop -p kp-krateo` and `minikube start -p kp-eval`.
+
+**Scripts.** Every Krateo script sources `krateo/env/krateo.env`. The shared scripts follow it because `env/versions.env` now takes `KP_PROFILE` and the cluster size from the environment (defaults unchanged).
+
+**Re-run:**
+- all scored runs: `./krateo/scripts/final-runs.sh`
+- report: `./krateo/scripts/krateo_compare.py`
+- lifecycle experiment: `./krateo/scripts/lifecycle.sh && ./krateo/scripts/lifecycle_report.py`
+
+**Pitfalls:**
+- Composition `Ready=True` is also reported for a failed Helm release; check `helm list -a`.
+- Recreating a composition renames the CDC's RoleBindings; regenerate the ground truth with `krateo_oracle.py truth <snapshot>`, then `check`.
+- Kyverno keeps stale results when a policy's match is narrowed; delete the PolicyReports when switching policy sets (the scripts do).
+- Do not run `helm` from `evaluation/krateo/`: `./kyverno` would be taken as a local chart.

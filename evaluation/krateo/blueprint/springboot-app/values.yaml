@@ -1,0 +1,77 @@
+# Default values of the springboot-app blueprint. The global.* values are injected by the
+# composition-dynamic-controller (https://docs.krateo.io/key-concepts/kco/cdc/values-injection);
+# the defaults below only make `helm template` work outside Krateo.
+
+# Tenant that owns the application; used for the platform-developers group and the agents' ServiceAccounts.
+tenant: tenant-a
+
+app:
+  description: Spring Boot demo application with a MySQL database.
+  # Pods whose resource usage is charted from Prometheus (one RESTAction per pod).
+  pods:
+    - backend-86ccc4747f-gzc4v
+    - frontend-557b899867-8dkbp
+    - mysql-db-5f6f758d4b-zhxtl
+
+monitoring:
+  # Secret with server-url of the Prometheus API (snowplow endpointRef).
+  endpointRef:
+    name: prometheus-endpoint
+    namespace: krateo-system
+
+cve:
+  # When false, the cve-table RESTAction is not rendered but its Markdown widgets still are.
+  tableEnabled: true
+  ids:
+    - cve-2021-3449
+    - cve-2022-37434
+    - cve-2023-4806
+    - cve-2024-2961
+    - cve-2025-4673
+
+# SBOM viewers: one RESTAction (reading the Trivy SbomReport) and one YamlViewer per ReplicaSet/container.
+# scanned=false: no SbomReport yet, so the RESTAction is not rendered (the viewer is).
+# displayed=false: the viewer is rendered but not listed in the SBOM panel.
+sbom:
+  - replicaset: backend-86ccc4747f
+    container: demo-app
+    scanned: true
+    displayed: true
+  - replicaset: frontend-557b899867
+    container: demo-app
+    scanned: true
+    displayed: true
+  - replicaset: mysql-db-5f6f758d4b
+    container: mysql
+    scanned: true
+    displayed: false
+
+rbac:
+  aiAgents:
+    - ai-cve-clustering
+    - ai-cve-summary
+    - ai-cve-tech-clustering
+  vulnerabilityReportClusterRole: platform-devs-vulnerabilityreport-clusterrole
+
+page:
+  order: 100
+  releaseNotes:
+    # rendered and listed in the overview panel are two separate switches
+    rendered: true
+    listed: false
+
+portal-composition-page-generic:
+  form:
+    alphabeticalOrder: false
+
+global:
+  compositionId: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+  compositionName: demo-app
+  compositionNamespace: tenant-a
+  compositionInstalledVersion: v1-0-0
+  compositionApiVersion: composition.krateo.io/v1-0-0
+  compositionGroup: composition.krateo.io
+  compositionResource: springbootapps
+  compositionKind: SpringbootApp
+  krateoNamespace: krateo-system
+  gracefullyPaused: "false"

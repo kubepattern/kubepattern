@@ -1,0 +1,10 @@
+# Informer-cached list of every clusterroles.rbac.authorization.k8s.io (v1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: clusterroles.rbac.authorization.k8s.io
+spec:
+  kubernetesResource:
+    group: rbac.authorization.k8s.io
+    version: v1
+    resource: clusterroles

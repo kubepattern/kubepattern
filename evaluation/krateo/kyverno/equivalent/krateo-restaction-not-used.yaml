@@ -1,0 +1,57 @@
+# 1:1 translation of patterns/krateo-restaction-not-used.yaml.
+# The 24 widget kinds are enumerated as in the Pattern (one GlobalContextEntry each); CEL folds them into one list.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-restaction-not-used
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["templates.krateo.io"]
+        apiVersions: ["v1"]
+        resources: ["restactions"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: not-krateo-system
+      expression: object.metadata.namespace != 'krateo-system'
+  variables:
+    - name: widgets
+      expression: >-
+        [
+          globalContext.Get("barcharts.widgets.templates.krateo.io", ""),
+          globalContext.Get("buttongroups.widgets.templates.krateo.io", ""),
+          globalContext.Get("buttons.widgets.templates.krateo.io", ""),
+          globalContext.Get("columns.widgets.templates.krateo.io", ""),
+          globalContext.Get("datagrids.widgets.templates.krateo.io", ""),
+          globalContext.Get("eventlists.widgets.templates.krateo.io", ""),
+          globalContext.Get("filters.widgets.templates.krateo.io", ""),
+          globalContext.Get("flowcharts.widgets.templates.krateo.io", ""),
+          globalContext.Get("forms.widgets.templates.krateo.io", ""),
+          globalContext.Get("linecharts.widgets.templates.krateo.io", ""),
+          globalContext.Get("markdowns.widgets.templates.krateo.io", ""),
+          globalContext.Get("navmenuitems.widgets.templates.krateo.io", ""),
+          globalContext.Get("navmenus.widgets.templates.krateo.io", ""),
+          globalContext.Get("pages.widgets.templates.krateo.io", ""),
+          globalContext.Get("panels.widgets.templates.krateo.io", ""),
+          globalContext.Get("paragraphs.widgets.templates.krateo.io", ""),
+          globalContext.Get("piecharts.widgets.templates.krateo.io", ""),
+          globalContext.Get("routes.widgets.templates.krateo.io", ""),
+          globalContext.Get("routesloaders.widgets.templates.krateo.io", ""),
+          globalContext.Get("rows.widgets.templates.krateo.io", ""),
+          globalContext.Get("tables.widgets.templates.krateo.io", ""),
+          globalContext.Get("tablists.widgets.templates.krateo.io", ""),
+          globalContext.Get("themes.widgets.templates.krateo.io", ""),
+          globalContext.Get("yamlviewers.widgets.templates.krateo.io", "")
+        ]
+  validations:
+    - expression: >-
+        variables.widgets.exists(l, dyn(l).exists(d,
+          d.spec.?apiRef.?name.orValue('') == object.metadata.name
+          && d.spec.?apiRef.?namespace.orValue('') == object.metadata.namespace))
+      messageExpression: >-
+        'RESTAction ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' is not read by any widget (spec.apiRef): its API calls are defined but never rendered.'
