@@ -1,0 +1,13 @@
+# Audit only the requests issued by the KubePattern ServiceAccount (RQ4) and, for RQ6, by the
+# Kyverno controllers (every ServiceAccount in namespace kyverno).
+# Used to count API calls per analysis run / scan cycle and to time their phases.
+apiVersion: audit.k8s.io/v1
+kind: Policy
+omitStages:
+  - RequestReceived
+rules:
+  - level: Metadata
+    users: ["system:serviceaccount:kubepattern:kubepattern-sa"]
+  - level: Metadata
+    userGroups: ["system:serviceaccounts:kyverno"]
+  - level: None

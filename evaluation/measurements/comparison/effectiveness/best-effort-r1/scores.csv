@@ -1,0 +1,16 @@
+platform,pattern,positives,negatives,TP,FP,FN,TN,precision,recall,probes,probes_predicted,probe_FN,probe_FP,unlisted
+argocd,argocd-applicationset-generates-nothing,3,3,3,0,0,3,1.00,1.00,0,0,0,0,0
+argocd,argocd-appproject-empty,3,3,3,0,0,3,1.00,1.00,0,0,0,0,0
+capi,capi-machinetemplate-orphan,3,6,3,0,0,6,1.00,1.00,1,1,0,0,0
+cert-manager,certmanager-clusterissuer-not-used,3,4,3,0,0,4,1.00,1.00,2,2,0,0,0
+cnpg,cnpg-cluster-without-scheduledbackup,3,3,3,0,0,3,1.00,1.00,1,1,0,0,0
+cnpg,cnpg-pooler-name-clashes-with-cluster,3,3,3,0,0,3,1.00,1.00,0,0,0,0,0
+crossplane,crossplane-composition-without-xrd,3,3,3,0,0,3,1.00,1.00,1,1,0,0,0
+crossplane,crossplane-function-not-used,3,4,3,0,0,4,1.00,1.00,0,0,0,0,0
+external-secrets,eso-clustersecretstore-not-used,3,4,3,0,0,4,1.00,1.00,1,1,0,0,0
+external-secrets,eso-secretstore-not-used,3,5,3,0,0,5,1.00,1.00,2,2,0,0,0
+flux,flux-ocirepository-not-used,4,4,4,0,0,4,1.00,1.00,1,1,0,0,0
+kargo,kargo-warehouse-not-requested,3,4,3,0,0,4,1.00,1.00,0,0,0,0,0
+kubevela,kubevela-componentdefinition-not-used,3,3,3,0,0,3,1.00,1.00,1,1,0,0,0
+kubevela,kubevela-traitdefinition-not-used,3,3,3,0,0,3,1.00,1.00,0,0,0,0,0
+all,TOTAL,43,52,43,0,0,52,1.00,1.00,10,10,0,0,0

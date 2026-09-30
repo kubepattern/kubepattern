@@ -1,0 +1,16 @@
+id,operator,pattern,kind,namespace,name,description
+M01,delete-referrer,certmanager-clusterissuer-not-used,ClusterIssuer,,ci-web,delete Certificate kp-certs/web (its CertificateRequests are garbage-collected)
+M02,delete-referrer,cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-live,delete ScheduledBackup db-live-daily
+M03,introduce-clash,cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,pool-rw,create a Cluster named pool-rw next to Pooler pool-rw
+M03b,side-effect,cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,pool-rw,the Cluster introduced by M03 has no ScheduledBackup (true positive of a second pattern)
+M04,delete-referrer,eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-default-kind,delete ExternalSecret default-kind
+M05,delete-referrer,eso-clustersecretstore-not-used,ClusterSecretStore,,css-ces,delete ClusterExternalSecret ces (its generated ExternalSecret is garbage-collected)
+M06,rename-reference,flux-ocirepository-not-used,OCIRepository,kp-flux-a,podinfo-chart,HelmRelease podinfo chartRef.name -> podinfo-chart-v2
+M07,rename-reference,argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-list-1,empty the list generator of as-list-1 (controller deletes its Application)
+M08,delete-referrer,argocd-appproject-empty,AppProject,argocd,team-a,delete Application guestbook-a
+M09,delete-referrer,kargo-warehouse-not-requested,Warehouse,kp-kargo-2,images,delete Stage kp-kargo-2/dev
+M10,delete-referrer,crossplane-function-not-used,Function,,function-go-templating,delete CronOperation yearly-report
+M11,delete-referenced,crossplane-composition-without-xrd,Composition,,cache-default,delete the XCache CompositeResourceDefinition
+M12,rename-reference,kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-secret-config,Application a2 second component type -> kp-configmap
+M13,rename-reference,kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-owner-annot,Application a2 second component drops trait kp-owner-annot
+M14,rename-reference,capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-md-workers,template rotation: MachineDeployment md-workers -> dmt-rotated-v2

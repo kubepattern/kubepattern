@@ -1,0 +1,10 @@
+# Informer-cached list of every compositions.apiextensions.crossplane.io (v1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: compositions.apiextensions.crossplane.io
+spec:
+  kubernetesResource:
+    group: apiextensions.crossplane.io
+    version: v1
+    resource: compositions

@@ -1,0 +1,13 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-list-2,clean,clean,negative,list generator with two elements owns two Applications
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-list-1,clean,clean,negative,list generator with one element
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-cluster-all,clean,clean,near-miss,cluster generator without selector matches the in-cluster destination
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-empty-list,smell,smell,positive,empty list generator
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-cluster-none,smell,smell,positive,cluster selector matches no registered cluster
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-git-badpath,smell,smell,positive,git directory generator path matches nothing
+argocd-appproject-empty,AppProject,argocd,team-a,clean,clean,negative,one Application
+argocd-appproject-empty,AppProject,argocd,team-two,clean,clean,negative,two Applications
+argocd-appproject-empty,AppProject,argocd,team-appset,clean,clean,near-miss,used only by ApplicationSet-generated Applications
+argocd-appproject-empty,AppProject,argocd,empty-1,smell,smell,positive,no Application
+argocd-appproject-empty,AppProject,argocd,empty-2,smell,smell,positive,no Application
+argocd-appproject-empty,AppProject,argocd,empty-3,smell,smell,positive,no Application

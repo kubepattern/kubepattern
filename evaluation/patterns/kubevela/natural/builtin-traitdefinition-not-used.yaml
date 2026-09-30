@@ -1,0 +1,36 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: kubevela-builtin-traitdefinition-not-used
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: kubevela
+spec:
+  displayName: Built-in TraitDefinition Not Used
+  category: Architecture
+  severity: LOW
+  message: "TraitDefinition {{target.metadata.namespace}}/{{target.metadata.name}} is not used by any Application that can resolve it."
+  reference: "https://kubevela.io/docs/platform-engineers/oam/x-definition/"
+  target:
+    kind: TraitDefinition
+    apiVersion: core.oam.dev/v1beta1
+    plural: traitdefinitions
+    # Platform catalogue: definitions in vela-system are resolvable from every namespace.
+    filters:
+      matchAll:
+        - path: "metadata.namespace"
+          operator: EQUALS
+          values: ["vela-system"]
+  dependencies:
+    - id: application
+      kind: Application
+      apiVersion: core.oam.dev/v1beta1
+      plural: applications
+  relationships:
+    matchNone:
+      - with: application
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.components[*].traits[*].type"
+            operator: EQUALS

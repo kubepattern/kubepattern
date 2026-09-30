@@ -1,0 +1,47 @@
+# Best-effort variant of equivalent/capi-machinetemplate-orphan.yaml.
+# G1: name and kind are correlated on the same ClusterClass worker entry.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: capi-machinetemplate-orphan
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["infrastructure.cluster.x-k8s.io"]
+        apiVersions: ["v1beta2"]
+        resources: ["dockermachinetemplates"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: machinedeployments
+      expression: globalContext.Get("machinedeployments.cluster.x-k8s.io", "")
+    - name: machinesets
+      expression: globalContext.Get("machinesets.cluster.x-k8s.io", "")
+    - name: controlplanes
+      expression: globalContext.Get("kubeadmcontrolplanes.controlplane.cluster.x-k8s.io", "")
+    - name: clusterclasses
+      expression: globalContext.Get("clusterclasses.cluster.x-k8s.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.machinedeployments).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.template.spec.?infrastructureRef.?name.orValue('') == object.metadata.name
+          && d.spec.template.spec.?infrastructureRef.?kind.orValue('') == object.kind)
+        || dyn(variables.machinesets).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.template.spec.?infrastructureRef.?name.orValue('') == object.metadata.name
+          && d.spec.template.spec.?infrastructureRef.?kind.orValue('') == object.kind)
+        || dyn(variables.controlplanes).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.machineTemplate.spec.?infrastructureRef.?name.orValue('') == object.metadata.name
+          && d.spec.machineTemplate.spec.?infrastructureRef.?kind.orValue('') == object.kind)
+        || dyn(variables.clusterclasses).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.?workers.?machineDeployments.orValue([]).exists(m,
+               m.?infrastructure.?templateRef.?name.orValue('') == object.metadata.name
+               && m.?infrastructure.?templateRef.?kind.orValue('') == object.kind))
+        || dyn(variables.clusterclasses).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.?controlPlane.?machineInfrastructure.?templateRef.?name.orValue('') == object.metadata.name
+          && d.spec.?controlPlane.?machineInfrastructure.?templateRef.?kind.orValue('') == object.kind)
+      messageExpression: >-
+        'DockerMachineTemplate ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' is not referenced by any MachineDeployment, MachineSet, KubeadmControlPlane or ClusterClass.'

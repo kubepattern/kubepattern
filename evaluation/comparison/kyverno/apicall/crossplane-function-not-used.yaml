@@ -1,0 +1,39 @@
+# Cost variant of equivalent/ (same semantics): live resource.List calls instead of GlobalContextEntries.
+# Translation of patterns/crossplane/function-not-used.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: crossplane-function-not-used
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["pkg.crossplane.io"]
+        apiVersions: ["v1"]
+        resources: ["functions"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: compositions
+      expression: resource.List("apiextensions.crossplane.io/v1", "compositions", "").items
+    - name: operations
+      expression: resource.List("ops.crossplane.io/v1alpha1", "operations", "").items
+    - name: cronoperations
+      expression: resource.List("ops.crossplane.io/v1alpha1", "cronoperations", "").items
+    - name: watchoperations
+      expression: resource.List("ops.crossplane.io/v1alpha1", "watchoperations", "").items
+  validations:
+    - expression: >-
+        dyn(variables.compositions).exists(d,
+          d.spec.?pipeline.orValue([]).exists(s, s.functionRef.name == object.metadata.name))
+        || dyn(variables.operations).exists(d,
+          d.spec.pipeline.exists(s, s.functionRef.name == object.metadata.name))
+        || dyn(variables.cronoperations).exists(d,
+          d.spec.operationTemplate.spec.pipeline.exists(s, s.functionRef.name == object.metadata.name))
+        || dyn(variables.watchoperations).exists(d,
+          d.spec.operationTemplate.spec.pipeline.exists(s, s.functionRef.name == object.metadata.name))
+      messageExpression: >-
+        'Function ' + object.metadata.name +
+        ' runs a Pod but is not referenced by any Composition or Operation pipeline step.'

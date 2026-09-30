@@ -1,0 +1,201 @@
+# CloudNativePG scenario, seeds (see ground-truth.csv).
+# --- cnpg-cluster-without-scheduledbackup
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-two-sb
+  namespace: kp-db-a
+  annotations:
+    cnpg.io/reconciliationLoop: disabled  # object-only seed, no Postgres pods
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-two-sb-hourly
+  namespace: kp-db-a
+spec:
+  schedule: "0 0 0 1 1 *"  # yearly: no backup runs during the evaluation
+  cluster:
+    name: db-two-sb
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-two-sb-weekly
+  namespace: kp-db-a
+spec:
+  schedule: "0 0 0 1 1 *"  # yearly: no backup runs during the evaluation
+  cluster:
+    name: db-two-sb
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-renamed-sb
+  namespace: kp-db-a
+  annotations:
+    cnpg.io/reconciliationLoop: disabled  # object-only seed, no Postgres pods
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: nightly
+  namespace: kp-db-a
+spec:
+  schedule: "0 0 0 1 1 *"  # yearly: no backup runs during the evaluation
+  cluster:
+    name: db-renamed-sb
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-nobackup
+  namespace: kp-db-a
+  annotations:
+    cnpg.io/reconciliationLoop: disabled  # object-only seed, no Postgres pods
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-sb-elsewhere
+  namespace: kp-db-a
+  annotations:
+    cnpg.io/reconciliationLoop: disabled  # object-only seed, no Postgres pods
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-sb-elsewhere
+  namespace: kp-db-b
+spec:
+  schedule: "0 0 0 1 1 *"  # yearly: no backup runs during the evaluation
+  cluster:
+    name: db-sb-elsewhere
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-typo
+  namespace: kp-db-a
+  annotations:
+    cnpg.io/reconciliationLoop: disabled  # object-only seed, no Postgres pods
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-typo
+  namespace: kp-db-a
+spec:
+  schedule: "0 0 0 1 1 *"  # yearly: no backup runs during the evaluation
+  cluster:
+    name: db-typ0
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-suspended
+  namespace: kp-db-a
+  annotations:
+    cnpg.io/reconciliationLoop: disabled  # object-only seed, no Postgres pods
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-suspended
+  namespace: kp-db-a
+spec:
+  schedule: "0 0 0 1 1 *"  # yearly: no backup runs during the evaluation
+  cluster:
+    name: db-suspended
+  suspend: true
+# --- cnpg-pooler-name-clashes-with-cluster
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: db-nobackup
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live
+  instances: 0
+  type: rw
+  pgbouncer:
+    poolMode: session
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: db-typo
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live
+  instances: 0
+  type: rw
+  pgbouncer:
+    poolMode: session
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: db-two-sb
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live
+  instances: 0
+  type: rw
+  pgbouncer:
+    poolMode: session
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: db-renamed-sb
+  namespace: kp-db-b
+spec:
+  cluster:
+    name: db-live
+  instances: 0
+  type: rw
+  pgbouncer:
+    poolMode: session
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: pool-orphan-name
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live
+  instances: 0
+  type: rw
+  pgbouncer:
+    poolMode: session

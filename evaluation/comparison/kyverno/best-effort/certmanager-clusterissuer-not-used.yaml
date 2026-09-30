@@ -1,0 +1,38 @@
+# Best-effort variant of equivalent/certmanager-clusterissuer-not-used.yaml.
+# G4: issuerRef.group must be cert-manager.io (the default when omitted).
+# G8: a CertificateRequest does not count when it is a superseded revision of its owning Certificate.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: certmanager-clusterissuer-not-used
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["cert-manager.io"]
+        apiVersions: ["v1"]
+        resources: ["clusterissuers"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: certificates
+      expression: globalContext.Get("certificates.cert-manager.io", "")
+    - name: requests
+      expression: globalContext.Get("certificaterequests.cert-manager.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.certificates).exists(d, d.spec.issuerRef.?kind.orValue('') == 'ClusterIssuer'
+          && d.spec.issuerRef.name == object.metadata.name
+          && d.spec.issuerRef.?group.orValue('cert-manager.io') == 'cert-manager.io')
+        || dyn(variables.requests).exists(d, d.spec.issuerRef.?kind.orValue('') == 'ClusterIssuer'
+          && d.spec.issuerRef.name == object.metadata.name
+          && d.spec.issuerRef.?group.orValue('cert-manager.io') == 'cert-manager.io'
+          && !dyn(variables.certificates).exists(c,
+               d.metadata.?ownerReferences.orValue([]).exists(o, o.uid == c.metadata.uid)
+               && int(d.metadata.?annotations[?'cert-manager.io/certificate-revision'].orValue('0'))
+                  < c.?status.?revision.orValue(0)))
+      messageExpression: >-
+        'ClusterIssuer ' + object.metadata.name +
+        ' is not referenced by any Certificate or CertificateRequest; it still holds signing material.'

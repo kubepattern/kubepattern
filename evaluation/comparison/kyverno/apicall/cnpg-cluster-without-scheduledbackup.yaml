@@ -1,0 +1,27 @@
+# Cost variant of equivalent/ (same semantics): live resource.List calls instead of GlobalContextEntries.
+# Translation of patterns/cnpg/cluster-without-scheduledbackup.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: cnpg-cluster-without-scheduledbackup
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["postgresql.cnpg.io"]
+        apiVersions: ["v1"]
+        resources: ["clusters"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: schedules
+      expression: resource.List("postgresql.cnpg.io/v1", "scheduledbackups", "").items
+  validations:
+    - expression: >-
+        dyn(variables.schedules).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.cluster.name == object.metadata.name)
+      messageExpression: >-
+        'CNPG Cluster ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' has no ScheduledBackup in its namespace.'

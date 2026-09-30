@@ -1,0 +1,15 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-live,clean,clean,negative,live Cluster with a ScheduledBackup of the same name
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-two-sb,clean,clean,near-miss,two ScheduledBackups
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-renamed-sb,clean,clean,near-miss,ScheduledBackup with an unrelated name
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-nobackup,smell,smell,positive,no ScheduledBackup
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-sb-elsewhere,smell,smell,positive,same-name ScheduledBackup lives in another namespace (namespace criterion)
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-typo,smell,smell,positive,ScheduledBackup points to a mistyped cluster name
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-suspended,smell,clean,probe-G10,only ScheduledBackup is suspended; filters compare strings only so spec.suspend=true cannot be excluded
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-nobackup,smell,smell,positive,Pooler for db-live named like Cluster db-nobackup
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-typo,smell,smell,positive,Pooler for db-live named like Cluster db-typo
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-two-sb,smell,smell,positive,Pooler for db-live named like Cluster db-two-sb
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,pool-rw,clean,clean,negative,regular Pooler name
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,pool-orphan-name,clean,clean,near-miss,name matches no Cluster
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-b,db-renamed-sb,clean,clean,near-miss,same-name Cluster exists only in another namespace
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-live,n/a,n/a,blocked-upstream,self-referencing clash rejected by the CNPG admission webhook (not seedable)

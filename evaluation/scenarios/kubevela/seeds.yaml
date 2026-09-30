@@ -1,0 +1,213 @@
+# KubeVela scenario, seeds (see ground-truth.csv).
+# near-misses: used only by the second component / its second trait (nested wildcard).
+---
+apiVersion: core.oam.dev/v1beta1
+kind: ComponentDefinition
+metadata:
+  name: kp-secret-config
+  namespace: kp-vela-a
+spec:
+  workload:
+    definition: {apiVersion: v1, kind: ConfigMap}
+  schematic:
+    cue:
+      template: |
+        output: {
+          apiVersion: "v1"
+          kind:       "ConfigMap"
+          metadata: name: context.name
+          data: msg: parameter.msg
+        }
+        parameter: msg: *"hello" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: TraitDefinition
+metadata:
+  name: kp-owner-annot
+  namespace: kp-vela-a
+spec:
+  appliesToWorkloads: ["*"]
+  schematic:
+    cue:
+      template: |
+        patch: metadata: labels: "kp-owner-annot": parameter.value
+        parameter: value: *"true" | string
+# positives: never used.
+---
+apiVersion: core.oam.dev/v1beta1
+kind: ComponentDefinition
+metadata:
+  name: kp-legacy-cm
+  namespace: kp-vela-a
+spec:
+  workload:
+    definition: {apiVersion: v1, kind: ConfigMap}
+  schematic:
+    cue:
+      template: |
+        output: {
+          apiVersion: "v1"
+          kind:       "ConfigMap"
+          metadata: name: context.name
+          data: msg: parameter.msg
+        }
+        parameter: msg: *"hello" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: ComponentDefinition
+metadata:
+  name: kp-batch
+  namespace: kp-vela-a
+spec:
+  workload:
+    definition: {apiVersion: v1, kind: ConfigMap}
+  schematic:
+    cue:
+      template: |
+        output: {
+          apiVersion: "v1"
+          kind:       "ConfigMap"
+          metadata: name: context.name
+          data: msg: parameter.msg
+        }
+        parameter: msg: *"hello" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: TraitDefinition
+metadata:
+  name: kp-unused-trait-1
+  namespace: kp-vela-a
+spec:
+  appliesToWorkloads: ["*"]
+  schematic:
+    cue:
+      template: |
+        patch: metadata: labels: "kp-unused-trait-1": parameter.value
+        parameter: value: *"true" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: TraitDefinition
+metadata:
+  name: kp-unused-trait-2
+  namespace: kp-vela-a
+spec:
+  appliesToWorkloads: ["*"]
+  schematic:
+    cue:
+      template: |
+        patch: metadata: labels: "kp-unused-trait-2": parameter.value
+        parameter: value: *"true" | string
+# positives: defined in kp-vela-a, but only an Application in kp-vela-b uses a same-name definition (resolved in kp-vela-b).
+---
+apiVersion: core.oam.dev/v1beta1
+kind: ComponentDefinition
+metadata:
+  name: kp-worker
+  namespace: kp-vela-a
+spec:
+  workload:
+    definition: {apiVersion: v1, kind: ConfigMap}
+  schematic:
+    cue:
+      template: |
+        output: {
+          apiVersion: "v1"
+          kind:       "ConfigMap"
+          metadata: name: context.name
+          data: msg: parameter.msg
+        }
+        parameter: msg: *"hello" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: TraitDefinition
+metadata:
+  name: kp-b-trait
+  namespace: kp-vela-a
+spec:
+  appliesToWorkloads: ["*"]
+  schematic:
+    cue:
+      template: |
+        patch: metadata: labels: "kp-b-trait": parameter.value
+        parameter: value: *"true" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: ComponentDefinition
+metadata:
+  name: kp-worker
+  namespace: kp-vela-b
+spec:
+  workload:
+    definition: {apiVersion: v1, kind: ConfigMap}
+  schematic:
+    cue:
+      template: |
+        output: {
+          apiVersion: "v1"
+          kind:       "ConfigMap"
+          metadata: name: context.name
+          data: msg: parameter.msg
+        }
+        parameter: msg: *"hello" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: TraitDefinition
+metadata:
+  name: kp-b-trait
+  namespace: kp-vela-b
+spec:
+  appliesToWorkloads: ["*"]
+  schematic:
+    cue:
+      template: |
+        patch: metadata: labels: "kp-b-trait": parameter.value
+        parameter: value: *"true" | string
+# probe G4: referenced through a pinned revision (type: name@v1).
+---
+apiVersion: core.oam.dev/v1beta1
+kind: ComponentDefinition
+metadata:
+  name: kp-versioned
+  namespace: kp-vela-a
+spec:
+  workload:
+    definition: {apiVersion: v1, kind: ConfigMap}
+  schematic:
+    cue:
+      template: |
+        output: {
+          apiVersion: "v1"
+          kind:       "ConfigMap"
+          metadata: name: context.name
+          data: msg: parameter.msg
+        }
+        parameter: msg: *"hello" | string
+---
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: a2
+  namespace: kp-vela-a
+spec:
+  components:
+    - name: first
+      type: kp-configmap
+      traits:
+        - type: kp-team-label
+    - name: second
+      type: kp-secret-config
+      traits:
+        - type: kp-team-label
+        - type: kp-owner-annot
+---
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: b1
+  namespace: kp-vela-b
+spec:
+  components:
+    - name: worker
+      type: kp-worker
+      traits:
+        - type: kp-b-trait

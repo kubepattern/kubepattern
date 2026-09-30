@@ -1,0 +1,297 @@
+# External Secrets scenario, seeds (see ground-truth.csv).
+# --- SecretStores
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-default-kind
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-data
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-push
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-unused-1
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-unused-2
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-app
+  namespace: kp-secrets-b
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-g1
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: css-g1b
+  namespace: kp-secrets-a
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: ss-selected
+  namespace: kp-secrets-a
+  labels: {tier: push}
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+# --- ClusterSecretStores
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: css-ces
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: css-data
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: ss-g1
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: css-g1b
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: css-unused-1
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: css-unused-2
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: ss-app
+spec:
+  provider:
+    fake:
+      data:
+        - key: db-password
+          value: s3cr3t
+---
+# near-miss (SecretStore): kind omitted, defaults to SecretStore.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: default-kind
+  namespace: kp-secrets-a
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: ss-default-kind}
+  target: {name: default-kind}
+  data:
+    - secretKey: password
+      remoteRef: {key: db-password}
+---
+# near-misses: stores referenced only through the second data entry (ss-data, css-data).
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: per-entry
+  namespace: kp-secrets-a
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: ss-app, kind: SecretStore}
+  target: {name: per-entry}
+  data:
+    - secretKey: a
+      remoteRef: {key: db-password}
+    - secretKey: b
+      remoteRef: {key: db-password}
+      sourceRef:
+        storeRef: {name: ss-data, kind: SecretStore}
+    - secretKey: c
+      remoteRef: {key: db-password}
+      sourceRef:
+        storeRef: {name: css-data, kind: ClusterSecretStore}
+---
+# probes G1: entry 0 names ClusterSecretStore ss-g1, entry 1 names SecretStore css-g1b.
+# Names and kinds are extracted independently, so SecretStore ss-g1 and ClusterSecretStore css-g1b look used.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mixed
+  namespace: kp-secrets-a
+spec:
+  refreshInterval: 1h
+  target: {name: mixed}
+  data:
+    - secretKey: a
+      remoteRef: {key: db-password}
+      sourceRef:
+        storeRef: {name: ss-g1, kind: ClusterSecretStore}
+    - secretKey: b
+      remoteRef: {key: db-password}
+      sourceRef:
+        storeRef: {name: css-g1b, kind: SecretStore}
+---
+# near-miss (ClusterSecretStore): used through a ClusterExternalSecret.
+apiVersion: external-secrets.io/v1
+kind: ClusterExternalSecret
+metadata:
+  name: ces
+spec:
+  namespaceSelectors:
+    - matchLabels: {kubernetes.io/metadata.name: kp-secrets-b}
+  externalSecretSpec:
+    refreshInterval: 1h
+    secretStoreRef: {name: css-ces, kind: ClusterSecretStore}
+    target: {name: ces}
+    data:
+      - secretKey: password
+        remoteRef: {key: db-password}
+---
+# near-miss (SecretStore): used only by a PushSecret.
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: push
+  namespace: kp-secrets-a
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - {name: ss-push, kind: SecretStore}
+  selector:
+    secret: {name: app}
+  data:
+    - match:
+        secretKey: password
+        remoteRef: {remoteKey: pushed}
+---
+# probe G7: store selected through a label selector, which the DSL cannot evaluate.
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: push-selected
+  namespace: kp-secrets-a
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - kind: SecretStore
+      labelSelector:
+        matchLabels: {tier: push}
+  selector:
+    secret: {name: app}
+  data:
+    - match:
+        secretKey: password
+        remoteRef: {remoteKey: pushed-selected}

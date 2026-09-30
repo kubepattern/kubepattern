@@ -1,0 +1,10 @@
+# Informer-cached list of every helmreleases.helm.toolkit.fluxcd.io (v2), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: helmreleases.helm.toolkit.fluxcd.io
+spec:
+  kubernetesResource:
+    group: helm.toolkit.fluxcd.io
+    version: v2
+    resource: helmreleases

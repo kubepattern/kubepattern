@@ -1,0 +1,27 @@
+# 1:1 translation of patterns/argocd/applicationset-generates-nothing.yaml.
+# `owns` is a transitive ownerReference walk in KubePattern; CEL checks direct ownership only.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: argocd-applicationset-generates-nothing
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["argoproj.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["applicationsets"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: applications
+      expression: globalContext.Get("applications.argoproj.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.applications).exists(d,
+          d.metadata.?ownerReferences.orValue([]).exists(o, o.uid == object.metadata.uid))
+      messageExpression: >-
+        'ApplicationSet ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' currently owns no Application: its generators match nothing.'

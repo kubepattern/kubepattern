@@ -1,0 +1,34 @@
+# Kargo scenario, base state: Warehouse app feeds dev directly and qa through dev.
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: app
+  namespace: kp-kargo-1
+spec:
+  interval: 24h
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: public.ecr.aws/nginx/nginx
+        constraint: ^1.27.0
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: kp-kargo-1
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: app}
+      sources: {direct: true}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: qa
+  namespace: kp-kargo-1
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: app}
+      sources: {stages: [dev]}

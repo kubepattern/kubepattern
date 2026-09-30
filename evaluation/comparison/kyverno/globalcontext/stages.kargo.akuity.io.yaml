@@ -1,0 +1,10 @@
+# Informer-cached list of every stages.kargo.akuity.io (v1alpha1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: stages.kargo.akuity.io
+spec:
+  kubernetesResource:
+    group: kargo.akuity.io
+    version: v1alpha1
+    resource: stages

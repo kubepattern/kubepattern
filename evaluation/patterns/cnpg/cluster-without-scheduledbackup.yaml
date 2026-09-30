@@ -1,0 +1,33 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: cnpg-cluster-without-scheduledbackup
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: cnpg
+spec:
+  displayName: PostgreSQL Cluster Without Scheduled Backup
+  category: Reliability
+  severity: HIGH
+  message: "CNPG Cluster {{target.metadata.namespace}}/{{target.metadata.name}} has no ScheduledBackup in its namespace."
+  reference: "https://cloudnative-pg.io/documentation/current/backup/"
+  target:
+    kind: Cluster
+    apiVersion: postgresql.cnpg.io/v1
+    plural: clusters
+  dependencies:
+    - id: schedule
+      kind: ScheduledBackup
+      apiVersion: postgresql.cnpg.io/v1
+      plural: scheduledbackups
+  relationships:
+    matchNone:
+      - with: schedule
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.cluster.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

@@ -1,0 +1,59 @@
+# Flux scenario, base state: OCI sources consumed by a HelmRelease and a Kustomization (both suspended).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-flux-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-flux-b
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: podinfo-chart
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/charts/podinfo
+  ref:
+    semver: ">=0.0.0"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  suspend: true  # reference only: nothing is installed
+  chartRef:
+    kind: OCIRepository
+    name: podinfo-chart
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: podinfo-manifests
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/manifests/podinfo
+  ref:
+    semver: ">=0.0.0"
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: podinfo
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  suspend: true  # reference only: nothing is applied
+  prune: false
+  path: ./kustomize
+  sourceRef:
+    kind: OCIRepository
+    name: podinfo-manifests

@@ -1,0 +1,6 @@
+# Default chart RBAC: read everything.
+RBAC:
+  rules:
+    - apiGroups: ["*"]
+      resources: ["*"]
+      verbs: ["get", "list", "watch"]

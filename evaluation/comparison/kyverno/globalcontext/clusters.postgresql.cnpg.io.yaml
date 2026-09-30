@@ -1,0 +1,10 @@
+# Informer-cached list of every clusters.postgresql.cnpg.io (v1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: clusters.postgresql.cnpg.io
+spec:
+  kubernetesResource:
+    group: postgresql.cnpg.io
+    version: v1
+    resource: clusters

@@ -1,0 +1,10 @@
+# Informer-cached list of every machinedeployments.cluster.x-k8s.io (v1beta2), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: machinedeployments.cluster.x-k8s.io
+spec:
+  kubernetesResource:
+    group: cluster.x-k8s.io
+    version: v1beta2
+    resource: machinedeployments
