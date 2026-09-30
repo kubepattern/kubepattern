@@ -424,6 +424,48 @@ Detection latency is bounded by the period in both. The KubePattern limitations 
    - Neither tool reacts to dependency-side changes: detection latency is bounded by the period in both (H5).
    - The G8 probe (`ci-old-ca`) can also be fixed within the DSL, with `metadata.ownerReferences IS_EMPTY` on the CertificateRequest dependency. It is a pattern-authoring choice, not a hard limit.
 
+## Discussion and next steps
+An overall assessment after RQ1–RQ6, to guide the paper's discussion and the engine's roadmap.
+
+**Strengths.**
+- *Verified, predictable semantics.* All 10 probes behave as the semantics predict and 15/15 mutants are killed. An independent engine (Kyverno, translated 1:1) agrees on 105/105 verdicts. This matters more than P = R = 1.00 on seeded scenarios, which a reviewer may discount as expected by construction.
+- *A real niche.* The platforms report 3/50 of these smells, and only as transient Events (RQ3).
+- *Low operating cost.* Zero idle footprint, and about 23× fewer API requests and about 50× less CPU than Kyverno at the same 5-minute period (RQ6). The CronJob model fits periodic hygiene checks.
+- *Generality.* 9 ecosystems with 0 engine changes (RQ1).
+
+**Weaknesses.**
+- *Expressiveness.* CEL resolves all 10 probes with shorter policies (RQ6a). The question "why not a policy engine?" must be answered with cost, structure and the smell-oriented output model, not with power.
+- *G1 is a correctness risk.* Uncorrelated criteria give silent false negatives (CAPI `t1`, ESO `ss-g1`), not just a missing feature.
+- *Scalability limits of the implementation.* The 5 QPS client limit takes about 97% of a run and caps it at about 750 Smells; matching is quadratic (RQ4). Both are cheap to fix.
+- *Maturity.* The fail-open GC (fixed on this branch), the stale linter tests (D4) and the random pattern order (D6) show a prototype.
+- *External validity (main threat).*
+  - Synthetic scenarios on a single-node minikube.
+  - The same authors wrote the Patterns, the ground truth and the Kyverno policies.
+  - The only natural state is the KubeVela catalogue.
+
+**Positioning.** KubePattern is a declarative, purpose-built analyser for relational smells across CRD ecosystems:
+- its semantics are verified and cross-validated by an independent engine;
+- it matches a general-purpose policy engine's effectiveness at a fraction of the operating cost;
+- its expressiveness limits are catalogued (G1–G10) as a roadmap.
+
+**Where an extended DSL can go beyond Kyverno.** Kyverno evaluates one object at a time, statelessly, with non-recursive CEL, over a list of kinds declared in advance. Three extensions exploit that. None of them works on today's engine either.
+
+| Extension | Concrete example | Kyverno 1.19 | KubePattern with the extension |
+|---|---|---|---|
+| (a) Stateful duration, `for: 1h` | A ClusterIssuer created a year ago is unreferenced for 7 minutes while its only Certificate is moved between namespaces by GitOps | the scan inside the window reports `fail` and emits an Event; an age filter (`time.now()` − `creationTimestamp`) does not help because the object is old; no "unused since" | the candidate is recorded at the first run and dropped when the Certificate returns, so nothing is reported. A really unused issuer becomes a Smell after 1 h, with "unused since". The Smell's stable identity already records the first sighting |
+| (b) Graph properties: `cycle` / reachability | Flux Kustomizations infra → monitoring → apps → db → infra (`dependsOn` cycle of 4): nothing ever reconciles | CEL has no recursion. A policy unrolled for cycles up to length 3 passes all 4 (miss), and each extra length needs one more nested `exists`. When a cycle is found, it gives one `fail` per member | a graph traversal in linear time, any length, on the graph the engine already holds (`owns` is already transitive); **one** Smell naming the whole cycle. The same machinery gives "transitively blocked by a suspended Kustomization" |
+| (c) Discovery-based kind sets + recursive paths | Secret `pg-bootstrap` referenced only by a CNPG Cluster (`spec.bootstrap.initdb.secret.name`); CNPG installed after the rule was written | the policy must enumerate the referrer kinds and fields; the CNPG Cluster is invisible, so the Secret is reported unused (false positive, risky deletion) | dependency = every kind found by discovery at each run, with paths such as `**.secretRef.name` / `**.secret.name`; new operators are covered automatically. Heuristic on field names, and costly (one LIST per kind) |
+
+A Crossplane ProviderConfig is **not** a good example for (c): Crossplane tracks its usage natively (`ProviderConfigUsage`, `status.users`). A dependency kind that can be *derived from the target* (e.g. a Gatekeeper ConstraintTemplate and its Constraint kind) is also within Kyverno's reach, through `resource.List` with computed strings.
+
+**Priorities.**
+1. Element-scoped criteria (G1): cheap, and it removes silent false negatives.
+2. Raise client QPS/Burst and index dependencies: removes the ~750-Smell ceiling and the quadratic matching.
+3. Merge the per-pattern prune (already validated).
+4. Prototype `for:` (extension (a)): the differentiator most aligned with the CronJob thesis.
+5. One real-world dataset (a staging cluster or the platforms' public demo repositories): the step that most increases external validity.
+6. AI-assisted authoring through a natural-language `intent`: see [`../docs/proposals/intent.md`](../docs/proposals/intent.md).
+
 ## Deviations from the plan
 - The first RQ5 attempt was invalidated by a host suspend. It was re-run from the verified baseline under `systemd-inhibit`, and the aborted run is kept as evidence of the timeout behaviour.
 - The RQ3 oracle excludes signals that are not discriminative. For example, ESO's `StoreUnmaintained` warning appears on every fake-provider store, used or not.

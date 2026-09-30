@@ -26,7 +26,7 @@ The user is writing a paper on **KubePattern**, a Go engine that runs as a CronJ
 All main results use the engine **as-is** (`dev` @ `69d4ffd`). The fix is reported as a separate before/after validation.
 
 ## 2. Repository state
-- Current branch: **`fix/per-pattern-prune`**, on top of `dev` (`69d4ffd`): the fix (`a814e4a`), then the commit that adds `evaluation/` (2026-09-30). **Not pushed.**
+- Current branch: **`fix/per-pattern-prune`**, on top of `dev` (`69d4ffd`): the fix (`a814e4a`), then the commits that add `evaluation/` and the documentation (2026-09-30). **Pushed** to `origin/fix/per-pattern-prune`.
 - `evaluation/` is committed (git-ignored runtime artefacts excluded). Commit further changes only when the user asks.
 - Git-ignored: `evaluation/bin/` (binaries `kubepattern-69d4ffd`, `kubepattern-a814e4a`), `results/raw/`, `env/.kargo-admin`, `env/sa.kubeconfig`, `__pycache__/`.
 - Engine tests: `internal/analysis` and `internal/kube` pass. `internal/linter` tests were already broken on `dev` (D4: fixtures lack `plural`); leave them alone unless asked.
@@ -74,7 +74,12 @@ All main results use the engine **as-is** (`dev` @ `69d4ffd`). The fix is report
 | Mutation testing (15 mutants) | `MUTATION_LABEL=... MUTATION_OUT=... ./scripts/mutate.sh` |
 | CronJob timeline (RQ5) | `TIMELINE_LABEL=... ./scripts/cronjob-timeline.sh`, then `./scripts/timeline_report.py --label ... --gc global\|per-pattern` |
 | Scale sweep / GC subset / restore | `./scripts/scale.py`, `./scripts/scale.py s2-subset`, `./scripts/scale.py cleanup` |
-| LaTeX tables | `./scripts/make_tables.py`, `./scripts/gcfix_compare.py` |
+| LaTeX tables | `./scripts/make_tables.py`, `./scripts/gcfix_compare.py`, `./scripts/comparison_tables.py` (RQ6) |
+| RQ6: one forced Kyverno scan, archived and converted to smells.json | `./scripts/kyverno-run.sh <label>` (restart of the reports controller + `kyverno-snapshot.sh`) |
+| RQ6: effectiveness and expressiveness | `./scripts/comparison_effectiveness.py`, `./scripts/policy_metrics.py` |
+| RQ6: mutation testing with Kyverno | `MUTATION_RUNNER=./scripts/kyverno-run.sh MUTATION_LABEL=... MUTATION_OUT=... ./scripts/mutate.sh` |
+| RQ6: cost window and report | `footprint-sample.sh <dir>/footprint.tsv 3600 10` + `audit-harvest.sh <dir>/audit.jsonl 3600 120`, then `cost_report.py <dir> --kp-run <run-once dir> --kp-perf <perf-local line>` |
+| RQ6: staleness (CronJob `*/5` unsuspended first) and robustness | `REPS=5 PERIOD=300 ./scripts/staleness.sh`, `./scripts/staleness_report.py <run>`, `./scripts/kyverno-robustness.sh` |
 
 Ground truth: `scenarios/*/ground-truth.csv`, with columns `pattern,kind,namespace,name,truth,engine_expected,class,note`.
 - Classes: `positive`, `negative`, `near-miss`, `probe-G*` (the documented limitation; `engine_expected` differs from `truth`), `blocked-upstream`.
@@ -97,5 +102,13 @@ Ground truth: `scenarios/*/ground-truth.csv`, with columns `pattern,kind,namespa
 - Krateo is out of scope for this cluster (the user has separate Krateo experiments).
 - The main results stay on the as-is engine; improvements are reported as separate validations.
 
-## 7. Next task
-Nothing is scheduled. Optional RQ6 extensions, not run: the `apicall/` cost variant (live `resource.List` instead of GlobalContextEntries) and the S1 scale sweep for Kyverno. RQ6 how-to: `README.md` §Reproduce; Kyverno runs are archived in `results/raw/kyverno/`.
+## 7. Next steps
+The assessment (strengths, weaknesses, positioning) and the roadmap are in `README.md` → *Discussion and next steps*. Nothing is running. Candidates, in the recommended order:
+1. Element-scoped criteria (G1): removes silent false negatives.
+2. Raise client QPS/Burst and index dependencies: removes the ~750-Smell ceiling and the quadratic matching.
+3. Merge the per-pattern prune fix.
+4. Prototype `for:` (stateful duration), the extension that Kyverno cannot replicate. Two more: `cycle`/reachability and discovery-based kind sets (examples in the README table).
+5. One real-world dataset for external validity.
+6. AI-assisted authoring with a natural-language `intent`: proposal in [`../docs/proposals/intent.md`](../docs/proposals/intent.md), with a candidate RQ7 (DSL vs CEL as an LLM generation target).
+
+Any of these that changes the engine is reported as a separate validation; RQ1–RQ6 stay on the existing engines. Optional RQ6 extensions, not run: the `apicall/` cost variant and the Kyverno S1 scale sweep.
