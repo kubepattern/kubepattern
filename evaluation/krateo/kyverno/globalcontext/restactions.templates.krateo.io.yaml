@@ -1,0 +1,10 @@
+# Informer-cached list of every restactions.templates.krateo.io (v1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: restactions.templates.krateo.io
+spec:
+  kubernetesResource:
+    group: templates.krateo.io
+    version: v1
+    resource: restactions

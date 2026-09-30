@@ -1,0 +1,3 @@
+# Vendored dependency and packaged artefacts (rebuilt by env/install/20-chart-repo.sh)
+blueprint/springboot-app/charts/
+blueprint/dist/

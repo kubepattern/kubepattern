@@ -1,0 +1,52 @@
+{{- $app := include "app.name" . }}
+{{- $ep := .Values.monitoring.endpointRef }}
+# Per-pod resource metrics read from Prometheus through the endpointRef Secret.
+# The dump labels them with the (missing) generator that created them.
+{{- range .Values.app.pods }}
+{{- $pod := printf "%s-%s" $app . }}
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: {{ $pod }}-get-pod-resources
+  namespace: {{ $app }}
+  labels:
+    krateo.io/managed-by: {{ $app }}-restaction-for-pod-resources
+spec:
+  api:
+    {{- range $metric := list "memory" "cpu" }}
+    {{- range $kind := list "requests" "limits" }}
+    - name: {{ $metric }}_data_{{ $kind }}
+      endpointRef:
+        name: {{ $ep.name }}
+        namespace: {{ $ep.namespace }}
+      verb: GET
+      path: >-
+        ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_{{ $kind }}{namespace=\"{{ $app }}\", pod=\"{{ $pod }}\", resource=\"{{ $metric }}\"}" | @uri)
+        + "&start=" + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    {{- end }}
+    {{- end }}
+    - name: memory_data_usage
+      endpointRef:
+        name: {{ $ep.name }}
+        namespace: {{ $ep.namespace }}
+      verb: GET
+      path: >-
+        ${ "/api/v1/query_range?query=" + ("container_memory_working_set_bytes{namespace=\"{{ $app }}\", pod=\"{{ $pod }}\"}" | @uri)
+        + "&start=" + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    - name: cpu_data_usage
+      endpointRef:
+        name: {{ $ep.name }}
+        namespace: {{ $ep.namespace }}
+      verb: GET
+      path: >-
+        ${ "/api/v1/query_range?query=" + ("sum(rate(container_cpu_usage_seconds_total{namespace=\"{{ $app }}\", pod=\"{{ $pod }}\", container!=\"\"}[5m]))" | @uri)
+        + "&start=" + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+  filter: >-
+    { "memory": { "requests": (.memory_data_requests.data.result[0].values // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring) })),
+                  "limits":   (.memory_data_limits.data.result[0].values   // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring) })),
+                  "usage":    (.memory_data_usage.data.result[0].values    // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring) })) },
+      "cpu":    { "requests": (.cpu_data_requests.data.result[0].values    // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) })),
+                  "limits":   (.cpu_data_limits.data.result[0].values      // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) })),
+                  "usage":    (.cpu_data_usage.data.result[0].values       // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) })) } }
+{{- end }}

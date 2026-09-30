@@ -1,0 +1,28 @@
+# 1:1 translation of patterns/krateo-rolebinding-clusterrole-missing.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-rolebinding-clusterrole-missing
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["rbac.authorization.k8s.io"]
+        apiVersions: ["v1"]
+        resources: ["rolebindings"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: binds-a-clusterrole
+      expression: object.roleRef.kind == 'ClusterRole'
+  variables:
+    - name: clusterroles
+      expression: globalContext.Get("clusterroles.rbac.authorization.k8s.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.clusterroles).exists(d, d.metadata.name == object.roleRef.name)
+      messageExpression: >-
+        'RoleBinding ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' binds a ClusterRole that does not exist: its subjects silently get no access (and would get whatever a future ClusterRole with that name grants).'
