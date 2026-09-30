@@ -1,0 +1,31 @@
+# 1:1 translation of patterns/krateo-rolebinding-subject-sa-missing.yaml.
+# Kind, name and namespace of subjects[*] are checked independently (not per subject), as in KubePattern.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-rolebinding-subject-sa-missing
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["rbac.authorization.k8s.io"]
+        apiVersions: ["v1"]
+        resources: ["rolebindings"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: has-serviceaccount-subject
+      expression: object.?subjects.orValue([]).exists(s, s.kind == 'ServiceAccount')
+  variables:
+    - name: serviceaccounts
+      expression: globalContext.Get("serviceaccounts.core", "")
+  validations:
+    - expression: >-
+        dyn(variables.serviceaccounts).exists(d,
+             object.subjects.exists(s, s.name == d.metadata.name)
+          && object.subjects.exists(s, s.?namespace.orValue('') == d.metadata.namespace))
+      messageExpression: >-
+        'RoleBinding ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' grants a Role to a ServiceAccount that does not exist (e.g. an agent that was never deployed): the grant is dormant and is picked up by any future ServiceAccount with that name.'

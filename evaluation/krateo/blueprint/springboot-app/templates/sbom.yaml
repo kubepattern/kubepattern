@@ -1,0 +1,38 @@
+{{- $app := include "app.name" . }}
+# SBOM viewers: a RESTAction reading the Trivy SbomReport and a YamlViewer bound to it (spec.apiRef).
+{{- range .Values.sbom }}
+{{- $name := printf "replicaset-%s-%s-%s" $app .replicaset .container }}
+{{- if .scanned }}
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: {{ $name }}
+  namespace: {{ $app }}
+  labels:
+    managed-by: sbom-table
+spec:
+  api:
+    - name: getSbomReport
+      path: /apis/aquasecurity.github.io/v1alpha1/namespaces/{{ $app }}/sbomreports/{{ $name }}
+      verb: GET
+  filter: '{ yaml: .getSbomReport }'
+{{- end }}
+---
+apiVersion: {{ include "app.widgetsApiVersion" $ }}
+kind: YamlViewer
+metadata:
+  name: {{ $name }}
+  namespace: {{ $app }}
+  labels:
+    managed-by: sbom-table
+spec:
+  apiRef:
+    name: {{ $name }}
+    namespace: {{ $app }}
+  widgetData:
+    json: '{}'
+  widgetDataTemplate:
+    - forPath: json
+      expression: ${ .yaml | tojson }
+{{- end }}

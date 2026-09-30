@@ -1,0 +1,31 @@
+# 1:1 translation of patterns/krateo-compositiondefinition-unused.yaml.
+# The generated kinds are enumerated as in the Pattern (one GlobalContextEntry per kind and version).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-compositiondefinition-unused
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["core.krateo.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["compositiondefinitions"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: springbootapps
+      expression: globalContext.Get("springbootapps.composition.krateo.io", "")
+    - name: portalblueprintpages
+      expression: globalContext.Get("portalblueprintpages.composition.krateo.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.springbootapps).exists(d, d.kind == object.?status.?kind.orValue('')
+          && d.apiVersion == object.?status.?apiVersion.orValue(''))
+        || dyn(variables.portalblueprintpages).exists(d, d.kind == object.?status.?kind.orValue('')
+          && d.apiVersion == object.?status.?apiVersion.orValue(''))
+      messageExpression: >-
+        'CompositionDefinition ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' has no composition of the kind it generates, but keeps a CRD and a composition-dynamic-controller running.'

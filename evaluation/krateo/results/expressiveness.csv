@@ -1,0 +1,13 @@
+pattern,kp_loc,kp_logic_loc,dependencies,relationship_entries,kp_primitives,kyv_loc,kyv_loc_with_gce,lookups,cel_predicates,comprehensions,cel_chars,best_effort_loc,best_effort_delta,best_effort_lookups
+page-not-referenced,52,31,2,2,5,34,52,2,5,6,529,31,-3,2
+panel-not-referenced,97,55,7,7,8,43,106,7,3,5,418,44,1,7
+paragraph-not-referenced,65,40,3,3,7,33,60,3,3,4,332,33,0,3
+krateo-yamlviewer-apiref-dangling,37,24,1,1,3,28,37,1,2,1,187,,,
+krateo-restaction-not-used,337,324,24,24,49,55,271,24,3,2,218,60,5,25
+krateo-restaction-endpoint-missing,37,24,1,1,3,29,41,1,2,4,258,28,-1,1
+krateo-widget-manager-missing,49,37,2,2,5,34,52,2,5,2,305,36,2,2
+krateo-restaction-manager-missing,,,,,,,,,,,,28,,1
+krateo-navmenuitem-page-missing,33,20,1,1,2,26,35,1,2,3,236,26,0,1
+krateo-rolebinding-clusterrole-missing,35,22,1,1,2,27,36,1,2,1,114,,,
+krateo-rolebinding-subject-sa-missing,38,25,1,1,3,29,38,1,3,4,240,28,-1,1
+krateo-compositiondefinition-unused,46,33,2,2,4,29,47,2,4,2,292,24,-5,0

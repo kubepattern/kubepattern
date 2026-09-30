@@ -1,0 +1,27 @@
+id,operation,pattern,kind,namespace,name,change,description
+L1,composition values,paragraph-not-referenced,Paragraph,demo-app,demo-app-release-notes,-,releaseNotes.listed=true: the Panel now lists the Paragraph
+L1,composition values,krateo-restaction-not-used,RESTAction,demo-app,cve-table,-,cve.tableEnabled=false: the unused cve-table RESTAction is no longer rendered
+L1,composition values,krateo-widget-manager-missing,Markdown,demo-app,cve-2021-3449,+,cve.tableEnabled=false: the Markdown's manager disappears
+L1,composition values,krateo-widget-manager-missing,Markdown,demo-app,cve-2022-37434,+,same
+L1,composition values,krateo-widget-manager-missing,Markdown,demo-app,cve-2023-4806,+,same
+L1,composition values,krateo-widget-manager-missing,Markdown,demo-app,cve-2024-2961,+,same
+L1,composition values,krateo-widget-manager-missing,Markdown,demo-app,cve-2025-4673,+,same
+L2,delete referrer,page-not-referenced,Page,kp-krateo-a,page-panel,+,delete Panel kp-krateo-a/panel-links (its only referrer)
+L2,delete referrer,paragraph-not-referenced,Paragraph,kp-krateo-a,para-a,+,same
+L3,composition values,krateo-yamlviewer-apiref-dangling,YamlViewer,demo-app,replicaset-demo-app-backend-86ccc4747f-demo-app,+,sbom[0].scanned=false: the viewer's RESTAction is no longer rendered
+L4,create dependency,krateo-restaction-endpoint-missing,RESTAction,demo-app,demo-app-backend-86ccc4747f-gzc4v-get-pod-resources,-,create Secret krateo-system/prometheus-endpoint
+L4,create dependency,krateo-restaction-endpoint-missing,RESTAction,demo-app,demo-app-frontend-557b899867-8dkbp-get-pod-resources,-,same
+L4,create dependency,krateo-restaction-endpoint-missing,RESTAction,demo-app,demo-app-mysql-db-5f6f758d4b-zhxtl-get-pod-resources,-,same
+L4,create dependency,krateo-restaction-endpoint-missing,RESTAction,demo-app-2,demo-app-2-api-7d9f8b6c5d-x2k4q-get-pod-resources,-,same (the composition is also deleted by L5)
+L4,create dependency,krateo-restaction-endpoint-missing,RESTAction,demo-app-2,demo-app-2-postgres-0-get-pod-resources,-,same (the composition is also deleted by L5)
+L5,delete composition,krateo-restaction-not-used,RESTAction,demo-app-2,demo-app-2-api-7d9f8b6c5d-x2k4q-get-pod-resources,-,delete SpringbootApp tenant-b/demo-app-2: every object it rendered goes
+L5,delete composition,krateo-restaction-not-used,RESTAction,demo-app-2,demo-app-2-postgres-0-get-pod-resources,-,same
+L5,delete composition,krateo-widget-manager-missing,Markdown,demo-app-2,cve-2023-44487,-,same
+L5,delete composition,krateo-widget-manager-missing,Markdown,demo-app-2,cve-2024-6387,-,same
+L5,delete composition,krateo-yamlviewer-apiref-dangling,YamlViewer,demo-app-2,replicaset-demo-app-2-postgres-6c8d5f7b9-postgres,-,same
+L5,delete composition,krateo-rolebinding-clusterrole-missing,RoleBinding,demo-app-2,platform-devs-tenant-b-vulnerabilityreport-clusterrole,-,same
+L5,delete composition,krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app-2,-,same
+L5,delete composition,krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-summary-get-vulnerabilityreport-binding-springbootapp-demo-app-2,-,same
+L5,delete composition,krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-tech-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app-2,-,same
+L5,delete composition,panel-not-referenced,Panel,tenant-b,springbootapp-demo-app-2-composition-panel,-,same (a probe-G7 false positive disappears with it)
+L6,delete definition,krateo-compositiondefinition-unused,CompositionDefinition,kp-krateo-a,github-scaffolding-with-composition-page,-,delete the unused CompositionDefinition

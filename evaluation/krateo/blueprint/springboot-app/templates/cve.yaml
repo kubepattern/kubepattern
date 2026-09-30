@@ -1,0 +1,27 @@
+{{- $app := include "app.name" . }}
+# CVE table: a RESTAction and the Markdown widgets it manages (label managed-by).
+{{- if .Values.cve.tableEnabled }}
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: cve-table
+  namespace: {{ $app }}
+spec:
+  api:
+    - name: getdeployment
+      path: /apis/apps/v1/namespaces/{{ $app }}/deployments
+{{- end }}
+{{- range .Values.cve.ids }}
+---
+apiVersion: {{ include "app.widgetsApiVersion" $ }}
+kind: Markdown
+metadata:
+  name: {{ . }}
+  namespace: {{ $app }}
+  labels:
+    managed-by: cve-table
+spec:
+  widgetData:
+    markdown: '[{{ upper . }}](https://nvd.nist.gov/vuln/detail/{{ . }})'
+{{- end }}
