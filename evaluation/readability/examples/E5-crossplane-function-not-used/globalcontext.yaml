@@ -1,0 +1,39 @@
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: compositions.apiextensions.crossplane.io
+spec:
+  kubernetesResource:
+    group: apiextensions.crossplane.io
+    version: v1
+    resource: compositions
+---
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: operations.ops.crossplane.io
+spec:
+  kubernetesResource:
+    group: ops.crossplane.io
+    version: v1alpha1
+    resource: operations
+---
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: cronoperations.ops.crossplane.io
+spec:
+  kubernetesResource:
+    group: ops.crossplane.io
+    version: v1alpha1
+    resource: cronoperations
+---
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: watchoperations.ops.crossplane.io
+spec:
+  kubernetesResource:
+    group: ops.crossplane.io
+    version: v1alpha1
+    resource: watchoperations

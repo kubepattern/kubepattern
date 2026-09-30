@@ -1,0 +1,29 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: rule-e2
+spec:
+  displayName: Rule E2
+  category: General
+  severity: MEDIUM
+  message: "Finding on {{target.metadata.name}}"
+  target:
+    kind: Pooler
+    apiVersion: postgresql.cnpg.io/v1
+    plural: poolers
+  dependencies:
+    - id: cluster
+      kind: Cluster
+      apiVersion: postgresql.cnpg.io/v1
+      plural: clusters
+  relationships:
+    matchAll:
+      - with: cluster
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "metadata.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

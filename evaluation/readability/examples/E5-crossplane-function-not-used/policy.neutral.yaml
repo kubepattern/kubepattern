@@ -1,0 +1,35 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: rule-e5
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["pkg.crossplane.io"]
+        apiVersions: ["v1"]
+        resources: ["functions"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: compositions
+      expression: globalContext.Get("compositions.apiextensions.crossplane.io", "")
+    - name: operations
+      expression: globalContext.Get("operations.ops.crossplane.io", "")
+    - name: cronoperations
+      expression: globalContext.Get("cronoperations.ops.crossplane.io", "")
+    - name: watchoperations
+      expression: globalContext.Get("watchoperations.ops.crossplane.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.compositions).exists(d,
+          d.spec.?pipeline.orValue([]).exists(s, s.functionRef.name == object.metadata.name))
+        || dyn(variables.operations).exists(d,
+          d.spec.pipeline.exists(s, s.functionRef.name == object.metadata.name))
+        || dyn(variables.cronoperations).exists(d,
+          d.spec.operationTemplate.spec.pipeline.exists(s, s.functionRef.name == object.metadata.name))
+        || dyn(variables.watchoperations).exists(d,
+          d.spec.operationTemplate.spec.pipeline.exists(s, s.functionRef.name == object.metadata.name))
+      messageExpression: "'Finding on ' + object.metadata.name"

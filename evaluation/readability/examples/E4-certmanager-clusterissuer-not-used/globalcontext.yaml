@@ -1,0 +1,19 @@
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: certificates.cert-manager.io
+spec:
+  kubernetesResource:
+    group: cert-manager.io
+    version: v1
+    resource: certificates
+---
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: certificaterequests.cert-manager.io
+spec:
+  kubernetesResource:
+    group: cert-manager.io
+    version: v1
+    resource: certificaterequests

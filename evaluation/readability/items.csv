@@ -1,0 +1,20 @@
+example,pattern,kind,namespace,name,answer,why
+E1,cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-nobackup,yes,no ScheduledBackup names it
+E1,cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-sb-elsewhere,yes,the only ScheduledBackup that names it lives in another namespace (kp-db-b)
+E1,cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-renamed-sb,no,ScheduledBackup nightly in the same namespace names it; the backup's own name does not matter
+E1,cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-typo,yes,the ScheduledBackup db-typo names db-typ0 (zero instead of o)
+E1,cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-two-sb,no,two ScheduledBackups in the same namespace name it
+E2,cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-nobackup,yes,a Cluster named db-nobackup exists in the same namespace
+E2,cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,pool-orphan-name,no,no Cluster has this name
+E2,cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-b,db-renamed-sb,no,the Cluster db-renamed-sb exists only in another namespace (kp-db-a)
+E2,cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-typo,yes,a Cluster named db-typo exists in the same namespace
+E3,argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-empty-list,yes,no Application has it as owner
+E3,argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-list-1,no,Application as-list-1-solo has it as owner (same uid)
+E3,argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-cluster-none,yes,no Application has it as owner
+E4,certmanager-clusterissuer-not-used,ClusterIssuer,,ci-web,no,Certificate web names it with kind ClusterIssuer
+E4,certmanager-clusterissuer-not-used,ClusterIssuer,,ci-kind-omitted,yes,Certificate kind-omitted names it but without kind: ClusterIssuer
+E4,certmanager-clusterissuer-not-used,ClusterIssuer,,ci-manual,no,CertificateRequest manual names it with kind ClusterIssuer
+E4,certmanager-clusterissuer-not-used,ClusterIssuer,,ci-unused,yes,nothing names it
+E5,crossplane-function-not-used,Function,,function-auto-ready,no,step ready of Composition app-default invokes it (second step)
+E5,crossplane-function-not-used,Function,,function-go-templating,no,the pipeline of CronOperation yearly-report invokes it
+E5,crossplane-function-not-used,Function,,function-kcl,yes,no pipeline invokes it

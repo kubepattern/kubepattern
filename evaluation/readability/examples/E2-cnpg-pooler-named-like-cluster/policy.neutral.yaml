@@ -1,0 +1,23 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: rule-e2
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["postgresql.cnpg.io"]
+        apiVersions: ["v1"]
+        resources: ["poolers"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: clusters
+      expression: globalContext.Get("clusters.postgresql.cnpg.io", "")
+  validations:
+    - expression: >-
+        !dyn(variables.clusters).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.metadata.name == object.metadata.name)
+      messageExpression: "'Finding on ' + object.metadata.name"

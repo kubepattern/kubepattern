@@ -1,0 +1,39 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-auto-ready
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-go-templating
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-kcl
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: app-default
+spec:
+  pipeline:
+    - step: resources
+      functionRef:
+        name: function-patch-and-transform
+    - step: ready
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: ops.crossplane.io/v1alpha1
+kind: CronOperation
+metadata:
+  name: yearly-report
+spec:
+  operationTemplate:
+    spec:
+      pipeline:
+        - step: render
+          functionRef:
+            name: function-go-templating

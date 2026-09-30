@@ -1,0 +1,23 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: argocd-applicationset-generates-nothing
+spec:
+  displayName: ApplicationSet Generates No Applications
+  category: Architecture
+  severity: MEDIUM
+  message: "ApplicationSet {{target.metadata.namespace}}/{{target.metadata.name}} currently owns no Application: its generators match nothing."
+  reference: "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+  target:
+    kind: ApplicationSet
+    apiVersion: argoproj.io/v1alpha1
+    plural: applicationsets
+  dependencies:
+    - id: application
+      kind: Application
+      apiVersion: argoproj.io/v1alpha1
+      plural: applications
+  relationships:
+    matchNone:
+      - with: application
+        type: owns

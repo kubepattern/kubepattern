@@ -1,0 +1,22 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: rule-e3
+spec:
+  displayName: Rule E3
+  category: General
+  severity: MEDIUM
+  message: "Finding on {{target.metadata.name}}"
+  target:
+    kind: ApplicationSet
+    apiVersion: argoproj.io/v1alpha1
+    plural: applicationsets
+  dependencies:
+    - id: application
+      kind: Application
+      apiVersion: argoproj.io/v1alpha1
+      plural: applications
+  relationships:
+    matchNone:
+      - with: application
+        type: owns

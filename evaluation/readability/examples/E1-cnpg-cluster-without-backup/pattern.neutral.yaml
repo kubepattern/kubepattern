@@ -1,0 +1,29 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: rule-e1
+spec:
+  displayName: Rule E1
+  category: General
+  severity: MEDIUM
+  message: "Finding on {{target.metadata.name}}"
+  target:
+    kind: Cluster
+    apiVersion: postgresql.cnpg.io/v1
+    plural: clusters
+  dependencies:
+    - id: schedule
+      kind: ScheduledBackup
+      apiVersion: postgresql.cnpg.io/v1
+      plural: scheduledbackups
+  relationships:
+    matchNone:
+      - with: schedule
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.cluster.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

@@ -1,0 +1,9 @@
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: applications.argoproj.io
+spec:
+  kubernetesResource:
+    group: argoproj.io
+    version: v1alpha1
+    resource: applications

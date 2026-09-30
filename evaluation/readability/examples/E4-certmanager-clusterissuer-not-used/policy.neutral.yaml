@@ -1,0 +1,27 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: rule-e4
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["cert-manager.io"]
+        apiVersions: ["v1"]
+        resources: ["clusterissuers"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: certificates
+      expression: globalContext.Get("certificates.cert-manager.io", "")
+    - name: requests
+      expression: globalContext.Get("certificaterequests.cert-manager.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.certificates).exists(d, d.spec.issuerRef.?kind.orValue('') == 'ClusterIssuer'
+          && d.spec.issuerRef.name == object.metadata.name)
+        || dyn(variables.requests).exists(d, d.spec.issuerRef.?kind.orValue('') == 'ClusterIssuer'
+          && d.spec.issuerRef.name == object.metadata.name)
+      messageExpression: "'Finding on ' + object.metadata.name"
