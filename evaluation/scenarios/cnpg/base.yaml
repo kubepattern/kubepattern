@@ -1,0 +1,44 @@
+# CloudNativePG scenario, base state: one live Cluster with its ScheduledBackup and Pooler.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-db-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-db-b
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-live
+  namespace: kp-db-a
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-live-daily
+  namespace: kp-db-a
+spec:
+  schedule: "0 0 0 1 1 *"  # yearly: no backup runs during the evaluation
+  cluster:
+    name: db-live
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: pool-rw
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-live
+  instances: 0
+  type: rw
+  pgbouncer:
+    poolMode: session

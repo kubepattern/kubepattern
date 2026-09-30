@@ -1,0 +1,124 @@
+# Cluster API scenario, base state: a paused Cluster (no machines are ever built) with its control plane and workers.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-capi-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-capi-b
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerClusterTemplate
+metadata:
+  name: dct
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+kind: KubeadmControlPlaneTemplate
+metadata:
+  name: kcpt
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {kubeadmConfigSpec: {format: cloud-config}}
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
+kind: KubeadmConfigTemplate
+metadata:
+  name: kct
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {format: cloud-config}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerClusterTemplate
+metadata:
+  name: dct
+  namespace: kp-capi-b
+spec:
+  template:
+    spec: {}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+kind: KubeadmControlPlaneTemplate
+metadata:
+  name: kcpt
+  namespace: kp-capi-b
+spec:
+  template:
+    spec: {kubeadmConfigSpec: {format: cloud-config}}
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
+kind: KubeadmConfigTemplate
+metadata:
+  name: kct
+  namespace: kp-capi-b
+spec:
+  template:
+    spec: {format: cloud-config}
+---
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: Cluster
+metadata:
+  name: c1
+  namespace: kp-capi-a
+spec:
+  paused: true
+  controlPlaneRef: {apiGroup: controlplane.cluster.x-k8s.io, kind: KubeadmControlPlane, name: c1-cp}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+kind: KubeadmControlPlane
+metadata:
+  name: c1-cp
+  namespace: kp-capi-a
+spec:
+  replicas: 1
+  version: v1.34.0
+  machineTemplate:
+    spec:
+      infrastructureRef: {apiGroup: infrastructure.cluster.x-k8s.io, kind: DockerMachineTemplate, name: dmt-cp}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-cp
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-md-workers
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: MachineDeployment
+metadata:
+  name: md-workers
+  namespace: kp-capi-a
+spec:
+  clusterName: c1
+  replicas: 0
+  selector:
+    matchLabels: {kp-pool: md-workers}
+  template:
+    metadata:
+      labels: {kp-pool: md-workers}
+    spec:
+      clusterName: c1
+      version: v1.34.0
+      bootstrap:
+        configRef: {apiGroup: bootstrap.cluster.x-k8s.io, kind: KubeadmConfigTemplate, name: kct}
+      infrastructureRef: {apiGroup: infrastructure.cluster.x-k8s.io, kind: DockerMachineTemplate, name: dmt-md-workers}

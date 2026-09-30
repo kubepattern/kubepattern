@@ -1,0 +1,10 @@
+# Informer-cached list of every applications.argoproj.io (v1alpha1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: applications.argoproj.io
+spec:
+  kubernetesResource:
+    group: argoproj.io
+    version: v1alpha1
+    resource: applications

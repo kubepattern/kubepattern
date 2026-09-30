@@ -1,0 +1,79 @@
+# cert-manager scenario, seeds: positives, near-misses and limitation probes (see ground-truth.csv).
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-unused
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-retired
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-kind-omitted
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-foreign-group
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-old-ca
+spec:
+  selfSigned: {}
+---
+# near-miss: ClusterIssuer used only by a hand-made CertificateRequest (e.g. istio-csr / csi-driver style).
+apiVersion: cert-manager.io/v1
+kind: CertificateRequest
+metadata:
+  name: manual
+  namespace: kp-certs
+spec:
+  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlIWk1JR0FBZ0VBTUI0eEhEQWFCZ05WQkFNTUUyMWhiblZoYkM1cmNDMWpaWEowY3k1emRtTXdXVEFUQmdjcQpoa2pPUFFJQkJnZ3Foa2pPUFFNQkJ3TkNBQVJPbTJJSHF2dDdLVFV0amNLTXg5UjRlMVZUSWRzNnFLRVlpRTZvCjk1c1FNZ2VHZzlXZkprOFJrVW9zVnRQZFcwMGFBdktiS2JVbzVjR3lzVEJYMmc2bm9BQXdDZ1lJS29aSXpqMEUKQXdJRFNBQXdSUUlnZTcyT0FQNUp0c2hkeXNSK3Y4eTI3eEwyYm50ODB6L0MwWVRWSkdLcG95VUNJUUN0c0lvagpTdFJHMG91TE5xNWZ4ZHdieGROY2JhZktUZk9ScXNydUZiS2xSZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFIFJFUVVFU1QtLS0tLQo=
+  usages: ["digital signature", "key encipherment"]
+  issuerRef:
+    name: ci-manual
+    kind: ClusterIssuer
+    group: cert-manager.io
+# positive: reference without kind means a namespaced Issuer, so ci-kind-omitted is unused.
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kind-omitted
+  namespace: kp-certs
+spec:
+  secretName: kind-omitted-tls
+  dnsNames: ["kind-omitted.kp-certs.svc"]
+  revisionHistoryLimit: 3
+  issuerRef:
+    name: ci-kind-omitted
+# probe G4: same name, but the group names an external issuer type; the group is encoded in the target apiVersion string.
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: foreign
+  namespace: kp-certs
+spec:
+  secretName: foreign-tls
+  dnsNames: ["foreign.kp-certs.svc"]
+  revisionHistoryLimit: 3
+  issuerRef:
+    name: ci-foreign-group
+    kind: ClusterIssuer
+    group: example.com
+# probe G8: Certificate api is created by post.sh (issued by ci-old-ca, then rotated to ci-new-ca).

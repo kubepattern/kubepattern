@@ -1,0 +1,10 @@
+# Informer-cached list of every applications.core.oam.dev (v1beta1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: applications.core.oam.dev
+spec:
+  kubernetesResource:
+    group: core.oam.dev
+    version: v1beta1
+    resource: applications

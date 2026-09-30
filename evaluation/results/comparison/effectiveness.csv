@@ -1,0 +1,7 @@
+set,rep,run,results,fail,errors,positives,negatives,TP,FP,FN,TN,precision,recall,probes,probes_as_engine,probes_as_truth,probe_FN,probe_FP,score_exit
+best-effort,1,20260929T074823Z,105,50,0,43,52,43,0,0,52,1.00,1.00,10,0,10,0,0,0
+best-effort,2,20260929T075006Z,105,50,0,43,52,43,0,0,52,1.00,1.00,10,0,10,0,0,0
+best-effort,3,20260929T075129Z,105,50,0,43,52,43,0,0,52,1.00,1.00,10,0,10,0,0,0
+equivalent,1,20260929T074251Z,105,46,0,43,52,43,0,0,52,1.00,1.00,10,10,0,7,3,0
+equivalent,2,20260929T074446Z,105,46,0,43,52,43,0,0,52,1.00,1.00,10,10,0,7,3,0
+equivalent,3,20260929T074609Z,105,46,0,43,52,43,0,0,52,1.00,1.00,10,10,0,7,3,0

@@ -1,0 +1,155 @@
+# Cluster API scenario, seeds (see ground-truth.csv).
+# near-misses: templates referenced only by a ClusterClass (worker class #2, control-plane machines) or a bare MachineSet.
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-cc-md2
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-cc-cp
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-ms-only
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DevMachineTemplate
+metadata:
+  name: t1
+  namespace: kp-capi-a
+spec:
+  template:
+    spec:
+      backend:
+        docker: {}
+---
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: ClusterClass
+metadata:
+  name: cc1
+  namespace: kp-capi-a
+spec:
+  infrastructure:
+    templateRef: {apiVersion: infrastructure.cluster.x-k8s.io/v1beta2, kind: DockerClusterTemplate, name: dct}
+  controlPlane:
+    templateRef: {apiVersion: controlplane.cluster.x-k8s.io/v1beta2, kind: KubeadmControlPlaneTemplate, name: kcpt}
+    machineInfrastructure:
+      templateRef: {apiVersion: infrastructure.cluster.x-k8s.io/v1beta2, kind: DockerMachineTemplate, name: dmt-cc-cp}
+  workers:
+    machineDeployments:
+      # md[0] uses the DevMachineTemplate t1, md[1] a DockerMachineTemplate: see probe t1 below.
+      - class: dev-workers
+        bootstrap:
+          templateRef: {apiVersion: bootstrap.cluster.x-k8s.io/v1beta2, kind: KubeadmConfigTemplate, name: kct}
+        infrastructure:
+          templateRef: {apiVersion: infrastructure.cluster.x-k8s.io/v1beta2, kind: DevMachineTemplate, name: t1}
+      - class: docker-workers
+        bootstrap:
+          templateRef: {apiVersion: bootstrap.cluster.x-k8s.io/v1beta2, kind: KubeadmConfigTemplate, name: kct}
+        infrastructure:
+          templateRef: {apiVersion: infrastructure.cluster.x-k8s.io/v1beta2, kind: DockerMachineTemplate, name: dmt-cc-md2}
+---
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: MachineSet
+metadata:
+  name: ms-legacy
+  namespace: kp-capi-a
+spec:
+  clusterName: c1
+  replicas: 0
+  selector:
+    matchLabels: {kp-pool: ms-legacy}
+  template:
+    metadata:
+      labels: {kp-pool: ms-legacy}
+    spec:
+      clusterName: c1
+      version: v1.34.0
+      bootstrap:
+        configRef: {apiGroup: bootstrap.cluster.x-k8s.io, kind: KubeadmConfigTemplate, name: kct}
+      infrastructureRef: {apiGroup: infrastructure.cluster.x-k8s.io, kind: DockerMachineTemplate, name: dmt-ms-only}
+# positive: rotation left the previous template behind (md-rotated now uses dmt-rotated-v2).
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-rotated-v1
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-rotated-v2
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: MachineDeployment
+metadata:
+  name: md-rotated
+  namespace: kp-capi-a
+spec:
+  clusterName: c1
+  replicas: 0
+  selector:
+    matchLabels: {kp-pool: md-rotated}
+  template:
+    metadata:
+      labels: {kp-pool: md-rotated}
+    spec:
+      clusterName: c1
+      version: v1.34.0
+      bootstrap:
+        configRef: {apiGroup: bootstrap.cluster.x-k8s.io, kind: KubeadmConfigTemplate, name: kct}
+      infrastructureRef: {apiGroup: infrastructure.cluster.x-k8s.io, kind: DockerMachineTemplate, name: dmt-rotated-v2}
+# positives: never referenced; same name as a used template but in another namespace.
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-orphan
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: dmt-md-workers
+  namespace: kp-capi-b
+spec:
+  template:
+    spec: {}
+# probe G1: DockerMachineTemplate t1 is referenced by no one (md[0] names a DevMachineTemplate t1),
+# but name and kind are matched on different array elements of the ClusterClass.
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: DockerMachineTemplate
+metadata:
+  name: t1
+  namespace: kp-capi-a
+spec:
+  template:
+    spec: {}

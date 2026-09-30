@@ -1,0 +1,18 @@
+# R1: the target CRD (Kratix Promise) is not installed in the cluster.
+# Expected: the pattern is skipped and logged, the run completes, other patterns are unaffected.
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: kratix-promise-without-requests
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: robustness
+spec:
+  displayName: Promise Without Resource Requests
+  category: Architecture
+  severity: LOW
+  message: "Promise {{target.metadata.name}} has no resource requests."
+  target:
+    kind: Promise
+    apiVersion: platform.kratix.io/v1alpha1
+    plural: promises

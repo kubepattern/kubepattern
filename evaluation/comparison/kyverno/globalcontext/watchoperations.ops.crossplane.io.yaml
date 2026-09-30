@@ -1,0 +1,10 @@
+# Informer-cached list of every watchoperations.ops.crossplane.io (v1alpha1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: watchoperations.ops.crossplane.io
+spec:
+  kubernetesResource:
+    group: ops.crossplane.io
+    version: v1alpha1
+    resource: watchoperations
