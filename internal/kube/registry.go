@@ -34,3 +34,20 @@ func (c *Client) ReadAllDefinitions(ctx context.Context) (map[string][]byte, err
 
 	return patterns, nil
 }
+
+// InstalledPatternUIDs returns the UIDs of every Pattern read from the cluster, including
+// patterns that fail linting or are skipped: their smells must not be treated as orphans.
+func InstalledPatternUIDs(raw map[string][]byte) map[string]struct{} {
+	uids := make(map[string]struct{}, len(raw))
+	for _, data := range raw {
+		var p struct {
+			Metadata struct {
+				UID string `json:"uid"`
+			} `json:"metadata"`
+		}
+		if err := json.Unmarshal(data, &p); err == nil && p.Metadata.UID != "" {
+			uids[p.Metadata.UID] = struct{}{}
+		}
+	}
+	return uids
+}
