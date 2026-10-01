@@ -19,8 +19,25 @@ import (
 )
 
 func main() {
+	// runStart is the instant of this run's observations (a Pattern's spec.for is measured against it).
+	runStart := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
+
+	// --- Step 0: Load App Configuration ---
+	configPath := "/app/config/config.yaml"
+	// Fallback per test in locale
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		configPath = "config.yaml"
+	}
+
+	appCfg, err := config.Load(configPath)
+	if err != nil {
+		slog.Warn("config file not found or invalid, using defaults", "error", err)
+		appCfg = &config.AppConfig{}
+	} else {
+		slog.Info("configuration loaded successfully")
+	}
 
 	// --- Kubernetes client ---
 	// 1. In-Cluster config
@@ -41,25 +58,14 @@ func main() {
 		}
 	}
 
+	// The rate limits must be set before the clients are created: they copy the config.
+	restConfig.QPS, restConfig.Burst = appCfg.Client.RateLimits()
+	slog.Info("kubernetes client rate limits", "qps", restConfig.QPS, "burst", restConfig.Burst)
+
 	kubeClient, err := kube.NewClient(restConfig)
 	if err != nil {
 		slog.Error("failed to create kubernetes client", "error", err)
 		os.Exit(1)
-	}
-
-	// --- Step 0: Load App Configuration ---
-	configPath := "/app/config/config.yaml"
-	// Fallback per test in locale
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		configPath = "config.yaml"
-	}
-
-	appCfg, err := config.Load(configPath)
-	if err != nil {
-		slog.Warn("config file not found or invalid, using defaults", "error", err)
-		appCfg = &config.AppConfig{}
-	} else {
-		slog.Info("configuration loaded successfully")
 	}
 
 	// --- Step 1: fetch patterns from the Kubernetes registry ---
@@ -79,6 +85,7 @@ func main() {
 		appCfg.SaveInNamespace,
 		appCfg.TargetNamespace,
 		string(uuid.NewUUID()),
+		runStart,
 	)
 
 	// Smells of Patterns that are no longer installed are removed at the end of every run,

@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -81,6 +82,11 @@ type Spec struct {
 	Target        Target        `yaml:"target"`
 	Dependencies  []Dependency  `yaml:"dependencies,omitempty"`
 	Relationships Relationships `yaml:"relationships,omitempty"`
+
+	// For is the minimum duration (e.g. "30m", "1h") a target must keep satisfying the
+	// relationships before its Smell becomes Active; until then the Smell is Pending.
+	// Empty means 0s: the Smell is Active at the first observation.
+	For string `yaml:"for,omitempty"`
 }
 
 type Target struct {
@@ -243,6 +249,10 @@ func lintSpec(spec *Spec) error {
 		return lintErr("spec.message is empty")
 	}
 
+	if err := lintFor(spec.For); err != nil {
+		return err
+	}
+
 	if err := lintTarget(spec.Target); err != nil {
 		return err
 	}
@@ -263,6 +273,29 @@ func lintSpec(spec *Spec) error {
 	}
 
 	return nil
+}
+
+func lintFor(f string) error {
+	if f == "" {
+		return nil
+	}
+	d, err := time.ParseDuration(f)
+	if err != nil {
+		return lintErr("spec.for '%s' is not a valid duration (e.g. 30m, 1h, 24h)", f)
+	}
+	if d < 0 {
+		return lintErr("spec.for '%s' must not be negative", f)
+	}
+	return nil
+}
+
+// ForDuration returns spec.for as a duration; an empty or invalid value (rejected by the linter) is 0.
+func (s Spec) ForDuration() time.Duration {
+	d, err := time.ParseDuration(s.For)
+	if err != nil || d < 0 {
+		return 0
+	}
+	return d
 }
 
 func lintSeverity(s Severity) error {
@@ -438,7 +471,7 @@ func lintRelationship(group string, index int, rel Relationship, depIDs map[stri
 				return err
 			}
 		}
-	case RelationshipOwns, RelationshipOwnedBy, RelationshipSelects, RelationshipSelectedBy:
+	case RelationshipOwns, RelationshipOwnedBy:
 		// These types leverage graph knowledge / standardized k8s relations. They shouldn't have criteria.
 		if len(rel.Criteria) > 0 {
 			return lintErr("spec.relationships.%s[%d] of type '%s' must not declare criteria", group, index, rel.Type)
@@ -450,12 +483,16 @@ func lintRelationship(group string, index int, rel Relationship, depIDs map[stri
 
 func lintRelationshipType(group string, index int, t RelationshipType) error {
 	switch t {
-	case RelationshipCustom, RelationshipOwns, RelationshipOwnedBy, RelationshipSelects, RelationshipSelectedBy:
+	case RelationshipCustom, RelationshipOwns, RelationshipOwnedBy:
 		return nil
+	case RelationshipSelects, RelationshipSelectedBy:
+		// Declared in the API but not evaluated by the engine yet: reject them instead of
+		// letting the relationship silently evaluate to false.
+		return lintErr("spec.relationships.%s[%d].type '%s' is not implemented yet. Supported: custom, owns, ownedBy", group, index, t)
 	case "":
 		return lintErr("spec.relationships.%s[%d].type is empty", group, index)
 	default:
-		return lintErr("spec.relationships.%s[%d].type '%s' is not valid. Expected: custom, owns, ownedBy, selects, selectedBy", group, index, t)
+		return lintErr("spec.relationships.%s[%d].type '%s' is not valid. Expected: custom, owns, ownedBy", group, index, t)
 	}
 }
 
@@ -474,11 +511,14 @@ func lintCriteria(group string, relIndex int, index int, c Criteria) error {
 
 func lintCriteriaOperator(group string, relIndex int, index int, op CriteriaOperator) error {
 	switch op {
-	case CriteriaEquals, CriteriaContains, CriteriaLabelSelector:
+	case CriteriaEquals:
 		return nil
+	case CriteriaContains, CriteriaLabelSelector:
+		// Declared in the API but not evaluated by the engine yet (see the resolver).
+		return lintErr("spec.relationships.%s[%d].criteria[%d].operator '%s' is not implemented yet. Supported: EQUALS", group, relIndex, index, op)
 	case "":
 		return lintErr("spec.relationships.%s[%d].criteria[%d].operator is empty", group, relIndex, index)
 	default:
-		return lintErr("spec.relationships.%s[%d].criteria[%d].operator '%s' is not valid. Expected: EQUALS, CONTAINS, LABEL_SELECTOR", group, relIndex, index, op)
+		return lintErr("spec.relationships.%s[%d].criteria[%d].operator '%s' is not valid. Expected: EQUALS", group, relIndex, index, op)
 	}
 }
