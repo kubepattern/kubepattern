@@ -1,0 +1,10 @@
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Column
+metadata: {name: rq8-col, namespace: kp-krateo-rq8}
+spec:
+  widgetData:
+    allowedResources: [paragraphs]
+    items: [{resourceRefId: rq8-moved}]
+  resourcesRefs:
+    items:
+      - {id: rq8-moved, apiVersion: widgets.templates.krateo.io/v1beta1, resource: paragraphs, name: rq8-moved, namespace: kp-krateo-rq8, verb: GET}

@@ -1,0 +1,20 @@
+# R1a: counterpart of patterns/_robustness/crd-not-installed.yaml. The target CRD (Kratix Promise)
+# is not installed. KubePattern skips and logs the pattern; the run completes.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: kratix-promise-without-requests
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["platform.kratix.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["promises"]
+        operations: ["CREATE", "UPDATE"]
+  validations:
+    - expression: "false"
+      messageExpression: "'Promise ' + object.metadata.name + ' has no resource requests.'"

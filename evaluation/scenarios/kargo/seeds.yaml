@@ -1,0 +1,126 @@
+# Kargo scenario, seeds (see ground-truth.csv).
+# near-miss: requested as the second requestedFreight entry of Stage qa-multi.
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: config
+  namespace: kp-kargo-1
+spec:
+  interval: 24h
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: public.ecr.aws/nginx/nginx
+        constraint: ^1.27.0
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: qa-multi
+  namespace: kp-kargo-1
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: app}
+      sources: {stages: [dev]}
+    - origin: {kind: Warehouse, name: config}
+      sources: {direct: true}
+# near-miss: requested only through an upstream Stage (sources.stages).
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: hotfix
+  namespace: kp-kargo-1
+spec:
+  interval: 24h
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: public.ecr.aws/nginx/nginx
+        constraint: ^1.27.0
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: hotfix-dev
+  namespace: kp-kargo-1
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: hotfix}
+      sources: {direct: true}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: hotfix-prod
+  namespace: kp-kargo-1
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: hotfix}
+      sources: {stages: [hotfix-dev]}
+# positives: never requested.
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: orphan
+  namespace: kp-kargo-1
+spec:
+  interval: 24h
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: public.ecr.aws/nginx/nginx
+        constraint: ^1.27.0
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: retired
+  namespace: kp-kargo-1
+spec:
+  interval: 24h
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: public.ecr.aws/nginx/nginx
+        constraint: ^1.27.0
+# positive: same name as a requested Warehouse, but in another project (namespace criterion).
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: app
+  namespace: kp-kargo-2
+spec:
+  interval: 24h
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: public.ecr.aws/nginx/nginx
+        constraint: ^1.27.0
+# negative in project 2: its own Warehouse and Stage.
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: images
+  namespace: kp-kargo-2
+spec:
+  interval: 24h
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: public.ecr.aws/nginx/nginx
+        constraint: ^1.27.0
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: kp-kargo-2
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: images}
+      sources: {direct: true}

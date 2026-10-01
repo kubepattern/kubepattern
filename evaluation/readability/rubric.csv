@@ -1,0 +1,6 @@
+example,expected_description,key_elements
+E1,"A Cluster is reported when no ScheduledBackup in its own namespace names it in spec.cluster.name.","target Cluster; dependency ScheduledBackup; match on name AND same namespace; reported when none matches"
+E2,"A Pooler is reported when a Cluster with the same name exists in the same namespace.","target Pooler; dependency Cluster; same name AND same namespace; reported when one matches (presence, not absence)"
+E3,"An ApplicationSet is reported when it owns no Application.","target ApplicationSet; dependency Application; ownership via ownerReferences; reported when none is owned"
+E4,"A ClusterIssuer is reported when no Certificate and no CertificateRequest names it with kind ClusterIssuer.","target ClusterIssuer; dependencies Certificate AND CertificateRequest; name match; kind must be ClusterIssuer; reported when none matches"
+E5,"A Function is reported when no Composition, Operation, CronOperation or WatchOperation invokes it in any step of its pipeline.","target Function; the four pipeline kinds; any pipeline step; reported when none matches"

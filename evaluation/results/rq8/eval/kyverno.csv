@@ -1,0 +1,4 @@
+pattern,kind,namespace,name
+"capi-machinetemplate-orphan","DockerMachineTemplate","kp-capi-a","dmt-rotated-v3"
+"certmanager-clusterissuer-not-used","ClusterIssuer","","ci-rq8-new"
+"certmanager-clusterissuer-not-used","ClusterIssuer","","ci-web"

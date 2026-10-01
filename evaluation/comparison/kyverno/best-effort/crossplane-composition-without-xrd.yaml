@@ -1,0 +1,27 @@
+# Best-effort variant of equivalent/crossplane-composition-without-xrd.yaml.
+# G4: the XRD group must equal the group encoded in compositeTypeRef.apiVersion.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: crossplane-composition-without-xrd
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["apiextensions.crossplane.io"]
+        apiVersions: ["v1"]
+        resources: ["compositions"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: xrds
+      expression: globalContext.Get("compositeresourcedefinitions.apiextensions.crossplane.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.xrds).exists(d, d.spec.names.kind == object.spec.compositeTypeRef.kind
+          && d.spec.group == object.spec.compositeTypeRef.apiVersion.split('/')[0])
+      messageExpression: >-
+        'Composition ' + object.metadata.name +
+        ' composes a kind that no CompositeResourceDefinition defines: it can never be selected.'

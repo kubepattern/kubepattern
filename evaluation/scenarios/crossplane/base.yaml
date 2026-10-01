@@ -1,0 +1,121 @@
+# Crossplane v2 scenario, base state: XRDs of every scope, their Compositions and the Functions they use.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-xp
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.11.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-auto-ready
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-auto-ready:v0.7.0
+---
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xapps.eval.kubepattern.dev
+spec:
+  scope: Namespaced
+  group: eval.kubepattern.dev
+  names: {kind: XApp, plural: xapps}
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                size: {type: string}
+---
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xcaches.eval.kubepattern.dev
+spec:
+  scope: Cluster
+  group: eval.kubepattern.dev
+  names: {kind: XCache, plural: xcaches}
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                size: {type: string}
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xlegacydbs.eval.kubepattern.dev
+spec:
+  group: eval.kubepattern.dev
+  names: {kind: XLegacyDB, plural: xlegacydbs}
+  claimNames: {kind: LegacyDB, plural: legacydbs}
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                size: {type: string}
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: app-default
+spec:
+  compositeTypeRef: {apiVersion: eval.kubepattern.dev/v1alpha1, kind: XApp}
+  mode: Pipeline
+  pipeline:
+    - step: resources
+      functionRef: {name: function-patch-and-transform}
+      input: {apiVersion: pt.fn.crossplane.io/v1beta1, kind: Resources, resources: []}
+    - step: ready
+      functionRef: {name: function-auto-ready}
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: cache-default
+spec:
+  compositeTypeRef: {apiVersion: eval.kubepattern.dev/v1alpha1, kind: XCache}
+  mode: Pipeline
+  pipeline:
+    - step: resources
+      functionRef: {name: function-patch-and-transform}
+      input: {apiVersion: pt.fn.crossplane.io/v1beta1, kind: Resources, resources: []}
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: legacydb-default
+spec:
+  compositeTypeRef: {apiVersion: eval.kubepattern.dev/v1alpha1, kind: XLegacyDB}
+  mode: Pipeline
+  pipeline:
+    - step: resources
+      functionRef: {name: function-patch-and-transform}
+      input: {apiVersion: pt.fn.crossplane.io/v1beta1, kind: Resources, resources: []}

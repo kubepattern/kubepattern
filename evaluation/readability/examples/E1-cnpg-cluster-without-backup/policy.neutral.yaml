@@ -1,0 +1,23 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: rule-e1
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["postgresql.cnpg.io"]
+        apiVersions: ["v1"]
+        resources: ["clusters"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: schedules
+      expression: globalContext.Get("scheduledbackups.postgresql.cnpg.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.schedules).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.cluster.name == object.metadata.name)
+      messageExpression: "'Finding on ' + object.metadata.name"

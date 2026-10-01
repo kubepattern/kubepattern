@@ -1,0 +1,31 @@
+# RQ6: read access for the Kyverno controllers that evaluate the comparison policies.
+# Same 15 API groups the KubePattern Patterns read (env/values/rbac-without-kargo.yaml minus
+# kubepattern.dev, plus kargo.akuity.io). Aggregated into the chart's controller ClusterRoles
+# (label names verified against chart 3.9.1).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kp-eval:kyverno-read-subjects
+  labels:
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+    rbac.kyverno.io/aggregate-to-reports-controller: "true"
+rules:
+  - apiGroups:
+      - apiextensions.crossplane.io
+      - argoproj.io
+      - cert-manager.io
+      - cluster.x-k8s.io
+      - controlplane.cluster.x-k8s.io
+      - core.oam.dev
+      - external-secrets.io
+      - helm.toolkit.fluxcd.io
+      - infrastructure.cluster.x-k8s.io
+      - kargo.akuity.io
+      - kustomize.toolkit.fluxcd.io
+      - ops.crossplane.io
+      - pkg.crossplane.io
+      - postgresql.cnpg.io
+      - source.toolkit.fluxcd.io
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]

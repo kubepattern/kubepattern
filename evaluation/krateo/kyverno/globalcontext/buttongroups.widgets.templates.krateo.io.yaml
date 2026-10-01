@@ -1,0 +1,10 @@
+# Informer-cached list of every buttongroups.widgets.templates.krateo.io (v1beta1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: buttongroups.widgets.templates.krateo.io
+spec:
+  kubernetesResource:
+    group: widgets.templates.krateo.io
+    version: v1beta1
+    resource: buttongroups

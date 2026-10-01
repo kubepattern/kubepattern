@@ -1,0 +1,103 @@
+{{- $app := include "app.name" . }}
+{{- $suffix := include "app.suffix" . }}
+{{- $tenant := .Values.tenant }}
+# Read access for the AI CVE agents; their ServiceAccounts live in the tenant namespace.
+{{- range .Values.rbac.aiAgents }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ . }}-get-vulnerabilityreport-role-{{ $suffix }}
+  namespace: {{ $app }}
+rules:
+  - apiGroups: [aquasecurity.github.io]
+    resources: [vulnerabilityreports]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ . }}-get-vulnerabilityreport-binding-{{ $suffix }}
+  namespace: {{ $app }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ . }}-get-vulnerabilityreport-role-{{ $suffix }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ . }}-sa-{{ $suffix }}
+    namespace: {{ $tenant }}
+{{- end }}
+---
+# Platform developers of the tenant manage the application's widgets and RESTActions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-devs-{{ $tenant }}-get-any-widgets-in-{{ $app }}
+  namespace: {{ $app }}
+rules:
+  - apiGroups: [widgets.templates.krateo.io]
+    resources: ["*"]
+    verbs: [create, delete, get, list]
+  - apiGroups: [templates.krateo.io]
+    resources: [restactions]
+    verbs: [get, list, create, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-devs-{{ $tenant }}-get-any-widgets-in-{{ $app }}
+  namespace: {{ $app }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: platform-devs-{{ $tenant }}-get-any-widgets-in-{{ $app }}
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: platform-devs-{{ $tenant }}
+---
+# Vulnerability reports through a shared ClusterRole (expected to be installed by the platform team).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-devs-{{ $tenant }}-vulnerabilityreport-clusterrole
+  namespace: {{ $app }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.rbac.vulnerabilityReportClusterRole }}
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: platform-devs-{{ $tenant }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-devs-{{ $app }}-get-pods-in-namespace
+  namespace: {{ $app }}
+rules:
+  - apiGroups: [""]
+    resources: [pods, configmaps]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, daemonsets]
+    verbs: [get, list, watch]
+  - apiGroups: [batch]
+    resources: [cronjobs, jobs]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-devs-{{ $app }}-get-pods-in-namespace
+  namespace: {{ $app }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: platform-devs-{{ $app }}-get-pods-in-namespace
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: platform-devs-{{ $tenant }}

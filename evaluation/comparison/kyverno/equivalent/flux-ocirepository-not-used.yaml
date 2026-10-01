@@ -1,0 +1,32 @@
+# 1:1 translation of patterns/flux/ocirepository-not-used.yaml (reference namespace overrides are ignored).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: flux-ocirepository-not-used
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["source.toolkit.fluxcd.io"]
+        apiVersions: ["v1"]
+        resources: ["ocirepositories"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: helmreleases
+      expression: globalContext.Get("helmreleases.helm.toolkit.fluxcd.io", "")
+    - name: kustomizations
+      expression: globalContext.Get("kustomizations.kustomize.toolkit.fluxcd.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.helmreleases).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.?chartRef.?name.orValue('') == object.metadata.name
+          && d.spec.?chartRef.?kind.orValue('') == object.kind)
+        || dyn(variables.kustomizations).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.sourceRef.name == object.metadata.name
+          && d.spec.sourceRef.kind == object.kind)
+      messageExpression: >-
+        'OCIRepository ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' is polled by source-controller but no HelmRelease or Kustomization in its namespace consumes it.'

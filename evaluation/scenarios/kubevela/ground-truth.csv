@@ -1,0 +1,14 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-configmap,clean,clean,negative,used by Applications a1 and a2
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-secret-config,clean,clean,near-miss,used only by the second component of a2
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-b,kp-worker,clean,clean,negative,used by Application b1 in the same namespace
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-legacy-cm,smell,smell,positive,never used
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-batch,smell,smell,positive,never used
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-worker,smell,smell,positive,only an Application in kp-vela-b uses the name and it resolves its own definition (namespace criterion)
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-versioned,clean,smell,probe-G4,used through a pinned revision (type kp-versioned@v1); the version suffix is part of the string
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-team-label,clean,clean,negative,first trait of several components
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-owner-annot,clean,clean,near-miss,second trait of the second component of a2 (nested wildcard)
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-b,kp-b-trait,clean,clean,negative,used by Application b1 in the same namespace
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-unused-trait-1,smell,smell,positive,never used
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-unused-trait-2,smell,smell,positive,never used
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-b-trait,smell,smell,positive,only an Application in kp-vela-b uses the name and it resolves its own definition (namespace criterion)

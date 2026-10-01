@@ -1,0 +1,923 @@
+# ----------------------------------------------------------------------------
+# Namespace
+# ----------------------------------------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+---
+# ----------------------------------------------------------------------------
+# KubePattern rules (cluster-scoped)
+# ----------------------------------------------------------------------------
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: page-not-referenced
+spec:
+  category: Architecture
+  dependencies:
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: navmenuitem
+    kind: NavMenuItem
+    plural: navmenuitems
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: panel
+    kind: Panel
+    plural: panels
+  displayName: Page Not Referenced
+  message: Page {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not managed by
+    any NavMenuItem.
+  relationships:
+    matchNone:
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: navmenuitem
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: panel
+  severity: HIGH
+  target:
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    filters:
+      matchNone:
+      - operator: EQUALS
+        path: metadata.namespace
+        values:
+        - krateo-system
+    kind: Page
+    plural: pages
+---
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: panel-not-referenced
+spec:
+  category: Architecture
+  dependencies:
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: parent-panel
+    kind: Panel
+    plural: panels
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: column
+    kind: Column
+    plural: columns
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: row
+    kind: Row
+    plural: rows
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: tablist
+    kind: TabList
+    plural: tablists
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: page
+    kind: Page
+    plural: pages
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: datagrid
+    kind: DataGrid
+    plural: datagrids
+  - apiVersion: composition.krateo.io/v1-0-10
+    id: portalblueprintpage
+    kind: PortalBlueprintPage
+    plural: portalblueprintpages
+  displayName: Panel Not Referenced
+  message: Panel {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not included in
+    any layout (Row, Column, TabList or Panel).
+  reference: https://docs.krateo.io/widgets/panel
+  relationships:
+    matchNone:
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: parent-panel
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: column
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: row
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: tablist
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: page
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: datagrid
+    - criteria:
+      - dependencyPath: status.managed[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: portalblueprintpage
+  severity: MEDIUM
+  target:
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    filters:
+      matchNone:
+      - operator: EQUALS
+        path: metadata.namespace
+        values:
+        - krateo-system
+    kind: Panel
+    plural: panels
+---
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: paragraph-not-referenced
+spec:
+  category: Architecture
+  dependencies:
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: panel
+    kind: Panel
+    plural: panels
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: column
+    kind: Column
+    plural: columns
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: row
+    kind: Row
+    plural: rows
+  displayName: Paragraph Not Referenced
+  message: Paragraph {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not managed
+    by any widgets.
+  relationships:
+    matchNone:
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: panel
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: column
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: row
+  severity: HIGH
+  target:
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    filters:
+      matchNone:
+      - operator: EQUALS
+        path: metadata.namespace
+        values:
+        - krateo-system
+    kind: Paragraph
+    plural: paragraphs
+---
+# ----------------------------------------------------------------------------
+# Composition documentation
+# ----------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-app-documentation-readme
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+data:
+  README.md: "# Documentation \nComposition name: demo-app"
+---
+# ----------------------------------------------------------------------------
+# RBAC: Roles
+# ----------------------------------------------------------------------------
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ai-cve-clustering-get-vulnerabilityreport-role-springbootapp-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+rules:
+- apiGroups:
+  - aquasecurity.github.io
+  resources:
+  - vulnerabilityreports
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ai-cve-summary-get-vulnerabilityreport-role-springbootapp-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+rules:
+- apiGroups:
+  - aquasecurity.github.io
+  resources:
+  - vulnerabilityreports
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ai-cve-tech-clustering-get-vulnerabilityreport-role-springbootapp-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+rules:
+- apiGroups:
+  - aquasecurity.github.io
+  resources:
+  - vulnerabilityreports
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-devs-tenant-a-get-any-widgets-in-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+rules:
+- apiGroups:
+  - widgets.templates.krateo.io
+  resources:
+  - '*'
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+- apiGroups:
+  - templates.krateo.io
+  resources:
+  - restactions
+  verbs:
+  - get
+  - list
+  - create
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-devs-demo-app-get-pods-in-namespace
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+---
+# ----------------------------------------------------------------------------
+# RBAC: RoleBindings
+# ----------------------------------------------------------------------------
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ai-cve-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ai-cve-clustering-get-vulnerabilityreport-role-springbootapp-demo-app
+subjects:
+- kind: ServiceAccount
+  name: ai-cve-clustering-sa-springbootapp-demo-app
+  namespace: tenant-a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ai-cve-summary-get-vulnerabilityreport-binding-springbootapp-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ai-cve-summary-get-vulnerabilityreport-role-springbootapp-demo-app
+subjects:
+- kind: ServiceAccount
+  name: ai-cve-summary-sa-springbootapp-demo-app
+  namespace: tenant-a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ai-cve-tech-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ai-cve-tech-clustering-get-vulnerabilityreport-role-springbootapp-demo-app
+subjects:
+- kind: ServiceAccount
+  name: ai-cve-tech-clustering-sa-springbootapp-demo-app
+  namespace: tenant-a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-devs-tenant-a-get-any-widgets-in-demo-app
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: platform-devs-tenant-a-get-any-widgets-in-demo-app
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: platform-devs-tenant-a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-devs-tenant-a-vulnerabilityreport-clusterrole
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: platform-devs-vulnerabilityreport-clusterrole
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: platform-devs-tenant-a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-devs-demo-app-get-pods-in-namespace
+  namespace: demo-app
+  labels:
+    krateo.io/composition-group: composition.krateo.io
+    krateo.io/composition-id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    krateo.io/composition-installed-version: v0-1-70
+    krateo.io/composition-kind: SpringbootApp
+    krateo.io/composition-name: demo-app
+    krateo.io/composition-namespace: tenant-a
+    krateo.io/composition-resource: springbootapps
+    krateo.io/krateo-namespace: krateo-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: platform-devs-demo-app-get-pods-in-namespace
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: platform-devs-tenant-a
+---
+# ----------------------------------------------------------------------------
+# CVE table: RESTAction and the Markdown widgets it manages (label managed-by)
+# ----------------------------------------------------------------------------
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: cve-table
+  namespace: demo-app
+spec:
+  api:
+  - name: getdeployment
+    path: /apis/apps/v1/namespaces/demo-app/deployments
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: cve-2021-3449
+  namespace: demo-app
+  labels:
+    managed-by: cve-table
+spec:
+  widgetData:
+    markdown: '[CVE-2021-3449](https://nvd.nist.gov/vuln/detail/cve-2021-3449)'
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: cve-2022-37434
+  namespace: demo-app
+  labels:
+    managed-by: cve-table
+spec:
+  widgetData:
+    markdown: '[CVE-2022-37434](https://nvd.nist.gov/vuln/detail/cve-2022-37434)'
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: cve-2023-4806
+  namespace: demo-app
+  labels:
+    managed-by: cve-table
+spec:
+  widgetData:
+    markdown: '[CVE-2023-4806](https://nvd.nist.gov/vuln/detail/cve-2023-4806)'
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: cve-2024-2961
+  namespace: demo-app
+  labels:
+    managed-by: cve-table
+spec:
+  widgetData:
+    markdown: '[CVE-2024-2961](https://nvd.nist.gov/vuln/detail/cve-2024-2961)'
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Markdown
+metadata:
+  name: cve-2025-4673
+  namespace: demo-app
+  labels:
+    managed-by: cve-table
+spec:
+  widgetData:
+    markdown: '[CVE-2025-4673](https://nvd.nist.gov/vuln/detail/cve-2025-4673)'
+---
+# ----------------------------------------------------------------------------
+# Per-pod resource metrics (Prometheus)
+# ----------------------------------------------------------------------------
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: demo-app-backend-86ccc4747f-gzc4v-get-pod-resources
+  namespace: demo-app
+  labels:
+    krateo.io/managed-by: demo-app-restaction-for-pod-resources
+spec:
+  api:
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_requests
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_requests{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-backend-86ccc4747f-gzc4v" + "\", resource=\"memory\"}" | @uri) + "&start="
+      + ((now - 1200) | tostring) + "&end=" + (now | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_usage
+    path: ${ "/api/v1/query_range?query=" + ("container_memory_working_set_bytes{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-backend-86ccc4747f-gzc4v" + "\"}" | @uri) + "&start=" + ((now - 1200)
+      | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_limits
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_limits{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-backend-86ccc4747f-gzc4v" + "\", resource=\"memory\"}" | @uri) + "&start="
+      + ((now - 1200) | tostring) + "&end=" + (now | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_requests
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_requests{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-backend-86ccc4747f-gzc4v" + "\", resource=\"cpu\"}" | @uri) + "&start="
+      + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_usage
+    path: ${ "/api/v1/query_range?query=" + ("sum(rate(container_cpu_usage_seconds_total{namespace=\""
+      + "demo-app" + "\", pod=\"" + "demo-app-backend-86ccc4747f-gzc4v" + "\", container!=\"\"}[5m]))"
+      | @uri) + "&start=" + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m"
+      }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_limits
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_limits{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-backend-86ccc4747f-gzc4v" + "\", resource=\"cpu\"}" | @uri) + "&start="
+      + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  filter: '{ "memory": { "requests": ( .memory_data_requests.data.result[0].values // [] | map({ xAxis:
+    (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring)
+    }) ), "limits": ( .memory_data_limits.data.result[0].values // [] | map({ xAxis: (.[0] | localtime
+    | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring) }) ), "usage": ( .memory_data_usage.data.result[0].values
+    // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024
+    | round | tostring) }) ) }, "cpu": { "requests": ( .cpu_data_requests.data.result[0].values // []
+    | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000
+    | tostring) }) ), "limits": ( .cpu_data_limits.data.result[0].values // [] | map({ xAxis: (.[0] |
+    localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) }) ), "usage":
+    ( .cpu_data_usage.data.result[0].values // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")),
+    yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) }) ) } }'
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: demo-app-frontend-557b899867-8dkbp-get-pod-resources
+  namespace: demo-app
+  labels:
+    krateo.io/managed-by: demo-app-restaction-for-pod-resources
+spec:
+  api:
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_requests
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_requests{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-frontend-557b899867-8dkbp" + "\", resource=\"memory\"}" | @uri) + "&start="
+      + ((now - 1200) | tostring) + "&end=" + (now | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_usage
+    path: ${ "/api/v1/query_range?query=" + ("container_memory_working_set_bytes{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-frontend-557b899867-8dkbp" + "\"}" | @uri) + "&start=" + ((now - 1200)
+      | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_limits
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_limits{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-frontend-557b899867-8dkbp" + "\", resource=\"memory\"}" | @uri) + "&start="
+      + ((now - 1200) | tostring) + "&end=" + (now | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_requests
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_requests{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-frontend-557b899867-8dkbp" + "\", resource=\"cpu\"}" | @uri) + "&start="
+      + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_usage
+    path: ${ "/api/v1/query_range?query=" + ("sum(rate(container_cpu_usage_seconds_total{namespace=\""
+      + "demo-app" + "\", pod=\"" + "demo-app-frontend-557b899867-8dkbp" + "\", container!=\"\"}[5m]))"
+      | @uri) + "&start=" + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m"
+      }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_limits
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_limits{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-frontend-557b899867-8dkbp" + "\", resource=\"cpu\"}" | @uri) + "&start="
+      + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  filter: '{ "memory": { "requests": ( .memory_data_requests.data.result[0].values // [] | map({ xAxis:
+    (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring)
+    }) ), "limits": ( .memory_data_limits.data.result[0].values // [] | map({ xAxis: (.[0] | localtime
+    | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring) }) ), "usage": ( .memory_data_usage.data.result[0].values
+    // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024
+    | round | tostring) }) ) }, "cpu": { "requests": ( .cpu_data_requests.data.result[0].values // []
+    | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000
+    | tostring) }) ), "limits": ( .cpu_data_limits.data.result[0].values // [] | map({ xAxis: (.[0] |
+    localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) }) ), "usage":
+    ( .cpu_data_usage.data.result[0].values // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")),
+    yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) }) ) } }'
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: demo-app-mysql-db-5f6f758d4b-zhxtl-get-pod-resources
+  namespace: demo-app
+  labels:
+    krateo.io/managed-by: demo-app-restaction-for-pod-resources
+spec:
+  api:
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_requests
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_requests{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-mysql-db-5f6f758d4b-zhxtl" + "\", resource=\"memory\"}" | @uri) + "&start="
+      + ((now - 1200) | tostring) + "&end=" + (now | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_usage
+    path: ${ "/api/v1/query_range?query=" + ("container_memory_working_set_bytes{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-mysql-db-5f6f758d4b-zhxtl" + "\"}" | @uri) + "&start=" + ((now - 1200)
+      | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: memory_data_limits
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_limits{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-mysql-db-5f6f758d4b-zhxtl" + "\", resource=\"memory\"}" | @uri) + "&start="
+      + ((now - 1200) | tostring) + "&end=" + (now | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_requests
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_requests{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-mysql-db-5f6f758d4b-zhxtl" + "\", resource=\"cpu\"}" | @uri) + "&start="
+      + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_usage
+    path: ${ "/api/v1/query_range?query=" + ("sum(rate(container_cpu_usage_seconds_total{namespace=\""
+      + "demo-app" + "\", pod=\"" + "demo-app-mysql-db-5f6f758d4b-zhxtl" + "\", container!=\"\"}[5m]))"
+      | @uri) + "&start=" + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m"
+      }
+    verb: GET
+  - endpointRef:
+      name: prometheus-endpoint
+      namespace: krateo-system
+    name: cpu_data_limits
+    path: ${ "/api/v1/query_range?query=" + ("kube_pod_container_resource_limits{namespace=\"" + "demo-app"
+      + "\", pod=\"" + "demo-app-mysql-db-5f6f758d4b-zhxtl" + "\", resource=\"cpu\"}" | @uri) + "&start="
+      + ((now - 1200) | floor | tostring) + "&end=" + (now | floor | tostring) + "&step=5m" }
+    verb: GET
+  filter: '{ "memory": { "requests": ( .memory_data_requests.data.result[0].values // [] | map({ xAxis:
+    (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring)
+    }) ), "limits": ( .memory_data_limits.data.result[0].values // [] | map({ xAxis: (.[0] | localtime
+    | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024 | round | tostring) }) ), "usage": ( .memory_data_usage.data.result[0].values
+    // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber / 1024 / 1024
+    | round | tostring) }) ) }, "cpu": { "requests": ( .cpu_data_requests.data.result[0].values // []
+    | map({ xAxis: (.[0] | localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000
+    | tostring) }) ), "limits": ( .cpu_data_limits.data.result[0].values // [] | map({ xAxis: (.[0] |
+    localtime | strftime("%H:%M")), yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) }) ), "usage":
+    ( .cpu_data_usage.data.result[0].values // [] | map({ xAxis: (.[0] | localtime | strftime("%H:%M")),
+    yAxis: (.[1] | tonumber * 1000 | round / 1000 | tostring) }) ) } }'
+---
+# ----------------------------------------------------------------------------
+# SBOM viewers: RESTAction + YamlViewer (spec.apiRef)
+# ----------------------------------------------------------------------------
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: replicaset-demo-app-backend-86ccc4747f-demo-app
+  namespace: demo-app
+  labels:
+    managed-by: sbom-table
+spec:
+  api:
+  - name: getSbomReport
+    path: /apis/aquasecurity.github.io/v1alpha1/namespaces/demo-app/sbomreports/replicaset-demo-app-backend-86ccc4747f-demo-app
+    verb: GET
+  filter: '{ yaml: .getSbomReport }'
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata:
+  name: replicaset-demo-app-backend-86ccc4747f-demo-app
+  namespace: demo-app
+  labels:
+    managed-by: sbom-table
+spec:
+  apiRef:
+    name: replicaset-demo-app-backend-86ccc4747f-demo-app
+    namespace: demo-app
+  widgetData:
+    json: '{}'
+  widgetDataTemplate:
+  - expression: ${ .yaml | tojson }
+    forPath: json
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: replicaset-demo-app-frontend-557b899867-demo-app
+  namespace: demo-app
+  labels:
+    managed-by: sbom-table
+spec:
+  api:
+  - name: getSbomReport
+    path: /apis/aquasecurity.github.io/v1alpha1/namespaces/demo-app/sbomreports/replicaset-demo-app-frontend-557b899867-demo-app
+    verb: GET
+  filter: '{ yaml: .getSbomReport }'
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata:
+  name: replicaset-demo-app-frontend-557b899867-demo-app
+  namespace: demo-app
+  labels:
+    managed-by: sbom-table
+spec:
+  apiRef:
+    name: replicaset-demo-app-frontend-557b899867-demo-app
+    namespace: demo-app
+  widgetData:
+    json: '{}'
+  widgetDataTemplate:
+  - expression: ${ .yaml | tojson }
+    forPath: json
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: replicaset-demo-app-mysql-db-5f6f758d4b-mysql
+  namespace: demo-app
+  labels:
+    managed-by: sbom-table
+spec:
+  api:
+  - name: getSbomReport
+    path: /apis/aquasecurity.github.io/v1alpha1/namespaces/demo-app/sbomreports/replicaset-demo-app-mysql-db-5f6f758d4b-mysql
+    verb: GET
+  filter: '{ yaml: .getSbomReport }'
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: YamlViewer
+metadata:
+  name: replicaset-demo-app-mysql-db-5f6f758d4b-mysql
+  namespace: demo-app
+  labels:
+    managed-by: sbom-table
+spec:
+  apiRef:
+    name: replicaset-demo-app-mysql-db-5f6f758d4b-mysql
+    namespace: demo-app
+  widgetData:
+    json: '{}'
+  widgetDataTemplate:
+  - expression: ${ .yaml | tojson }
+    forPath: json

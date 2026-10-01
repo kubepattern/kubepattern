@@ -1,0 +1,29 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: certmanager-clusterissuer-not-used
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["cert-manager.io"]
+        apiVersions: ["v1"]
+        resources: ["clusterissuers"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: certificates
+      expression: globalContext.Get("certificates.cert-manager.io", "")
+    - name: requests
+      expression: globalContext.Get("certificaterequests.cert-manager.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.certificates).exists(d, d.spec.issuerRef.?kind.orValue('') == 'ClusterIssuer'
+          && d.spec.issuerRef.name == object.metadata.name)
+        || dyn(variables.requests).exists(d, d.spec.issuerRef.?kind.orValue('') == 'ClusterIssuer'
+          && d.spec.issuerRef.name == object.metadata.name)
+      messageExpression: >-
+        'ClusterIssuer ' + object.metadata.name +
+        ' is not referenced by any Certificate or CertificateRequest; it still holds signing material.'

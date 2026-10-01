@@ -1,0 +1,206 @@
+{{- $app := include "app.name" . }}
+{{- $api := include "app.widgetsApiVersion" . }}
+# Application page in the Composable Portal. The portal lists every NavMenuItem in the sidebar
+# (RESTAction sidebar-nav-menu-items), so the page is reachable from /apps/<name>.
+# NavMenuItem -> Page -> Row -> Column (left, right) -> Panels -> Paragraph / Markdown / YamlViewer.
+apiVersion: {{ $api }}
+kind: NavMenuItem
+metadata:
+  name: {{ $app }}-nav-menu-item
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    allowedResources: [pages]
+    resourceRefId: {{ $app }}-page
+    label: {{ $app }}
+    icon: fa-leaf
+    path: /apps/{{ $app }}
+    order: {{ .Values.page.order }}
+  resourcesRefs:
+    items:
+      - id: {{ $app }}-page
+        apiVersion: {{ $api }}
+        name: {{ $app }}-page
+        namespace: {{ $app }}
+        resource: pages
+        verb: GET
+---
+apiVersion: {{ $api }}
+kind: Page
+metadata:
+  name: {{ $app }}-page
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    allowedResources: [rows]
+    items:
+      - resourceRefId: {{ $app }}-row
+  resourcesRefs:
+    items:
+      - id: {{ $app }}-row
+        apiVersion: {{ $api }}
+        name: {{ $app }}-row
+        namespace: {{ $app }}
+        resource: rows
+        verb: GET
+---
+apiVersion: {{ $api }}
+kind: Row
+metadata:
+  name: {{ $app }}-row
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    allowedResources: [columns]
+    items:
+      - resourceRefId: {{ $app }}-column-left
+        size: 12
+      - resourceRefId: {{ $app }}-column-right
+        size: 12
+  resourcesRefs:
+    items:
+      {{- range list "left" "right" }}
+      - id: {{ $app }}-column-{{ . }}
+        apiVersion: {{ $api }}
+        name: {{ $app }}-column-{{ . }}
+        namespace: {{ $app }}
+        resource: columns
+        verb: GET
+      {{- end }}
+{{- range $side, $panels := dict "left" (list "overview" "cve") "right" (list "sbom") }}
+---
+apiVersion: {{ $api }}
+kind: Column
+metadata:
+  name: {{ $app }}-column-{{ $side }}
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    allowedResources: [panels]
+    items:
+      {{- range $panels }}
+      - resourceRefId: {{ $app }}-{{ . }}-panel
+      {{- end }}
+  resourcesRefs:
+    items:
+      {{- range $panels }}
+      - id: {{ $app }}-{{ . }}-panel
+        apiVersion: {{ $api }}
+        name: {{ $app }}-{{ . }}-panel
+        namespace: {{ $app }}
+        resource: panels
+        verb: GET
+      {{- end }}
+{{- end }}
+---
+# Overview: description and (when listed) release notes.
+apiVersion: {{ $api }}
+kind: Panel
+metadata:
+  name: {{ $app }}-overview-panel
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    title: {{ $app }}
+    icon:
+      name: fa-leaf
+    actions: {}
+    items:
+      - resourceRefId: {{ $app }}-description
+      {{- if .Values.page.releaseNotes.listed }}
+      - resourceRefId: {{ $app }}-release-notes
+      {{- end }}
+  resourcesRefs:
+    items:
+      - id: {{ $app }}-description
+        apiVersion: {{ $api }}
+        name: {{ $app }}-description
+        namespace: {{ $app }}
+        resource: paragraphs
+        verb: GET
+      {{- if .Values.page.releaseNotes.listed }}
+      - id: {{ $app }}-release-notes
+        apiVersion: {{ $api }}
+        name: {{ $app }}-release-notes
+        namespace: {{ $app }}
+        resource: paragraphs
+        verb: GET
+      {{- end }}
+---
+apiVersion: {{ $api }}
+kind: Paragraph
+metadata:
+  name: {{ $app }}-description
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    text: {{ .Values.app.description | quote }}
+{{- if .Values.page.releaseNotes.rendered }}
+---
+apiVersion: {{ $api }}
+kind: Paragraph
+metadata:
+  name: {{ $app }}-release-notes
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    text: Release notes of {{ $app }} ({{ .Values.global.compositionInstalledVersion }}).
+{{- end }}
+---
+# Known vulnerabilities: one Markdown per CVE.
+apiVersion: {{ $api }}
+kind: Panel
+metadata:
+  name: {{ $app }}-cve-panel
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    title: Vulnerabilities
+    icon:
+      name: fa-bug
+    actions: {}
+    items:
+      {{- range .Values.cve.ids }}
+      - resourceRefId: {{ . }}
+      {{- end }}
+  resourcesRefs:
+    items:
+      {{- range .Values.cve.ids }}
+      - id: {{ . }}
+        apiVersion: {{ $api }}
+        name: {{ . }}
+        namespace: {{ $app }}
+        resource: markdowns
+        verb: GET
+      {{- end }}
+---
+# Software bill of materials: the displayed SBOM viewers.
+apiVersion: {{ $api }}
+kind: Panel
+metadata:
+  name: {{ $app }}-sbom-panel
+  namespace: {{ $app }}
+spec:
+  widgetData:
+    title: SBOM
+    icon:
+      name: fa-list
+    actions: {}
+    items:
+      {{- range .Values.sbom }}
+      {{- if .displayed }}
+      - resourceRefId: replicaset-{{ $app }}-{{ .replicaset }}-{{ .container }}
+      {{- end }}
+      {{- end }}
+  resourcesRefs:
+    items:
+      {{- range .Values.sbom }}
+      {{- if .displayed }}
+      - id: replicaset-{{ $app }}-{{ .replicaset }}-{{ .container }}
+        apiVersion: {{ $api }}
+        name: replicaset-{{ $app }}-{{ .replicaset }}-{{ .container }}
+        namespace: {{ $app }}
+        resource: yamlviewers
+        verb: GET
+      {{- end }}
+      {{- end }}

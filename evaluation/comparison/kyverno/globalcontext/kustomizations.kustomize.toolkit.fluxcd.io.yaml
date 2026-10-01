@@ -1,0 +1,10 @@
+# Informer-cached list of every kustomizations.kustomize.toolkit.fluxcd.io (v1), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: kustomizations.kustomize.toolkit.fluxcd.io
+spec:
+  kubernetesResource:
+    group: kustomize.toolkit.fluxcd.io
+    version: v1
+    resource: kustomizations

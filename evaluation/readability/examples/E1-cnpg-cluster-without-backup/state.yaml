@@ -1,0 +1,74 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-nobackup
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-sb-elsewhere
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-renamed-sb
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-typo
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db-two-sb
+  namespace: kp-db-a
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-sb-elsewhere
+  namespace: kp-db-b
+spec:
+  cluster:
+    name: db-sb-elsewhere
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: nightly
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-renamed-sb
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-typo
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-typ0
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-two-sb-hourly
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-two-sb
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: db-two-sb-weekly
+  namespace: kp-db-a
+spec:
+  cluster:
+    name: db-two-sb

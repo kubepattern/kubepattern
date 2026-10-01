@@ -1,0 +1,9 @@
+# Composition of the seeded portal-composition-page-generic definition (see seeds-definitions.yaml).
+apiVersion: composition.krateo.io/v1-4-3
+kind: PortalCompositionPageGeneric
+metadata:
+  name: page-generic-a
+  namespace: kp-krateo-a
+spec:
+  form:
+    alphabeticalOrder: false

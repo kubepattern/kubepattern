@@ -1,0 +1,20 @@
+# L1 + L3: new values for the demo-app composition (applied through Krateo: the CDC upgrades the release).
+apiVersion: composition.krateo.io/v1-0-0
+kind: SpringbootApp
+metadata:
+  name: demo-app
+  namespace: tenant-a
+spec:
+  tenant: tenant-a
+  cve:
+    tableEnabled: false          # L1: the CVE Markdowns lose their managing RESTAction
+    ids: [cve-2021-3449, cve-2022-37434, cve-2023-4806, cve-2024-2961, cve-2025-4673]
+  page:
+    order: 100
+    releaseNotes:
+      rendered: true
+      listed: true               # L1: the release notes Paragraph is now listed (fix)
+  sbom:
+    - {replicaset: backend-86ccc4747f, container: demo-app, scanned: false, displayed: true}   # L3: RESTAction removed
+    - {replicaset: frontend-557b899867, container: demo-app, scanned: true, displayed: true}
+    - {replicaset: mysql-db-5f6f758d4b, container: mysql, scanned: true, displayed: false}

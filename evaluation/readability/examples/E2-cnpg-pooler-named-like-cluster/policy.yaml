@@ -1,0 +1,25 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: cnpg-pooler-name-clashes-with-cluster
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["postgresql.cnpg.io"]
+        apiVersions: ["v1"]
+        resources: ["poolers"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: clusters
+      expression: globalContext.Get("clusters.postgresql.cnpg.io", "")
+  validations:
+    - expression: >-
+        !dyn(variables.clusters).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.metadata.name == object.metadata.name)
+      messageExpression: >-
+        'Pooler ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' has the same name as a CNPG Cluster in the same namespace (forbidden by the Pooler API contract).'

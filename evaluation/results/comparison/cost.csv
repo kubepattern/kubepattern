@@ -1,0 +1,7 @@
+tool,component,mem_median_mib,mem_peak_mib,cpu_cores_avg,cpu_s_per_hour,requests_per_hour,watch_per_hour,list_per_hour,get_per_hour,report-write_per_hour,smell-write_per_hour,lease_per_hour,event_per_hour,other-write_per_hour,discovery_per_hour,requests_per_cycle,requests_per_cycle_no_lease,smell_writes_per_cycle,run_s
+kyverno,admission-controller,164.2,174.1,0.0083,30.0,4807,460,0,721,0,0,2149,0,758,720,400.6,221.5,,
+kyverno,background-controller,105.9,113.4,0.0053,19.0,2829,321,0,0,0,0,1790,0,0,719,235.8,86.7,,
+kyverno,cleanup-controller,115.3,116.2,0.0037,13.3,16072,144,0,0,0,0,1790,0,14019,120,1339.3,1190.2,,
+kyverno,reports-controller,91.8,99.2,0.0517,186.1,15447,363,1677,5294,4192,0,1790,1102,0,1030,1287.2,1138.1,,
+kyverno,TOTAL (4 controllers),477.2,502.9,0.069,248.4,39155.0,1288.0,1677.0,6015.0,4192.0,0.0,7519.0,1102.0,14777.0,2589.0,3262.9,2636.5,,
+kubepattern,kubepattern-job (1 run per 300 s; idle 0),0,30.9,0.0013,4.8,1716,0,588,552,0,552,0,0,0,24,143,143,46,30.0

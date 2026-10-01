@@ -1,0 +1,30 @@
+# Cost variant of equivalent/ (same semantics): live resource.List calls instead of GlobalContextEntries.
+# Translation of patterns/kubevela/traitdefinition-not-used.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: kubevela-traitdefinition-not-used
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["core.oam.dev"]
+        apiVersions: ["v1beta1"]
+        resources: ["traitdefinitions"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: team-owned
+      expression: object.metadata.namespace != 'vela-system'
+  variables:
+    - name: applications
+      expression: resource.List("core.oam.dev/v1beta1", "applications", "").items
+  validations:
+    - expression: >-
+        dyn(variables.applications).exists(d, d.metadata.namespace == object.metadata.namespace
+          && d.spec.components.exists(c, c.?traits.orValue([]).exists(t, t.type == object.metadata.name)))
+      messageExpression: >-
+        'TraitDefinition ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' is not used by any Application that can resolve it.'

@@ -1,0 +1,158 @@
+# Argo CD scenario, seeds (see ground-truth.csv).
+# --- argocd-appproject-empty
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-two
+  namespace: argocd
+spec:
+  sourceRepos: ["https://github.com/argoproj/argocd-example-apps.git"]
+  destinations:
+    - {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook-two-1
+  namespace: argocd
+spec:
+  project: team-two
+  source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+  destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook-two-2
+  namespace: argocd
+spec:
+  project: team-two
+  source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+  destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: empty-1
+  namespace: argocd
+spec:
+  sourceRepos: ["https://github.com/argoproj/argocd-example-apps.git"]
+  destinations:
+    - {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: empty-2
+  namespace: argocd
+spec:
+  sourceRepos: ["https://github.com/argoproj/argocd-example-apps.git"]
+  destinations:
+    - {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: empty-3
+  namespace: argocd
+spec:
+  sourceRepos: ["https://github.com/argoproj/argocd-example-apps.git"]
+  destinations:
+    - {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+# --- argocd-applicationset-generates-nothing
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-list-1
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - list:
+        elements: [{name: solo}]
+  template:
+    metadata:
+      name: 'as-list-1-{{.name}}'
+    spec:
+      project: team-appset
+      source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+      destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+# near-miss: the cluster generator without selector matches the in-cluster destination.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-cluster-all
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - clusters: {}
+  template:
+    metadata:
+      name: 'as-cluster-all-{{.name}}'
+    spec:
+      project: team-appset
+      source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+      destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+# positives: generators that currently match nothing.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-empty-list
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - list:
+        elements: []
+  template:
+    metadata:
+      name: 'as-empty-list-{{.name}}'
+    spec:
+      project: team-appset
+      source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+      destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-cluster-none
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - clusters:
+        selector:
+          matchLabels: {env: does-not-exist}
+  template:
+    metadata:
+      name: 'as-cluster-none-{{.name}}'
+    spec:
+      project: team-appset
+      source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+      destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-git-badpath
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: "https://github.com/argoproj/argocd-example-apps.git"
+        revision: HEAD
+        directories:
+          - path: does-not-exist/*
+  template:
+    metadata:
+      name: 'as-git-badpath-{{.name}}'
+    spec:
+      project: team-appset
+      source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+      destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
