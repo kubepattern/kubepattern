@@ -64,6 +64,8 @@ By default, the analysis runs every hour. You can easily override the schedule d
 | `resources.limits` | Maximum resource limits for the pod. | `cpu: 1000m, memory: 1Gi` |
 | `affinity` | Node scheduling affinity rules. | Preference for worker nodes (`weight: 1`) |
 | `tolerations` | Tolerations to allow scheduling on tainted nodes. | Toleration for `workload=critical` |
+| `analysis.client.qps` | Client-side QPS limit of the Kubernetes API client. | `50` |
+| `analysis.client.burst` | Client-side burst limit of the Kubernetes API client. | `100` |
 
 *(For advanced configurations, please refer to the `values.yaml` file included in the chart).*
 

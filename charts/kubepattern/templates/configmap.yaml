@@ -7,3 +7,6 @@ data:
   config.yaml: |
     saveInNamespace: {{ .Values.analysis.saveInNamespace }}
     targetNamespace: {{ default .Release.Namespace .Values.analysis.targetNamespace | quote }}
+    client:
+      qps: {{ .Values.analysis.client.qps }}
+      burst: {{ .Values.analysis.client.burst }}
