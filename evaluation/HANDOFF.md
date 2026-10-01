@@ -1,4 +1,4 @@
-# Handoff: KubePattern evaluation (RQ1–RQ6 done, Krateo case study done)
+# Handoff: KubePattern evaluation (RQ1–RQ6, Krateo case study, engine update and RQ8 done)
 
 Read this first when you continue the work in a new session. RQ1–RQ5, the fix validation and the Kyverno comparison (RQ6, [`COMPARISON-PLAN.md`](COMPARISON-PLAN.md)) are done; results are in [`README.md`](README.md).
 
@@ -22,11 +22,13 @@ The user is writing a paper on **KubePattern**, a Go engine that runs as a CronJ
 | RQ5 CronJob mode | 9/9 scheduled snapshots as predicted; found a fail-open GC |
 | Fix validation | Per-pattern prune on `fix/per-pattern-prune` @ `a814e4a`. Overlapping runs 12/46 → 46/46 Smells kept; the skipped pattern keeps its Smells; no flapping above the ceiling; no regression |
 | RQ6 Kyverno 1.19.1 | CEL `ValidatingPolicy` 1:1: 105/105 verdicts equal (P = R = 1.00, probes 10/10 as predicted), mutation 15/15; best-effort resolves 10/10 probes; cost at 5-min period: 477 MiB always-on, ~50× CPU, ~23× API requests; staleness bounded by the period for both; robustness R1/R2 recorded |
+| Engine update `54dc498` | QPS 50/100 + linter + `spec.for`: full regression unchanged (RQ2, mutation, D8, RQ5, Krateo); whole cluster 26.2 s → 0.85 s; 805 Smells in 30.5 s (ceiling gone) |
+| RQ8 `spec.for` | 0 transient findings with `for` (vs 2 on kp-eval, 3 on Krateo); every persistent smell reported 2 periods later; Kyverno reports the transients |
 
 All main results use the engine **as-is** (`dev` @ `69d4ffd`). The fix is reported as a separate before/after validation.
 
 ## 2. Repository state
-- **Branch layout since 2026-10-01** (local, not pushed yet):
+- **Branch layout since 2026-10-01** (pushed to origin on 2026-10-01):
   - `dev` = `b9f6494`, a `--no-ff` merge of the per-pattern prune (`a814e4a`) only;
   - **`paper/evaluation`**, from `dev`: the commits that add `evaluation/` and `docs/proposals/`. Same tree as `fix/per-pattern-prune`, which is kept unchanged locally and on origin;
   - engine work goes on feature branches from `dev` (`chore/engine-cleanup`, `feat/element-scope`, `feat/for`). `paper/evaluation` merges `dev` before each validation.

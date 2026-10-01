@@ -55,6 +55,8 @@ D8 and D9 are **fixed on branch `fix/per-pattern-prune` @ `a814e4a`**, a port of
 - RQ5: timeline with per-pattern expectations;
 - RQ4: S2 at S ∈ {400, 800}, cold, two warm runs and two stale runs.
 
+D3 and D4 are **fixed by the engine update** (`feat/for` @ `54dc498`): the Smell update keeps `suppress` (and the new `since`), and the linter fixtures declare `plural`. The same update makes the client rate limits configurable (default 50/100), so the 5 QPS throttling is gone, and makes the linter reject the unimplemented primitives (`selects`, `selectedBy`, `CONTAINS`, `LABEL_SELECTOR`). Its regression and RQ8 are in `README.md` (*Engine update*, *RQ8*). The transient half of **G8** is addressed by `spec.for` (RQ8). The history-object half (`ci-old-ca`) is unchanged: it is a filter choice on the dependency.
+
 Results are in `results/gcfix/` and `results/cronjob-fix/`.
 
 ## 3. Research questions and metrics
