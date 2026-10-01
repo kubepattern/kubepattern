@@ -62,6 +62,11 @@ kubectl get smells -A
 kubectl describe smell <smell-name> -n <namespace>
 ```
 
+A Pattern can set `spec.for` (for example `for: 1h`): a Smell then stays `Pending` until its condition has held that long, and becomes `Active` afterwards. This hides transient states, such as a resource that is unreferenced for a few minutes during a GitOps sync. `spec.since` records the first observation. Keep only confirmed findings with `kubectl get smells -A -l kubepattern.dev/phase=Active`.
+
+> [!NOTE]
+> Helm installs the CRDs in `crds/` but does not upgrade them. After upgrading the chart, apply them again: `kubectl apply -f charts/kubepattern/crds/`.
+
 ---
 
 ## About the Author

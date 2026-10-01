@@ -29,10 +29,12 @@ spec:
   message: "Page is orphaned."
   target:
     kind: Page
+    plural: pages
     apiVersion: krateo.io/v1
   dependencies:
     - id: navmenuitem
       kind: NavMenuItem
+      plural: navmenuitems
       apiVersion: krateo.io/v1
   relationships:
     matchNone:
@@ -59,13 +61,16 @@ spec:
   message: "Pod is a Naked Pod."
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - id: replicaset
       kind: ReplicaSet
+      plural: replicasets
       apiVersion: apps/v1
     - id: statefulset
       kind: StatefulSet
+      plural: statefulsets
       apiVersion: apps/v1
   relationships:
     matchNone:
@@ -77,7 +82,7 @@ spec:
 			expectError: false,
 		},
 		{
-			name: "Valid - Dangling Service (selects relation and target filters)",
+			name: "Error - selects relationship is not implemented",
 			yamlContent: `
 apiVersion: kubepattern.dev/v1
 kind: Pattern
@@ -90,6 +95,7 @@ spec:
   message: "Service does not route to any Pods."
   target:
     kind: Service
+    plural: services
     apiVersion: v1
     filters:
       matchNone:
@@ -100,13 +106,15 @@ spec:
   dependencies:
     - id: target-pods
       kind: Pod
+      plural: pods
       apiVersion: v1
   relationships:
     matchNone:
       - with: target-pods
         type: selects
 `,
-			expectError: false,
+			expectError:   true,
+			errorContains: "type 'selects' is not implemented yet",
 		},
 
 		// ---------------------------------------------------------
@@ -132,6 +140,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -151,13 +160,16 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - id: dep1
       kind: Deployment
+      plural: deployments
       apiVersion: apps/v1
     - id: dep1
       kind: Service
+      plural: services
       apiVersion: v1
 `,
 			expectError:   true,
@@ -177,6 +189,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   relationships:
     matchAll:
@@ -200,10 +213,12 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - id: dep1
       kind: ReplicaSet
+      plural: replicasets
       apiVersion: apps/v1
   relationships:
     matchAny:
@@ -227,10 +242,12 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - id: dep1
       kind: ReplicaSet
+      plural: replicasets
       apiVersion: apps/v1
   relationships:
     matchAny:
@@ -258,6 +275,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
     filters:
       matchAll:
@@ -288,6 +306,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -306,6 +325,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -325,6 +345,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -343,6 +364,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -362,6 +384,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -381,6 +404,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -399,6 +423,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -417,6 +442,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -436,6 +462,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -454,6 +481,7 @@ spec:
   severity: LOW
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
 `,
 			expectError:   true,
@@ -492,6 +520,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
 `,
 			expectError:   true,
 			errorContains: "spec.target.apiVersion is empty",
@@ -510,6 +539,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - kind: Pod # Missing ID
@@ -533,6 +563,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
     filters:
       matchAll:
@@ -555,6 +586,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
     filters:
       matchAll:
@@ -578,6 +610,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
     filters:
       matchAll:
@@ -604,10 +637,12 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - id: dep1
       kind: ReplicaSet
+      plural: replicasets
       apiVersion: apps/v1
   relationships:
     matchAll:
@@ -630,10 +665,12 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - id: dep1
       kind: ReplicaSet
+      plural: replicasets
       apiVersion: apps/v1
   relationships:
     matchAll:
@@ -660,10 +697,12 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
   dependencies:
     - id: dep1
       kind: ReplicaSet
+      plural: replicasets
       apiVersion: apps/v1
   relationships:
     matchAll:
@@ -692,6 +731,7 @@ spec:
   message: "Test"
   target:
     kind: Pod
+    plural: pods
     apiVersion: v1
     filters:
       matchAll:
@@ -699,6 +739,206 @@ spec:
           operator: EXISTS
 `,
 			expectError: false,
+		},
+		{
+			name: "Error - selectedBy relationship is not implemented",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+  dependencies:
+    - id: rs
+      kind: ReplicaSet
+      apiVersion: apps/v1
+      plural: replicasets
+  relationships:
+    matchAll:
+      - with: rs
+        type: selectedBy
+`,
+			expectError:   true,
+			errorContains: "type 'selectedBy' is not implemented yet",
+		},
+		{
+			name: "Error - Criteria CONTAINS is not implemented",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+  dependencies:
+    - id: rs
+      kind: ReplicaSet
+      apiVersion: apps/v1
+      plural: replicasets
+  relationships:
+    matchAll:
+      - with: rs
+        type: custom
+        criteria:
+          - targetPath: metadata.name
+            dependencyPath: metadata.name
+            operator: CONTAINS
+`,
+			expectError:   true,
+			errorContains: "operator 'CONTAINS' is not implemented yet",
+		},
+		{
+			name: "Error - Criteria LABEL_SELECTOR is not implemented",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+  dependencies:
+    - id: rs
+      kind: ReplicaSet
+      apiVersion: apps/v1
+      plural: replicasets
+  relationships:
+    matchAll:
+      - with: rs
+        type: custom
+        criteria:
+          - targetPath: metadata.name
+            dependencyPath: metadata.name
+            operator: LABEL_SELECTOR
+`,
+			expectError:   true,
+			errorContains: "operator 'LABEL_SELECTOR' is not implemented yet",
+		},
+		{
+			name: "Error - Target without plural",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  target:
+    kind: Pod
+    apiVersion: v1
+`,
+			expectError:   true,
+			errorContains: "spec.target.pluralName is empty",
+		},
+		{
+			name: "Error - Dependency without plural",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+  dependencies:
+    - id: rs
+      kind: ReplicaSet
+      apiVersion: apps/v1
+`,
+			expectError:   true,
+			errorContains: "spec.dependencies[0].pluralName is empty",
+		},
+		{
+			name: "Valid - for duration",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  for: 1h30m
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+`,
+			expectError: false,
+		},
+		{
+			name: "Error - for in days is not a Go duration",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  for: 1d
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+`,
+			expectError:   true,
+			errorContains: "spec.for '1d' is not a valid duration",
+		},
+		{
+			name: "Error - negative for",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  for: -5m
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+`,
+			expectError:   true,
+			errorContains: "spec.for '-5m' must not be negative",
 		},
 	}
 
