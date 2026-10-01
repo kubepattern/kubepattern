@@ -179,3 +179,25 @@ same detection as a scheduled job with no idle footprint, about
 reports controller at the same period, and with one finding per smell
 instead of one report per evaluated resource.
 ```
+
+## 6. External references (checked on 2026-10-01)
+These are the related-work and context claims that come from outside the evaluation. Each was checked against its primary source, and the table gives the wording to use.
+
+| Claim | Source | Verdict | Wording to use |
+|---|---|---|---|
+| Upstream ValidatingAdmissionPolicy cannot look up other resources | [kubernetes#133631](https://github.com/kubernetes/kubernetes/issues/133631), open since 2025-08-20 | **confirmed**: VAP sees only the object, the old object and an optional param | "ValidatingAdmissionPolicy has no cross-resource lookup; an enhancement request is open (#133631)." |
+| Kyverno has an open request for time-based background re-evaluation | [kyverno#16214](https://github.com/kyverno/kyverno/issues/16214), open since 2026-06-02 | **partial**: it concerns `MutatingPolicy` `matchConditions`, with timestamps read from the object's status. It says nothing about `ValidatingPolicy` results or a "failing since" | Do not cite it as evidence for `for`. The evidence is RQ6d: reports are stateless and re-evaluated at every scan. At most: "background re-evaluation of time-based conditions is an open request even for mutation (#16214)." |
+| Kyverno 1.19 | GitHub releases | **confirmed**: v1.19.0 on 2026-08-20; the evaluated v1.19.1 on 2026-09-10 | cite v1.19.1 |
+| kor reports unused resources | [yonahd/kor](https://github.com/yonahd/kor) README and `pkg/kor/crds.go` | **confirmed**: 24 native kinds plus CRDs, where a CRD is unused when it has no instances ("CRD has no instances") | "kor reports unused native resources and CRDs without instances; it does not follow references between custom resources." |
+| Popeye reports unused resources | [derailed/popeye](https://github.com/derailed/popeye) README | **confirmed**: potentially unused ServiceAccounts, Secrets and ConfigMaps (and their keys), plus checks on native workloads and volumes | "Popeye flags potentially unused native resources." |
+| kube-score has hard-coded cross-resource checks | [zegl/kube-score](https://github.com/zegl/kube-score) `README_CHECKS.md` | **confirmed**: `service-targets-pod`, `ingress-targets-service`, `networkpolicy-targets-pod`, PDB and HPA checks, on manifests | §2 wording stands: "where they consider relations, these are hard-coded for native kinds." |
+| Argo CD orphaned resources | [Argo CD docs](https://argo-cd.readthedocs.io/en/stable/user-guide/orphaned-resources/) | **confirmed**: "a top-level namespaced resource that does not belong to any Argo CD Application", within the project's destination namespaces; no reference semantics | "Argo CD's orphan monitoring measures membership in an Application, not references between resources." |
+| Steampipe queries custom resources with SQL | [turbot/steampipe-plugin-kubernetes](https://github.com/turbot/steampipe-plugin-kubernetes) docs | **confirmed**: custom resources become dynamic tables (`custom_resource_tables`, all by default); it is a CLI that queries the API, and it writes no findings to the cluster | "Steampipe can join custom resources with ad-hoc SQL from outside the cluster; it keeps no findings in the cluster." |
+| The Krateo portal renders about 530 custom resources and 45 RESTActions | [krateo-platformops/portal](https://github.com/krateo-platformops/portal) README, `main` @ `a1b4c7b` (2026-10-01, chart 1.5.93) | **stale**: rendering `helm/portal` with default values gives **577 objects**, among them 482 widgets (`widgets.templates.krateo.io/v1beta1`, 32 kinds), 63 RESTActions and 21 RBAC objects | Cite the rendered count with the commit, not the README. |
+
+**Note for the Krateo case study.** The current portal (`main`, chart 1.5.93) uses a new widget set:
+- it includes `Card`, `Flex`, `Listy`, `PageHeader`, `Statistic`, `Descriptions`, `Layout` and `Menu`;
+- it has **no** `Page`, `Panel`, `Column` or `NavMenuItem`, which are the target kinds of the three given Patterns and of `krateo-navmenuitem-page-missing`;
+- only `YamlViewer`, `Paragraph`, `Row`, `Markdown` and `RESTAction` remain.
+
+The case study (Krateo 3.0.2, portal 1.3.4) is still valid for that release, but its widget Patterns do not carry over to the next portal. This supports the G6 argument: the kind set changes between portal versions, so an enumerated kind list goes stale. State it as a threat to the case study's external validity.
