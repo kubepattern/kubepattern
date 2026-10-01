@@ -26,7 +26,10 @@ The user is writing a paper on **KubePattern**, a Go engine that runs as a CronJ
 All main results use the engine **as-is** (`dev` @ `69d4ffd`). The fix is reported as a separate before/after validation.
 
 ## 2. Repository state
-- Current branch: **`fix/per-pattern-prune`**, on top of `dev` (`69d4ffd`): the fix (`a814e4a`), then the commits that add `evaluation/` and the documentation (2026-09-30). **Pushed** to `origin/fix/per-pattern-prune`.
+- **Branch layout since 2026-10-01** (local, not pushed yet):
+  - `dev` = `b9f6494`, a `--no-ff` merge of the per-pattern prune (`a814e4a`) only;
+  - **`paper/evaluation`**, from `dev`: the commits that add `evaluation/` and `docs/proposals/`. Same tree as `fix/per-pattern-prune`, which is kept unchanged locally and on origin;
+  - engine work goes on feature branches from `dev` (`chore/engine-cleanup`, `feat/element-scope`, `feat/for`). `paper/evaluation` merges `dev` before each validation.
 - `evaluation/` is committed (git-ignored runtime artefacts excluded). Commit further changes only when the user asks.
 - Git-ignored: `evaluation/bin/` (binaries `kubepattern-69d4ffd`, `kubepattern-a814e4a`), `results/raw/`, `env/.kargo-admin`, `env/sa.kubeconfig`, `__pycache__/`.
 - Engine tests: `internal/analysis` and `internal/kube` pass. `internal/linter` tests were already broken on `dev` (D4: fixtures lack `plural`); leave them alone unless asked.
@@ -103,7 +106,25 @@ Ground truth: `scenarios/*/ground-truth.csv`, with columns `pattern,kind,namespa
 - The main results stay on the as-is engine; improvements are reported as separate validations.
 
 ## 7. Next steps
-The assessment (strengths, weaknesses, positioning) and the roadmap are in `README.md` → *Discussion and next steps*. Nothing is running. Candidates, in the recommended order:
+**Plan before submission (about one month, agreed on 2026-10-01):**
+- **WP0:** cleanup and client QPS;
+- **WP1:** element-scoped criteria (G1, `[@]`), validated with v2 Patterns on `kp-eval` and `kp-krateo`;
+- **WP2:** `for` (P1 of `docs/proposals/for.md`) and RQ8;
+- **paper track:** POSITIONING §5 and §6, Krateo section, threats.
+
+Index, G2, discovery, readability study and the operator port come after the paper.
+
+**WP0 status (2026-10-01):**
+- Uncommitted on `chore/engine-cleanup`:
+  - client QPS/Burst configurable (`analysis.client.{qps,burst}`, default 50/100, `internal/config`);
+  - the linter rejects `selects`, `selectedBy`, `CONTAINS` and `LABEL_SELECTOR`;
+  - D4 fixed: `go test ./internal/...` is green.
+- Done on `paper/evaluation`: the `for.md` naming fix and POSITIONING §6 (external references verified).
+- Registry patch for the `v1-0-10` pin prepared, not applied.
+- QPS validated on `kp-krateo` (`results/qps/README.md`): 31.85 s → 1.42 s, same 171 requests, same 61 Smells and verdicts.
+- **Pending:** the ceiling test on `kp-eval` (`scripts/qps-eval.sh`; the Krateo runs: `krateo/scripts/qps-krateo.sh`). Binary `bin/kubepattern-wp0`; compare with `results/gcfix/scale-after` via `SCALE_OUT=results/qps/scale RUN_PREFIX=qps- KP_BIN=$PWD/bin/kubepattern-wp0 ./scripts/scale.py s2-subset`, then `scale.py cleanup`, plus `perf-local.sh` before and after on the whole cluster.
+
+The earlier assessment (strengths, weaknesses, positioning) and the roadmap are in `README.md` → *Discussion and next steps*. Candidates, in the order recommended before the plan:
 1. Element-scoped criteria (G1): removes silent false negatives.
 2. Raise client QPS/Burst and index dependencies: removes the ~750-Smell ceiling and the quadratic matching.
 3. Merge the per-pattern prune fix.
