@@ -19,6 +19,8 @@ import (
 )
 
 func main() {
+	// runStart is the instant of this run's observations (a Pattern's spec.for is measured against it).
+	runStart := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -83,6 +85,7 @@ func main() {
 		appCfg.SaveInNamespace,
 		appCfg.TargetNamespace,
 		string(uuid.NewUUID()),
+		runStart,
 	)
 
 	// Smells of Patterns that are no longer installed are removed at the end of every run,
