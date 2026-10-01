@@ -28,10 +28,8 @@ The user is writing a paper on **KubePattern**, a Go engine that runs as a CronJ
 All main results use the engine **as-is** (`dev` @ `69d4ffd`). The fix is reported as a separate before/after validation.
 
 ## 2. Repository state
-- **Branch layout since 2026-10-01** (pushed to origin on 2026-10-01):
-  - `dev` = `b9f6494`, a `--no-ff` merge of the per-pattern prune (`a814e4a`) only;
-  - **`paper/evaluation`**, from `dev`: the commits that add `evaluation/` and `docs/proposals/`. Same tree as `fix/per-pattern-prune`, which is kept unchanged locally and on origin;
-  - engine work goes on feature branches from `dev` (`chore/engine-cleanup`, `feat/element-scope`, `feat/for`). `paper/evaluation` merges `dev` before each validation.
+- **Branch layout since 2026-10-01: everything is on `dev`** (pushed). The per-pattern prune, the engine update (`chore/engine-cleanup`, `feat/for`) and the evaluation material (`paper/evaluation`) were merged into `dev`, which now holds the engine, `evaluation/` and `docs/proposals/`. New work goes on feature branches from `dev`; merge them back into `dev`. The merged branches and `fix/per-pattern-prune` are kept on origin for history.
+- **`operator` is set aside** (user decision, 2026-10-01): do not port or develop on it for now.
 - `evaluation/` is committed (git-ignored runtime artefacts excluded). Commit further changes only when the user asks.
 - Git-ignored: `evaluation/bin/` (binaries `kubepattern-69d4ffd`, `kubepattern-a814e4a`), `results/raw/`, `env/.kargo-admin`, `env/sa.kubeconfig`, `__pycache__/`.
 - Engine tests: `internal/analysis` and `internal/kube` pass. `internal/linter` tests were already broken on `dev` (D4: fixtures lack `plural`); leave them alone unless asked.
@@ -124,7 +122,7 @@ Index, G2, discovery, readability study and the operator port come after the pap
 - **`spec.for` done** (WP2 brought forward). On `feat/for`:
   - `54dc498`: Smell `phase`/`since`, D3 fixed;
   - `2981a4a`: chart default for missing `analysis.client`.
-- **Branch state:** `feat/for` contains `chore/engine-cleanup`. Neither is merged into `dev` yet (the user decides); `paper/evaluation` has merged `feat/for`.
+- **Branch state:** all merged into `dev` (`c423610`).
 - **Regression of `54dc498`:** `results/regression/54dc498/README.md`. Every correctness result is unchanged (RQ2, mutation, D8, RQ5, Krateo scored and lifecycle). Whole cluster 26.2 s → 0.85 s; the 805-Smell case goes from deadline hit to 30.5 s; the next limit is CPU (quadratic matching) at about 20k objects.
 - **RQ8:** `results/rq8/README.md`, with hypotheses (a), (b) and (c) holding on Krateo and kp-eval. Tooling: `for/durations.csv` + `scripts/set-for.sh`; `score.py --active-only`.
 - **Pitfalls found:**
