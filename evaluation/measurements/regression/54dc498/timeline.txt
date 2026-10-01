@@ -1,0 +1,9 @@
+run 1:  46 smells (expected  46) OK  +46 =0 ~0 -0 4s skipped=[]  <- baseline
+run 2:  42 smells (expected  42) OK  +0 =42 ~0 -4 3s skipped=[]  <- after E1 fix (4 smells resolved)
+run 3:  45 smells (expected  45) OK  +3 =42 ~0 -0 3s skipped=[]  <- after E2 inject (3 new smells)
+run 4:  45 smells (expected  45) OK  +0 =45 ~0 -0 4s skipped=[kratix-promise-without-requests]  <- after E3 add pattern with missing CRD
+run 5:  45 smells (expected  45) OK  +0 =45 ~0 -0 4s skipped=[kargo-warehouse-not-requested;kratix-promise-without-requests]  <- after E4 RBAC without kargo.akuity.io
+run 6:  45 smells (expected  45) OK  +0 =45 ~0 -0 4s skipped=[kratix-promise-without-requests]  <- after E5 RBAC restored
+run 7:  46 smells (expected  46) OK  +1 =45 ~0 -0 4s skipped=[kratix-promise-without-requests]  <- after E6 rotation step 1 (new template not yet used)
+run 8:  46 smells (expected  46) OK  +1 =45 ~0 -1 3s skipped=[kratix-promise-without-requests]  <- after E6 rotation step 2 (switch)
+run 9:  46 smells (expected  46) OK  +4 =42 ~0 -4 4s skipped=[]  <- after E7 revert

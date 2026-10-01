@@ -39,6 +39,7 @@ All main results use the engine **as-is** (`dev` @ `69d4ffd`). The fix is report
   ```
 
 ## 3. Cluster
+- **2026-10-01: `kp-eval` was re-created empty** by `minikube start` (profile config and audit policy kept, new IP). It was rebuilt with `scripts/rebuild-eval.sh` (about 13 min), and the as-is baseline reproduced exactly. The installed KubePattern is now **`eval-54dc498`** (QPS + linter + `spec.for`), CronJob suspended. Claude cannot run `minikube` (see the memory note): the user starts profiles and loads images (`minikube -p <profile> image load evaluation/bin/kubepattern-eval-<commit>.tar`); check with `kubectl get nodes -o json | jq '.items[].status.images[].names[]'`.
 - **minikube profile `kp-eval`**:
   - kvm2 driver, docker runtime, 8 vCPU / 16 GiB, Kubernetes v1.34.4;
   - about 4 GiB used;
@@ -114,15 +115,20 @@ Ground truth: `scenarios/*/ground-truth.csv`, with columns `pattern,kind,namespa
 
 Index, G2, discovery, readability study and the operator port come after the paper.
 
-**WP0 status (2026-10-01):**
-- Uncommitted on `chore/engine-cleanup`:
-  - client QPS/Burst configurable (`analysis.client.{qps,burst}`, default 50/100, `internal/config`);
-  - the linter rejects `selects`, `selectedBy`, `CONTAINS` and `LABEL_SELECTOR`;
-  - D4 fixed: `go test ./internal/...` is green.
-- Done on `paper/evaluation`: the `for.md` naming fix and POSITIONING §6 (external references verified).
-- Registry patch for the `v1-0-10` pin prepared, not applied.
-- QPS validated on `kp-krateo` (`results/qps/README.md`): 31.85 s → 1.42 s, same 171 requests, same 61 Smells and verdicts.
-- **Pending:** the ceiling test on `kp-eval` (`scripts/qps-eval.sh`; the Krateo runs: `krateo/scripts/qps-krateo.sh`). Binary `bin/kubepattern-wp0`; compare with `results/gcfix/scale-after` via `SCALE_OUT=results/qps/scale RUN_PREFIX=qps- KP_BIN=$PWD/bin/kubepattern-wp0 ./scripts/scale.py s2-subset`, then `scale.py cleanup`, plus `perf-local.sh` before and after on the whole cluster.
+**Status (2026-10-01, end of day):**
+- **WP0 done.** On `chore/engine-cleanup`:
+  - `d4274e8`: client QPS/Burst, default 50/100;
+  - `f5ab2be`: the linter rejects the unimplemented primitives; D4 fixed.
+- **`spec.for` done** (WP2 brought forward). On `feat/for`:
+  - `54dc498`: Smell `phase`/`since`, D3 fixed;
+  - `2981a4a`: chart default for missing `analysis.client`.
+- **Branch state:** `feat/for` contains `chore/engine-cleanup`. Neither is merged into `dev` yet (the user decides); `paper/evaluation` has merged `feat/for`.
+- **Regression of `54dc498`:** `results/regression/54dc498/README.md`. Every correctness result is unchanged (RQ2, mutation, D8, RQ5, Krateo scored and lifecycle). Whole cluster 26.2 s → 0.85 s; the 805-Smell case goes from deadline hit to 30.5 s; the next limit is CPU (quadratic matching) at about 20k objects.
+- **RQ8:** `results/rq8/README.md`, with hypotheses (a), (b) and (c) holding on Krateo and kp-eval. Tooling: `for/durations.csv` + `scripts/set-for.sh`; `score.py --active-only`.
+- **Pitfalls found:**
+  - `perf-local.sh` reused the SA kubeconfig of another profile (fixed: it now regenerates when the server changes);
+  - waiting with `pgrep -f <script>` matches the waiting shell itself.
+- **Next:** WP1 (G1, element-scoped criteria `[@]`), then the paper track. The registry patch for the `v1-0-10` pin is ready but not applied.
 
 The earlier assessment (strengths, weaknesses, positioning) and the roadmap are in `README.md` → *Discussion and next steps*. Candidates, in the order recommended before the plan:
 1. Element-scoped criteria (G1): removes silent false negatives.

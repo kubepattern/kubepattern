@@ -1,0 +1,10 @@
+run,event_before_run,smells,expected,matches_expected,created,kept_updated_in_place,recreated,garbage_collected,skipped_patterns,job_duration_s,diff_missing,diff_extra
+1,baseline,46,46,True,46,0,0,0,,4.0,,
+2,after E1 fix (4 smells resolved),42,42,True,0,42,0,4,,3.0,,
+3,after E2 inject (3 new smells),45,45,True,3,42,0,0,,3.0,,
+4,after E3 add pattern with missing CRD,45,45,True,0,45,0,0,kratix-promise-without-requests,4.0,,
+5,after E4 RBAC without kargo.akuity.io,45,45,True,0,45,0,0,kargo-warehouse-not-requested;kratix-promise-without-requests,4.0,,
+6,after E5 RBAC restored,45,45,True,0,45,0,0,kratix-promise-without-requests,4.0,,
+7,after E6 rotation step 1 (new template not yet used),46,46,True,1,45,0,0,kratix-promise-without-requests,4.0,,
+8,after E6 rotation step 2 (switch),46,46,True,1,45,0,1,kratix-promise-without-requests,3.0,,
+9,after E7 revert,46,46,True,4,42,0,4,,4.0,,
