@@ -1,6 +1,10 @@
 # Proposal: `for`, a stateful duration for Patterns
 
-Status: **proposal** (2026-10-01). No code yet.
+Status: **implemented and evaluated** (2026-10-01).
+- **Engine:** branch `feat/for` @ `54dc498`, P1. One deviation: `T` is the process start time, captured in `main.go` and passed to the writer.
+- **Evaluation:** RQ8 (P2) in `evaluation/results/rq8/README.md`; regression with `for` unset in `evaluation/results/regression/54dc498/README.md`.
+- **Durations** for the evaluated Patterns: `evaluation/for/durations.csv` (P4 for the evaluation; the registry is still to do).
+- **Still open:** P3 (operator mode, webhook warning).
 Related: `evaluation/README.md` → *Discussion and next steps*, extension (a); RQ5 (transient finding during the template rotation); RQ6d (staleness); [`intent.md`](intent.md).
 
 ## 1. Motivation

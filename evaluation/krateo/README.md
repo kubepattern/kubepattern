@@ -240,6 +240,22 @@ Both tools converge after Krateo re-renders a composition, deletes it or recreat
 | KubePattern | the whole Pattern is skipped (one `WARN ... the server could not find the requested resource`), and the other 10 are unaffected: its 2 true positives are lost silently, except for the log line |
 | Kyverno | per object: 19 `pass` (Panels already referenced by a layout short-circuit the `||`) and 6 `error` ("got 'types.Null', expected iterable type"), including the 2 true positives. The policy status stays `ready` |
 
+## Engine update and RQ8 (2026-10-01)
+These are separate validations; the results above stay on `69d4ffd`.
+- **Regression of `54dc498`** (client QPS, linter, `spec.for` unset), with `krateo/scripts/regression.sh`:
+  - 3 in-cluster runs: 55/0/0/121, 25/25 probes;
+  - lifecycle 61/51/61, 26/26, reverted == baseline, for both tools;
+  - a whole-cluster run takes 1.42 s instead of 31.85 s, with the same 171 requests (`krateo/scripts/qps-krateo.sh`, `../results/qps/README.md`).
+
+  The lifecycle re-created `demo-app-2`, which renamed two RoleBindings in `scenario/ground-truth.csv`.
+- **RQ8** (`krateo/scripts/rq8-dev-wiring.sh`, `scenario/rq8/`, `../results/rq8/README.md`). `paragraph-not-referenced` was evaluated next to a `for: 5m` copy in the same runs:
+  - widgets wired during development, or briefly unreferenced during a re-sync, give 3 transient findings without `for` and none with it;
+  - Kyverno reports them as `fail`;
+  - the never-wired widget is reported 2 periods later.
+
+  This is the trade-off that the registry documentation of the widget Patterns describes.
+- **The current portal has moved on.** `krateo-platformops/portal` `main` (chart 1.5.93, 2026-10-01) renders 577 objects with a new widget set: there is no `Page`, `Panel`, `Column` or `NavMenuItem`. The widget Patterns of this case study therefore apply to Krateo 3.0.x only (`../POSITIONING.md` §6). This is a threat to external validity, and evidence for G6: enumerated kind lists go stale.
+
 ## Findings about Krateo (observed while building the case study)
 These are what a platform team hits while doing what this case study did. None of them is reported by the platform as a failure of the affected object.
 

@@ -2,7 +2,7 @@
 
 This folder is a reproducible evaluation of KubePattern (Go engine, `dev` @ `69d4ffd`, **unmodified**). It runs on 9 CRD ecosystems installed side by side in one minikube cluster and is meant as material for Section 4 (CronJob mode) of the paper.
 
-A fix for the Smell GC defect it uncovered (`fix/per-pattern-prune` @ `a814e4a`) is validated in a separate before/after section.
+A fix for the Smell GC defect it uncovered (`fix/per-pattern-prune` @ `a814e4a`) is validated in a separate before/after section. So is the later engine update (`feat/for` @ `54dc498`: configurable client QPS, a stricter linter and the stateful `spec.for` duration). Its RQ8 measures what `spec.for` adds.
 
 - [`SOURCE-PLAN.md`](SOURCE-PLAN.md): the testing plan extracted from the research note.
 - [`TEST-PLAN.md`](TEST-PLAN.md): the rewritten plan, grounded in the verified engine semantics. It covers the research questions, subjects, seeding, oracles, protocols, the limitation catalogue and threats to validity.
@@ -18,6 +18,8 @@ A fix for the Smell GC defect it uncovered (`fix/per-pattern-prune` @ `a814e4a`)
 | RQ5 CronJob mode | 9 scheduled runs with scripted fixes, injections, a missing CRD, narrowed RBAC and a template rotation: **9/9 snapshots match the prediction**. Smell identity is stable (40 Smells updated in place across all runs), fixes self-heal in the next run, and failures are isolated per pattern. Weak spot found: the GC is fail-open (skipped patterns, deadline overruns and overlapping runs delete valid Smells). |
 | RQ6 Comparison with Kyverno | Kyverno 1.19 (CEL `ValidatingPolicy`) translated 1:1 reproduces all **105/105** verdicts: P = R = 1.00, 10/10 probes as KubePattern predicts, mutation 15/15. This cross-validates the semantics. CEL is **more expressive**: best-effort variants resolve **10/10** probes, and the policies are shorter (417 vs 657 lines). At the same 5-minute period Kyverno costs **477 MiB always-on, about 50× the CPU and about 23× the API requests** (39,155/h vs 1,716/h); KubePattern has zero idle footprint. Detection latency after a dependency change is bounded by the period for both. |
 | Fix validation | Porting the per-pattern prune from the `operator` branch (`fix/per-pattern-prune` @ `a814e4a`) removes all three failure modes, with no regression (RQ2 43/52/10, mutation 15/15). Overlapping runs keep **46/46** Smells instead of 12/46; a skipped pattern keeps its Smells (**0** instead of 3 GC'd); above the ceiling **0** valid Smells are deleted (instead of 47–51 per run) and coverage converges (752 → 797 → 804 of 805). Cost: 14 extra LISTs per run (+2.8 s). |
+| Engine update (`54dc498`) | Client QPS 50/100, a linter that rejects unimplemented primitives, and `spec.for`. The whole evaluation re-run with `spec.for` unset gives **identical correctness** on both clusters: RQ2 43/52/10, mutation 15/15, D8 46/46, RQ5 9/9, Krateo 55/0/0/121 with 25/25 probes and lifecycle 26/26. Runs are **about 30× faster** with the same requests: whole cluster 26.2 s → 0.85 s. **The 750-Smell ceiling is gone**: 805 Smells in 30.5 s at the first run, instead of a deadline hit. The next limit is CPU (quadratic matching) at about 20k objects. |
+| RQ8 `spec.for` | Each Pattern is compared with a `spec.for` copy in the same runs. **No transient becomes Active with `for`**: 2 transient findings without it on kp-eval (CAPI rotation, GitOps delete-and-recreate) and 3 on Krateo (widgets wired during development). Every persistent smell is still reported (43/43 seeded, plus the new orphans), exactly 2 periods later (`for` rounded up to the next run). Kyverno reports every transient as `fail`. |
 
 
 ## Layout
@@ -31,7 +33,9 @@ scripts/        build-image.sh, apply-scenario.sh, apply-patterns.sh, run-once.s
                 concurrency_check.sh, gcfix-remeasure.sh, gcfix_compare.py (GC fix validation),
                 kyverno-*.sh, kyverno_reports_to_smells.py, policy_metrics.py, comparison_*.py, audit-harvest.sh,
                 footprint-sample.sh, audit_by_user.py, cost_report.py, staleness.sh, staleness_report.py (RQ6)
+                regression.sh, rebuild-eval.sh, qps-eval.sh, rq8.sh, set-for.sh, engine_update_tables.py (engine update, RQ8)
 comparison/     kyverno/: RBAC, GlobalContextEntries and ValidatingPolicies of the RQ6 comparison
+for/            durations.csv: the spec.for of every evaluated Pattern, with its rationale
 results/        CSV used in the paper, tables/*.tex (booktabs); results/raw/ holds the per-run archives (git-ignored)
 ```
 
@@ -77,6 +81,15 @@ MUTATION_RUNNER=./scripts/kyverno-run.sh MUTATION_LABEL=kyverno-mutation MUTATIO
 # staleness: CronJob */5 unsuspended, then REPS=5 PERIOD=300 ./scripts/staleness.sh && ./scripts/staleness_report.py <run>
 ./scripts/kyverno-robustness.sh
 ./scripts/comparison_tables.py                          # results/tables/comparison.tex
+
+# Engine update (QPS, linter, spec.for) and RQ8. Load the image by hand if `minikube image load` is not usable here.
+KP_COMMIT=54dc498 ./scripts/build-image.sh build && KP_COMMIT=54dc498 ./scripts/build-image.sh extract
+podman save -o bin/kubepattern-eval-54dc498.tar localhost/kubepattern:eval-54dc498   # minikube -p kp-eval image load <tar>
+./scripts/regression.sh 54dc498                         # RQ2, mutation, D8, RQ5, whole cluster, RQ4 (~1.5 h)
+KP_BIN=$PWD/bin/kubepattern-54dc498 ./scripts/rq8.sh    # RQ8 on kp-eval (~13 min)
+./scripts/engine_update_tables.py                       # results/tables/{engine-update,rq8}.tex
+# Krateo: krateo/scripts/qps-krateo.sh, krateo/scripts/regression.sh 54dc498, KP_BIN=... krateo/scripts/rq8-dev-wiring.sh
+# A re-created (empty) profile: ./scripts/rebuild-eval.sh rebuilds the state and checks the as-is baseline
 ```
 
 ## Results
@@ -409,11 +422,62 @@ Detection latency is bounded by the period in both. The KubePattern limitations 
 - *Scan scheduling.* The latencies depend on the phase of the change relative to each tool's tick. They are reported as distributions with their bound (about one period), not as a winner.
 - *Scale.* Everything was measured on the evaluation scenario (215 analysed objects). The optional S1 sweep was not run, so the relative cost at 10k+ objects (informer memory vs unpaginated LISTs) is open.
 
+### Engine update: client QPS, linter, `spec.for`
+The engine of branch `feat/for` (`54dc498`, on top of `dev` with the per-pattern prune) changes three things:
+- **Client QPS/Burst** are configurable (`analysis.client.{qps,burst}`), with defaults 50/100 instead of client-go's 5/10.
+- **The linter rejects** `selects`, `selectedBy`, `CONTAINS` and `LABEL_SELECTOR`. They passed the linter before, but always evaluated to false. The linter tests pass again (D4).
+- **`spec.for`** is a minimum duration before a Smell becomes `Active`; until then it is `Pending`. The Smell records `spec.since` (first observation) and `spec.phase`, with a label and printer columns. Both ride the existing writes. The update path now keeps `since` and `suppress` (D3 fixed). Proposal: [`../docs/proposals/for.md`](../docs/proposals/for.md).
+
+**Regression** (`results/regression/54dc498/README.md`, table `results/tables/engine-update.tex`). The whole evaluation was re-run with `spec.for` unset, against the per-pattern prune engine:
+- `scripts/regression.sh` on kp-eval;
+- `krateo/scripts/regression.sh` on kp-krateo.
+
+| Check | Prune engine `a814e4a` | `54dc498` |
+|---|---|---|
+| RQ2 in-cluster (first run + 3) | 43/52, 10/10 probes, 0 unlisted | identical; all 46 Smells `Active` |
+| RQ2b mutation testing | 15/15, reverted == baseline | identical |
+| D8 overlapping runs | 46/46 | 46/46, also with two runs started together (3 repetitions) |
+| RQ5 CronJob timeline | 9/9 | 9/9 (runs of 3–4 s) |
+| Krateo: 3 in-cluster runs / lifecycle | 55/0/0/121, 25/25 / 26/26 | identical, for KubePattern and Kyverno |
+| Whole cluster, 46 Smells (median of 3) | 26.2 s, 143 requests | **0.85 s**, 143 requests |
+| Krateo whole cluster, 61 Smells | 31.9 s, 171 requests | **1.42 s**, 171 requests |
+| RQ4 S=800 (805 Smells), cold run | 752 written, deadline hit | **805 in 30.5 s** |
+| RQ4 S=800, all orphans fixed (800 DELETEs) | 161 s | 14.5 s |
+| RQ4 S1, about 20k objects | 41.6 s (38.5 s CPU) | 33.0 s (39.3 s CPU) |
+
+- **The throttling ceiling of RQ4 is gone.** A Smell costs about 0.04 s instead of 0.4 s, and the Smell set converges at the first run.
+- **Run time is now bounded by CPU:** the quadratic matching takes the whole run at about 20k objects. Indexing the dependencies is the next scalability step.
+- **Cluster note.** On 2026-10-01, `minikube start` re-created kp-eval empty. It was rebuilt with `scripts/rebuild-eval.sh` from the pinned install scripts. The as-is engine then reproduced the original baseline exactly (46 Smells, 43/52/10, 23.4 s, 129 requests), so every number above is comparable with the original results.
+
+### RQ8: minimum duration (`spec.for`)
+> **RQ8.** Does a minimum duration remove snapshot false positives without hiding persistent smells, and at what cost in detection latency?
+
+**Method** (`results/rq8/README.md`, table `results/tables/rq8.tex`). Each Pattern is evaluated in the same out-of-cluster runs as a copy with `spec.for`, so both see identical cluster states. Transients are scripted, and a forced Kyverno scan is taken while they are present.
+
+| Setting | Without `for` | With `for` | Kyverno 1:1 |
+|---|---|---|---|
+| kp-eval: 14 Patterns, `for: 4m`, period 150 s; CAPI rotation, GitOps delete-and-recreate of a Certificate, a new orphan ClusterIssuer | 2 transient findings (`dmt-rotated-v3`, `ci-web`) | **0** transient findings; the 43 seeded smells become Active at run 3; the new orphans 2 runs after the no-`for` set | `fail` on both transients |
+| Krateo: `paragraph-not-referenced`, `for: 5m`, period 180 s; a widget wired during development, a Column re-synced | 3 transient findings (`rq8-wip` ×2, `rq8-moved`) | **0**; the never-wired widget is Active at run 3 | `fail` on both transients |
+
+All three hypotheses of the proposal hold:
+- **(a)** With `for` at 1.6–1.7 periods and transients lasting one period, no transient becomes Active and every persistent smell does.
+- **(b)** Appear latency grows by exactly `for` rounded up to the next run (2 periods here). Disappear latency is unchanged.
+- **(c)** The stateless background scan of Kyverno reports every transient.
+
+**Cost.** A Pending Smell costs the same writes as an Active one, so `spec.for` adds no request.
+
+**Durations for the evaluated Patterns.** `for/durations.csv` gives each Pattern a duration with its rationale, and `scripts/set-for.sh` applies them:
+- 24h for catalogue entries and template rotations;
+- 1h for GitOps-managed referrers and Krateo widgets;
+- 10m for dangling references, which are transient while the apply order settles;
+- 0s for misconfigurations.
+
 ## Findings to report in the paper
 1. **Unused definitions are invisible to the platforms.** Controllers expose dangling references, while orphan and unused definitions go unreported (RQ3). KubePattern covers this niche on 9 ecosystems with 14 declarative Patterns and no engine changes (RQ1, RQ2).
 2. **The limitations are principled.** Every seeded case that the DSL cannot handle fails exactly as its semantics predict (10/10 probes). They map to a small catalogue (G1–G10) that gives concrete future work: element-scoped criteria, defaulted paths, string operators, selectors, kind wildcards, typed comparisons and a minimum-age filter.
 3. **Run time is dominated by client-side throttling.** client-go's default 5 QPS spaces requests 200 ms apart, against 2–4 ms of server latency. That is about 97% of a run, and it caps one run at about 750 Smells before the 5-minute deadline (RQ4).
-   Memory is linear (about 9 KB/object) and matching is quadratic, O(targets × dependencies). CPU reaches wall-clock time at about 20k objects, which motivates indexing the dependencies. Still open: raising QPS/Burst, indexing and paginating LISTs.
+   Memory is linear (about 9 KB/object) and matching is quadratic, O(targets × dependencies). CPU reaches wall-clock time at about 20k objects, which motivates indexing the dependencies.
+   **Fixed for the throttling** by the engine update (QPS 50/100): 0.85 s per run, 805 Smells in 30.5 s, identical results. Still open: indexing and paginating LISTs.
 4. **The GC is fail-open (fixed).** In the as-is engine, a skipped pattern (RBAC), a run that hits the deadline, or two overlapping runs delete Smells that are still valid. Above the ceiling, Smells flap between runs on an unchanged cluster (47–51 deleted and re-created per run at 805 Smells), and overlapping runs keep only 12/46 Smells (RQ4, RQ5, D8).
    The per-pattern prune (`fix/per-pattern-prune` @ `a814e4a`) removes all three failure modes with no regression, at the cost of one extra LIST per pattern (see *Fix validation*).
 5. New limitation **G10**: filter `EQUALS` compares strings only, so boolean fields such as `spec.suspend` cannot be filtered.
@@ -423,6 +487,7 @@ Detection latency is bounded by the period in both. The KubePattern limitations 
    - At the same 5-minute period Kyverno keeps 477 MiB of controllers always on and uses about 50× the CPU and 23× the API requests. Its reporting pipeline alone (EphemeralReports, PolicyReports, Events) issues 8× the requests of a KubePattern run, even though it reads the analysed kinds from informers.
    - Neither tool reacts to dependency-side changes: detection latency is bounded by the period in both (H5).
    - The G8 probe (`ci-old-ca`) can also be fixed within the DSL, with `metadata.ownerReferences IS_EMPTY` on the CertificateRequest dependency. It is a pattern-authoring choice, not a hard limit.
+7. **A stateful duration removes snapshot false positives (RQ8).** With `spec.for`, no scripted transient becomes Active (0 vs 2 on kp-eval and 0 vs 3 on Krateo), every persistent smell is still reported, and the latency cost is `for` rounded up to the next run. Kyverno's stateless background scan reports every transient. It cannot keep a "failing since" without state, and an age filter on the object does not cover old objects whose references change.
 
 ## Discussion and next steps
 An overall assessment after RQ1–RQ6, to guide the paper's discussion and the engine's roadmap.
@@ -436,8 +501,8 @@ An overall assessment after RQ1–RQ6, to guide the paper's discussion and the e
 **Weaknesses.**
 - *Expressiveness.* CEL resolves all 10 probes with shorter policies (RQ6a). The question "why not a policy engine?" must be answered with cost, structure and the smell-oriented output model, not with power.
 - *G1 is a correctness risk.* Uncorrelated criteria give silent false negatives (CAPI `t1`, ESO `ss-g1`), not just a missing feature.
-- *Scalability limits of the implementation.* The 5 QPS client limit takes about 97% of a run and caps it at about 750 Smells; matching is quadratic (RQ4). Both are cheap to fix.
-- *Maturity.* The fail-open GC (fixed on this branch), the stale linter tests (D4) and the random pattern order (D6) show a prototype.
+- *Scalability limits of the implementation.* The 5 QPS client limit took about 97% of a run and capped it at about 750 Smells (RQ4). It is **fixed by the engine update** (0.85 s per run, 805 Smells in 30.5 s). Matching is still quadratic, which binds at about 20k objects.
+- *Maturity.* The fail-open GC, the stale linter tests (D4) and the suppression reset (D3) are fixed. The random pattern order (D6) and the missing Pattern status remain.
 - *External validity (main threat).*
   - Synthetic scenarios on a single-node minikube.
   - The same authors wrote the Patterns, the ground truth and the Kyverno policies.
@@ -458,11 +523,11 @@ An overall assessment after RQ1–RQ6, to guide the paper's discussion and the e
 
 A Crossplane ProviderConfig is **not** a good example for (c): Crossplane tracks its usage natively (`ProviderConfigUsage`, `status.users`). A dependency kind that can be *derived from the target* (e.g. a Gatekeeper ConstraintTemplate and its Constraint kind) is also within Kyverno's reach, through `resource.List` with computed strings.
 
-**Priorities.**
-1. Element-scoped criteria (G1): cheap, and it removes silent false negatives.
-2. Raise client QPS/Burst and index dependencies: removes the ~750-Smell ceiling and the quadratic matching.
-3. Merge the per-pattern prune (already validated).
-4. Prototype `for:` (extension (a)): the differentiator most aligned with the CronJob thesis.
+**Priorities** (status on 2026-10-01).
+1. Element-scoped criteria (G1): cheap, and it removes silent false negatives. **Next.**
+2. Raise client QPS/Burst (**done**: engine update) and index dependencies (open: quadratic matching).
+3. Merge the per-pattern prune (**done**: merged into `dev`).
+4. `for:` (extension (a)): **done and measured** (RQ8).
 5. One real-world dataset (a staging cluster or the platforms' public demo repositories): the step that most increases external validity.
 6. AI-assisted authoring through a natural-language `intent`: see [`../docs/proposals/intent.md`](../docs/proposals/intent.md).
 

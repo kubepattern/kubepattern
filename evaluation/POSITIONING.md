@@ -1,14 +1,14 @@
 # Positioning KubePattern
 
-How to position KubePattern in the paper, using only the evidence of RQ1–RQ6 ([`README.md`](README.md)) and the code (`dev` @ `69d4ffd`, fix `a814e4a`). For each claim, this file gives what supports it and where the numbers come from. Claims that the evidence does not support are listed separately, with the wording to use instead.
+How to position KubePattern in the paper, using only the evidence of RQ1–RQ6 and RQ8 ([`README.md`](README.md)) and the code (`dev` @ `69d4ffd`, fix `a814e4a`, engine update `54dc498`). For each claim, this file gives what supports it and where the numbers come from. Claims that the evidence does not support are listed separately, with the wording to use instead.
 
 ## Thesis
-> On relational smells across CRD ecosystems, KubePattern matches the detection of a general-purpose policy engine, as verified by that independent engine. It does so at a fraction of the operating cost, and its output is made of findings rather than per-resource reports. It is a purpose-built periodic analyser that complements admission control. It does not replace a policy engine.
+> On relational smells across CRD ecosystems, KubePattern matches the detection of a general-purpose policy engine, as verified by that independent engine. It does so at a fraction of the operating cost, and its output is made of findings rather than per-resource reports. Because those findings are stateful, a minimum duration (`spec.for`) removes the snapshot false positives that a stateless background scan reports (RQ8). It is a purpose-built periodic analyser that complements admission control. It does not replace a policy engine.
 
 The question "why not a policy engine?" must be answered with:
 - the problem class;
 - the operating cost;
-- the output model;
+- the output model, including the stateful duration (RQ8);
 - the verified semantics.
 
 It cannot be answered with expressive power or readability. On both, Kyverno is at least equal (§2).
@@ -48,7 +48,8 @@ The numbers below compare both tools at the same 5-minute period (`results/compa
   - one PolicyViolation Event is emitted per failure.
 - Caveats:
   - Everything was measured on 215 analysed objects. The Kyverno S1 sweep was not run, so the relative cost at 10k+ objects (informer memory vs unpaginated LISTs) is still open.
-  - client-go's 5 QPS default caps KubePattern at about 750 Smells per run, and its matching is quadratic (RQ4). **Fix both before calling KubePattern a serious alternative on large clusters.**
+  - client-go's 5 QPS default capped KubePattern at about 750 Smells per run (RQ4). **Fixed by the engine update** (`54dc498`, 50/100 QPS): 805 Smells in 30.5 s, the whole cluster in 0.85 s, with the same 143 requests. The quadratic matching remains: the run is CPU-bound at about 20k objects. **Index the dependencies before claiming large clusters.**
+  - The cost table was measured with `a814e4a`. With `54dc498` a run lasts about 1 s instead of about 26 s and uses about 0.2 s of CPU instead of about 0.3 s, with identical requests and writes (`results/regression/54dc498/`). The comparison with Kyverno was **not re-measured**: use the table above in the paper, and mention the shorter run only qualitatively (a shorter window in which the Job exists and holds credentials).
 
 ### 1.4 Finding-oriented output
 | | Kyverno 1.19 | KubePattern |
@@ -56,13 +57,15 @@ The numbers below compare both tools at the same 5-minute period (`results/compa
 | What is written | one report per evaluated resource, with pass/fail/error/skip per policy | one Smell per finding, and nothing for clean resources |
 | On the RQ2 scenario | 105 reports (74 `PolicyReport` in 13 namespaces, 31 `ClusterPolicyReport`) holding 46 `fail` and 59 `pass` | 46 Smells |
 | Writes per cycle | about 349 report writes and about 92 Events | 46 Smell updates |
-| Identity across runs | one report per resource | `<pattern>-<targetUID>`: 40 of 51 identities were a single object across all 9 RQ5 runs |
+| Identity across runs | one report per resource | `<pattern>-<targetUID>`: 40 of 51 identities were a single object across all 9 RQ5 runs; `spec.since` keeps the first observation (engine update) |
+| History of a finding | none: a report records when the resource was evaluated | `spec.since` ("unused since") and `spec.phase` (Pending/Active) |
 | Metadata | `severity` and `category` are optional (not set by these policies); `messageExpression` is full CEL | severity, category, message and reference; only 5 metadata placeholders |
 | Resource a relational smell is attributed to | the resource the policy matches | the target, by construction of the DSL |
 
 - `kubectl get smells -A` lists the problems to fix. With Kyverno, the failures must be filtered out of the reports.
 - Self-healing: a fixed smell disappears at the next run (RQ5).
-- **Some of these claims depend on the fix.** "The Smells of a skipped pattern are kept" and "no flapping" hold only with the per-pattern prune (`a814e4a`). Merge it before submission, so that the released tool matches the paper.
+- **Some of these claims depend on the fix.** "The Smells of a skipped pattern are kept" and "no flapping" hold only with the per-pattern prune (`a814e4a`), which is now **merged into `dev`**. Release it before submission, so that the released tool matches the paper.
+- **Suppression works now.** Before the engine update, every run reset `spec.suppress` to false (D3), so a suppressed false positive came back at the next run. `54dc498` keeps it, which makes "suppress a finding" a real feature of the output model.
 - Fairness: Kyverno's message model is richer (full CEL vs 5 placeholders).
 
 Where the report numbers come from: `results/raw/kyverno/equivalent-r1/*/reports.json`, in the git-ignored archive. Count them with `jq '[.items[] | {kind, ns: .metadata.namespace}]'`.
@@ -83,17 +86,30 @@ This is the core of the "solidity" claim. The DSL can only do what [`TEST-PLAN.m
 - 13 of the 14 Patterns use `custom` and 1 uses `owns`. On CRD platforms, resources reference each other through plain spec fields, and naming those fields is what makes unknown kinds analysable.
 - `owns` is transitive over the fetched graph. CEL has no recursion, so the Kyverno translation checks direct ownership only (RQ6a). The two are equivalent on this scenario, because ApplicationSets own their Applications directly.
 
+### 1.7 A stateful duration that a stateless scan cannot replicate (RQ8)
+| Evidence | Value | Source |
+|---|---|---|
+| Transient findings with `spec.for` | **0**, against 2 (kp-eval: CAPI rotation, GitOps delete-and-recreate) and 3 (Krateo: widgets wired during development) without it | `results/rq8/` |
+| Persistent smells with `spec.for` | all reported: 43/43 seeded, plus the new orphans | `results/rq8/eval/scores.csv` |
+| Latency cost | exactly `for` rounded up to the next run (2 periods in both settings); disappear latency unchanged | `results/rq8/` |
+| Kyverno at the same moment | `fail` on every transient, plus a PolicyViolation Event | `results/rq8/*/kyverno.csv` |
+| Request cost | none: a Pending Smell rides the same writes | engine design, `results/rq8/README.md` |
+
+- **Why Kyverno cannot replicate it.** The background scan re-evaluates each resource from scratch and keeps no "failing since". A CEL age filter on `creationTimestamp` hides new objects only. In the GitOps case the object is old and only its referrer is new.
+- **How to word it:** "a minimum duration trades a declared detection latency for the removal of snapshot false positives."
+- **Not:** "KubePattern has no false positives".
+
 ## 2. Claims to avoid
 | Claim | Why not | Say instead |
 |---|---|---|
 | "The DSL is more readable or simpler than CEL" | Readability was not measured (no user study). By size, CEL wins: 417 vs 657 lines (249 vs 475 logic lines), with 59 vs 58 atomic comparisons. H1 is not confirmed (RQ6a) | "A pattern contains no expressions: every check is a (path, operator, values) triple within a fixed structure of target, dependencies and relationships. The Kyverno translations are shorter, but they move the logic into 5,129 characters of CEL, with 43 `exists`/`all` comprehensions, 67 optional hops and `dyn()` casts." |
 | "Policy engines cannot express relational smells" or "existing analysers are blind to relational smells" | CEL expresses all 14 smells, and the best-effort variants resolve 10/10 probes (RQ6a) | "Policy engines express them through explicit lookups, evaluated by always-on controllers." |
 | "Policy languages have a learning curve that suits developers rather than architects and operations staff" | there is no user study | Drop it, or state it as a design goal. |
-| "Patterns are validated, so they cannot silently produce wrong findings" | The linter checks structure only. A mistyped path yields an empty value set, so inside `matchNone` every target becomes a finding. `selects` and `selectedBy` pass the linter (`internal/linter/pattern.go:458`) but evaluate to false (`internal/analysis/resolver.go:90`) | "A structurally malformed pattern is logged and skipped without affecting the others." Note that a mistyped path fails the same way as CEL optional chaining. |
+| "Patterns are validated, so they cannot silently produce wrong findings" | The linter checks structure only. A mistyped path yields an empty value set, so inside `matchNone` every target becomes a finding. (Since the engine update, the linter at least rejects the unimplemented `selects`, `selectedBy`, `CONTAINS` and `LABEL_SELECTOR`, which used to evaluate to false silently.) | "A structurally malformed pattern is logged and skipped without affecting the others." Note that a mistyped path fails the same way as CEL optional chaining. |
 | "Schema-checkable", as a current feature | The linter does not check paths against the CRD schemas. The evaluation checked them externally (`scripts/verify_fields.py`, 41/41) | Present it as a potential advantage of declarative paths, until it is implemented (§4). |
 | "Findings are visible only to the users entitled to see them (RBAC)", as a differentiator | Kyverno also writes namespaced reports, with the same RBAC granularity (§3) | Keep it as a design note, not a contribution. |
 | "Detects smells faster than Kyverno" | both tools are bounded by the period (RQ6d) | "Same detection latency, bounded by the period." |
-| "Scales to large clusters" | the 5 QPS ceiling (about 750 Smells per run), quadratic matching and unpaginated LISTs (RQ4); the S1 sweep was not run for Kyverno | Re-measure after raising QPS and indexing. |
+| "Scales to large clusters" | the 5 QPS ceiling is fixed (805 Smells in 30.5 s), but matching is quadratic (CPU-bound at about 20k objects) and LISTs are unpaginated; the S1 sweep was not run for Kyverno | "No throttling ceiling: 805 Smells in 30.5 s; run time is CPU-bound above about 20k objects (quadratic matching, future work)." |
 | "Checkers evaluate one resource at a time" | kube-score has a few hard-coded cross-resource checks (e.g. a Service that selects no Pod), and kor and Popeye report unused native resources (to verify and cite) | "Where they consider relations, these are hard-coded for native kinds." |
 
 ## 3. RBAC
@@ -130,9 +146,9 @@ These items would turn the positioning into evidence. They are ordered by their 
 
 | Item | What it gives | Kyverno 1.19 | Where |
 |---|---|---|---|
-| `for:` (stateful duration) | "unused for at least 1 h", with an "unused since" timestamp; removes transients (G8) | not replicable: each evaluation is per object and stateless | README *Discussion*, extension (a) |
+| `for:` (stateful duration) | "unused for at least 1 h", with an "unused since" timestamp; removes transients (G8) | not replicable: each evaluation is per object and stateless | **done** (`54dc498`), measured by RQ8 (§1.7) |
 | Element-scoped criteria (G1) | removes silent false negatives, including in the paper's Krateo `Page` example | already possible (`exists(m, …)`) | roadmap item 1 |
-| Higher client QPS/Burst and indexed dependencies | removes the ~750-Smell ceiling and the quadratic matching; a prerequisite for any scale claim | – | roadmap item 2 |
+| Higher client QPS/Burst and indexed dependencies | removes the ~750-Smell ceiling and the quadratic matching; a prerequisite for any scale claim | – | QPS **done** (`54dc498`); indexing open |
 | Pattern status conditions | failures become visible (§3) | misleading (R1a) or absent (R2) | new |
 | Checking paths against the CRD schemas | makes "schema-checkable" true | CEL strings are not checked (RQ6a) | new |
 | Cycle / reachability primitives | detects cycles of any length, with one Smell per cycle | no recursion; policies unrolled to a fixed length miss longer cycles | extension (b) |
@@ -164,7 +180,7 @@ Recommended titles:
 | "validated … instead of silently producing wrong findings" | see §2 | use the §2 wording |
 | "blind to relational smells"; "learning curve" | see §2 | use the §2 wording |
 | CRDs "which the platform then reconciles exactly as the native ones" | the API server stores and serves them uniformly; the operator's controllers reconcile them | reword |
-| Contribution (iii): "five relational primitives" | 3 are implemented; the selector primitives pass the linter but evaluate to false | write "five primitives, three of which are implemented", and make the linter reject the other two |
+| Contribution (iii): "five relational primitives" | 3 are implemented; the linter now rejects the selector primitives (engine update) | write "three relational primitives (owns, ownedBy, custom); selectors are future work" |
 
 **Positioning paragraph (draft).**
 ```latex
@@ -177,7 +193,12 @@ its semantics, and CEL is strictly more expressive. \tool delivers the
 same detection as a scheduled job with no idle footprint, about
 8$\times$ fewer API requests and 39$\times$ less CPU than Kyverno's
 reports controller at the same period, and with one finding per smell
-instead of one report per evaluated resource.
+instead of one report per evaluated resource. Because each finding keeps
+its first observation, a Pattern can require a condition to hold for a
+minimum duration: on scripted GitOps re-syncs, template rotations and
+widgets wired during development, this removes every transient finding
+that Kyverno reports, at a declared latency of one duration rounded up
+to the next run.
 ```
 
 ## 6. External references (checked on 2026-10-01)
