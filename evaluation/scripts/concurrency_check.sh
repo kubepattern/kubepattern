@@ -11,9 +11,15 @@ out="$EVAL/results/raw/concurrency-$KP_COMMIT/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$out"
 
 # The local run starts 5 s after the Job, so both write and prune in overlapping windows.
+# CONC_WAIT=ready starts it as soon as the Job's container runs instead: a run at 50 QPS takes
+# a few seconds, so a fixed 5 s delay may not overlap at all.
 job="kp-conc-$(date -u +%H%M%S)"
 kubectl -n "$KP_NAMESPACE" create job "$job" --from="cronjob/${KP_RELEASE}-cronjob" >/dev/null
-sleep 5
+if [[ "${CONC_WAIT:-}" == ready ]]; then
+  until [[ "$(kubectl -n "$KP_NAMESPACE" get pods -l "job-name=$job" -o jsonpath='{.items[0].status.containerStatuses[0].state.running.startedAt}' 2>/dev/null)" ]]; do sleep 0.2; done
+else
+  sleep 5
+fi
 "$EVAL/scripts/perf-local.sh" "concurrency-$KP_COMMIT" > "$out/local.json"
 kubectl -n "$KP_NAMESPACE" wait "job/$job" --for=condition=Complete --timeout=10m >/dev/null
 kubectl -n "$KP_NAMESPACE" logs "job/$job" > "$out/job.log"

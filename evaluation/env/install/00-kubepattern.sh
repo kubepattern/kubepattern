@@ -3,7 +3,8 @@
 # The CronJob is suspended: every analysis run is triggered explicitly by scripts/run-once.sh.
 source "$(dirname "$0")/lib.sh"
 log "KubePattern ($KP_IMAGE)"
-"$EVAL/scripts/build-image.sh" load
+# KP_SKIP_LOAD=1: the image is already in the profile (e.g. loaded by hand with `minikube image load`).
+[[ -n "${KP_SKIP_LOAD:-}" ]] || "$EVAL/scripts/build-image.sh" load
 helm upgrade --install "$KP_RELEASE" "$EVAL/../charts/kubepattern" \
   --namespace "$KP_NAMESPACE" --create-namespace \
   --set image.repository="${KP_IMAGE%:*}" --set image.tag="${KP_IMAGE##*:}" \
