@@ -92,7 +92,7 @@ krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app,demo-app-c2429vv9,cle
 krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app-2,smell,smell,positive,natural
 krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-summary-get-vulnerabilityreport-binding-springbootapp-demo-app-2,smell,smell,positive,natural
 krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,ai-cve-tech-clustering-get-vulnerabilityreport-binding-springbootapp-demo-app-2,smell,smell,positive,natural
-krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,demo-app-2-68bw8758,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,demo-app-2,demo-app-2-4zxfx8wc,clean,clean,negative,natural
 krateo-rolebinding-subject-sa-missing,RoleBinding,demo-system,springboot-app-4zdz9fdz,clean,clean,negative,natural
 krateo-rolebinding-subject-sa-missing,RoleBinding,demo-system,springbootapps-v1-0-0,clean,clean,negative,natural
 krateo-rolebinding-subject-sa-missing,RoleBinding,demo-system,springbootapps-v1-0-0-secret,clean,clean,negative,natural
@@ -123,7 +123,7 @@ krateo-rolebinding-subject-sa-missing,RoleBinding,kyverno,kyverno:background-con
 krateo-rolebinding-subject-sa-missing,RoleBinding,kyverno,kyverno:cleanup-controller,clean,clean,negative,natural
 krateo-rolebinding-subject-sa-missing,RoleBinding,kyverno,kyverno:reports-controller,clean,clean,negative,natural
 krateo-rolebinding-subject-sa-missing,RoleBinding,tenant-a,demo-app-c2429vv9,clean,clean,negative,natural
-krateo-rolebinding-subject-sa-missing,RoleBinding,tenant-b,demo-app-2-68bw8758,clean,clean,negative,natural
+krateo-rolebinding-subject-sa-missing,RoleBinding,tenant-b,demo-app-2-4zxfx8wc,clean,clean,negative,natural
 krateo-widget-manager-missing,Markdown,demo-app,cve-2021-3449,clean,clean,negative,natural
 krateo-widget-manager-missing,Markdown,demo-app,cve-2022-37434,clean,clean,negative,natural
 krateo-widget-manager-missing,Markdown,demo-app,cve-2023-4806,clean,clean,negative,natural
