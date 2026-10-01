@@ -168,6 +168,7 @@ func buildSmell(pattern *linter.PatternAsCode, target *unstructured.Unstructured
 		Message:        interpolateMessage(pattern.Spec.Message, target),
 		Reference:      pattern.Spec.Reference,
 		Suppress:       false,
+		For:            pattern.Spec.ForDuration(),
 		Target: SmellTarget{
 			APIVersion: target.GetAPIVersion(),
 			Kind:       target.GetKind(),
@@ -192,6 +193,7 @@ func buildSyntheticSmell(pattern *linter.PatternAsCode) Smell {
 		Message:        pattern.Spec.Message,
 		Reference:      pattern.Spec.Reference,
 		Suppress:       false,
+		For:            pattern.Spec.ForDuration(),
 		Target: SmellTarget{
 			Kind: pattern.Spec.Target.Kind,
 		},
@@ -204,7 +206,8 @@ func smellCRDName(patternName string, uid types.UID) string {
 }
 
 // interpolateMessage replaces {{target.metadata.X}} placeholders in the message
-// with the actual values from the target resource.
+// with the actual values from the target resource. The {{smell.since}} and {{smell.phase}}
+// placeholders are left to the writer, which knows the Smell's first observation.
 func interpolateMessage(message string, target *unstructured.Unstructured) string {
 	replacements := map[string]string{
 		"{{target.metadata.name}}":      target.GetName(),

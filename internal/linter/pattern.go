@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -81,6 +82,11 @@ type Spec struct {
 	Target        Target        `yaml:"target"`
 	Dependencies  []Dependency  `yaml:"dependencies,omitempty"`
 	Relationships Relationships `yaml:"relationships,omitempty"`
+
+	// For is the minimum duration (e.g. "30m", "1h") a target must keep satisfying the
+	// relationships before its Smell becomes Active; until then the Smell is Pending.
+	// Empty means 0s: the Smell is Active at the first observation.
+	For string `yaml:"for,omitempty"`
 }
 
 type Target struct {
@@ -243,6 +249,10 @@ func lintSpec(spec *Spec) error {
 		return lintErr("spec.message is empty")
 	}
 
+	if err := lintFor(spec.For); err != nil {
+		return err
+	}
+
 	if err := lintTarget(spec.Target); err != nil {
 		return err
 	}
@@ -263,6 +273,29 @@ func lintSpec(spec *Spec) error {
 	}
 
 	return nil
+}
+
+func lintFor(f string) error {
+	if f == "" {
+		return nil
+	}
+	d, err := time.ParseDuration(f)
+	if err != nil {
+		return lintErr("spec.for '%s' is not a valid duration (e.g. 30m, 1h, 24h)", f)
+	}
+	if d < 0 {
+		return lintErr("spec.for '%s' must not be negative", f)
+	}
+	return nil
+}
+
+// ForDuration returns spec.for as a duration; an empty or invalid value (rejected by the linter) is 0.
+func (s Spec) ForDuration() time.Duration {
+	d, err := time.ParseDuration(s.For)
+	if err != nil || d < 0 {
+		return 0
+	}
+	return d
 }
 
 func lintSeverity(s Severity) error {

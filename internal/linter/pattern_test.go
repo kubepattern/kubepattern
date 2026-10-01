@@ -878,6 +878,68 @@ spec:
 			expectError:   true,
 			errorContains: "spec.dependencies[0].pluralName is empty",
 		},
+		{
+			name: "Valid - for duration",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  for: 1h30m
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+`,
+			expectError: false,
+		},
+		{
+			name: "Error - for in days is not a Go duration",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  for: 1d
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+`,
+			expectError:   true,
+			errorContains: "spec.for '1d' is not a valid duration",
+		},
+		{
+			name: "Error - negative for",
+			yamlContent: `
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: test
+spec:
+  displayName: Test
+  category: Test
+  severity: LOW
+  message: "Test"
+  for: -5m
+  target:
+    kind: Pod
+    apiVersion: v1
+    plural: pods
+`,
+			expectError:   true,
+			errorContains: "spec.for '-5m' must not be negative",
+		},
 	}
 
 	for _, tc := range tests {

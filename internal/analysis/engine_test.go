@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -163,5 +164,17 @@ func TestRunWithoutPatternUIDSkipsPrune(t *testing.T) {
 	}
 	if len(w.prunes) != 0 {
 		t.Fatalf("a pattern without UID must not be pruned, got %+v", w.prunes)
+	}
+}
+
+func TestRunPassesThePatternForToTheSmell(t *testing.T) {
+	w := &fakeWriter{}
+	pattern := unusedConfigMapPattern("pat-uid", "ConfigMap", false)
+	pattern.Spec.For = "10m"
+	if err := NewEngine(testGraph(), w).Run(context.Background(), pattern); err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if len(w.written) != 1 || w.written[0].For != 10*time.Minute {
+		t.Fatalf("expected one smell with For = 10m, got %+v", w.written)
 	}
 }

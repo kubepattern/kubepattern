@@ -6,6 +6,7 @@ import (
 	"kubepattern-go/internal/analysis"
 	"log/slog"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +24,11 @@ const (
 	// patternUIDLabel tags every Smell with the UID of the Pattern that produced it, so each
 	// pattern prunes only its own stale smells and never those of other patterns.
 	patternUIDLabel = "kubepattern.dev/pattern-uid"
+	// phaseLabel mirrors spec.phase, so that kubectl selectors can keep only Active smells.
+	phaseLabel = "kubepattern.dev/phase"
+
+	phasePending = "Pending"
+	phaseActive  = "Active"
 )
 
 var smellGVR = schema.GroupVersionResource{
@@ -37,15 +43,19 @@ type SmellWriter struct {
 	saveInNamespace bool
 	targetNamespace string
 	scanId          string
+	// runStart is the start of the run: the first observation of the smells it creates and
+	// the instant against which a Pattern's spec.for is measured.
+	runStart time.Time
 }
 
 // NewSmellWriter creates a SmellWriter using the existing kube.Client and namespace preferences.
-func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace, scanId string) *SmellWriter {
+func NewSmellWriter(client *Client, saveInNamespace bool, targetNamespace, scanId string, runStart time.Time) *SmellWriter {
 	return &SmellWriter{
 		client:          client,
 		saveInNamespace: saveInNamespace,
 		targetNamespace: targetNamespace,
 		scanId:          scanId,
+		runStart:        runStart,
 	}
 }
 
@@ -74,8 +84,9 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	existing, err := dynClient.Resource(smellGVR).Namespace(namespace).Get(ctx, smell.CRDName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// 2a. Smell does not exist yet — create it.
-			obj.SetLabels(map[string]string{lastScanLabel: w.scanId, patternUIDLabel: smell.PatternUID})
+			// 2a. Smell does not exist yet — create it. This run is its first observation.
+			phase := setObservation(obj, smell, w.runStart, w.runStart)
+			obj.SetLabels(map[string]string{lastScanLabel: w.scanId, patternUIDLabel: smell.PatternUID, phaseLabel: phase})
 			_, err = dynClient.Resource(smellGVR).Namespace(namespace).Create(ctx, obj, metav1.CreateOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to create smell %q: %w", smell.CRDName, err)
@@ -89,6 +100,15 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 	// 3. Smell already exists — set the required resourceVersion before updating
 	obj.SetResourceVersion(existing.GetResourceVersion())
 
+	// Keep what belongs to the smell rather than to this run: its first observation, which
+	// drives the phase, and the user's suppression (previously reset to false on every update).
+	phase := setObservation(obj, smell, firstObservation(existing, w.runStart), w.runStart)
+	if suppress, found, _ := unstructured.NestedBool(existing.Object, "spec", "suppress"); found {
+		if err := unstructured.SetNestedField(obj.Object, suppress, "spec", "suppress"); err != nil {
+			return fmt.Errorf("failed to keep suppress on smell %q: %w", smell.CRDName, err)
+		}
+	}
+
 	labels := existing.GetLabels()
 	if labels == nil {
 		labels = map[string]string{}
@@ -96,6 +116,7 @@ func (w *SmellWriter) Write(ctx context.Context, smell analysis.Smell) error {
 
 	labels[lastScanLabel] = w.scanId
 	labels[patternUIDLabel] = smell.PatternUID
+	labels[phaseLabel] = phase
 	obj.SetLabels(labels)
 
 	_, err = dynClient.Resource(smellGVR).Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
@@ -164,6 +185,36 @@ func (w *SmellWriter) PruneOrphans(ctx context.Context, installed map[string]str
 		return fmt.Errorf("failed to prune %d orphaned smell(s): %s", len(errs), strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// setObservation sets spec.since and spec.phase on the smell object and fills the
+// {{smell.since}} and {{smell.phase}} placeholders of its message. The smell is Pending while
+// the condition has held for less than the Pattern's spec.for, and Active afterwards.
+func setObservation(obj *unstructured.Unstructured, smell analysis.Smell, since, runStart time.Time) string {
+	phase := phaseActive
+	if smell.For > 0 && runStart.Sub(since) < smell.For {
+		phase = phasePending
+	}
+	sinceStr := since.UTC().Format(time.RFC3339)
+	spec := obj.Object["spec"].(map[string]any)
+	spec["since"] = sinceStr
+	spec["phase"] = phase
+	spec["message"] = strings.NewReplacer("{{smell.since}}", sinceStr, "{{smell.phase}}", phase).Replace(smell.Message)
+	return phase
+}
+
+// firstObservation returns when the condition of an existing smell was first observed: its
+// spec.since, or its creation time for smells written before spec.since existed.
+func firstObservation(existing *unstructured.Unstructured, runStart time.Time) time.Time {
+	if since, found, _ := unstructured.NestedString(existing.Object, "spec", "since"); found {
+		if t, err := time.Parse(time.RFC3339, since); err == nil {
+			return t
+		}
+	}
+	if created := existing.GetCreationTimestamp(); !created.IsZero() {
+		return created.Time
+	}
+	return runStart
 }
 
 // toUnstructured converts a Smell into an unstructured Kubernetes object
