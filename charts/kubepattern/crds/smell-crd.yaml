@@ -20,6 +20,14 @@ spec:
           type: string
           description: "Smell severity (LOW, MEDIUM, HIGH, CRITICAL)"
           jsonPath: .spec.severity
+        - name: Phase
+          type: string
+          description: "Pending until the condition has held for the Pattern's spec.for, then Active"
+          jsonPath: .spec.phase
+        - name: Since
+          type: date
+          description: "First observation of the condition"
+          jsonPath: .spec.since
         - name: Target Kind
           type: string
           description: "Kind of the target resource"
@@ -82,6 +90,17 @@ spec:
                   type: boolean
                   description: "Resource to suppress (false positives)"
                   default: false
+                phase:
+                  type: string
+                  description: "Pending while the condition has held for less than the Pattern's spec.for, Active afterwards"
+                  enum:
+                    - Pending
+                    - Active
+                  default: Active
+                since:
+                  type: string
+                  format: date-time
+                  description: "First observation of the condition (start of the run that created the Smell)"
                 target:
                   type: object
                   required:
