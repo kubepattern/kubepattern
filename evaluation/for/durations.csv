@@ -1,0 +1,26 @@
+pattern,suite,for,family,rationale
+argocd-applicationset-generates-nothing,rq1,10m,orphan,generators can be empty until their clusters or list elements are registered by the same sync
+argocd-appproject-empty,rq1,0s,misconfiguration,an empty project is wrong as soon as it exists
+capi-machinetemplate-orphan,rq1,24h,orphan,two-step template rotation leaves the new template unreferenced for one step (RQ5 run 7)
+certmanager-clusterissuer-not-used,rq1,1h,orphan,GitOps delete-and-recreate of the only Certificate leaves an old issuer unreferenced for minutes
+cnpg-cluster-without-scheduledbackup,rq1,10m,missing companion,the ScheduledBackup is usually applied right after its Cluster
+cnpg-pooler-name-clashes-with-cluster,rq1,0s,misconfiguration,the name clash is wrong at the first observation
+crossplane-composition-without-xrd,rq1,10m,dangling,a Composition can be applied before its XRD in the same sync
+crossplane-function-not-used,rq1,24h,unused definition,catalogue entries are published before their first consumer
+eso-clustersecretstore-not-used,rq1,1h,orphan,GitOps delete-and-recreate of the referring ExternalSecrets
+eso-secretstore-not-used,rq1,1h,orphan,GitOps delete-and-recreate of the referring ExternalSecrets
+flux-ocirepository-not-used,rq1,1h,orphan,GitOps delete-and-recreate of the referring HelmRelease
+kargo-warehouse-not-requested,rq1,1h,orphan,a Warehouse is created before the Stages that request it
+kubevela-componentdefinition-not-used,rq1,24h,unused definition,catalogue entries are published before their first consumer
+kubevela-traitdefinition-not-used,rq1,24h,unused definition,catalogue entries are published before their first consumer
+krateo-compositiondefinition-unused,krateo,24h,unused definition,a blueprint is published before its first composition
+krateo-navmenuitem-page-missing,krateo,10m,dangling,the Page can be applied after the sidebar entry
+krateo-restaction-endpoint-missing,krateo,10m,dangling,the endpoint Secret can be created after the RESTAction
+krateo-restaction-not-used,krateo,1h,orphan,a RESTAction is written before the widget that renders it
+krateo-rolebinding-clusterrole-missing,krateo,10m,dangling,the ClusterRole can be applied after the RoleBinding
+krateo-rolebinding-subject-sa-missing,krateo,10m,dangling,the ServiceAccount is created by a later deployment
+krateo-widget-manager-missing,krateo,10m,dangling,the managing RESTAction or Table is re-rendered with the composition
+krateo-yamlviewer-apiref-dangling,krateo,10m,dangling,the RESTAction can be applied after the widget
+page-not-referenced,krateo,1h,orphan widget,widgets are wired into a layout after they are created (registry doc trade-off)
+panel-not-referenced,krateo,1h,orphan widget,widgets are wired into a layout after they are created (registry doc trade-off)
+paragraph-not-referenced,krateo,1h,orphan widget,widgets are wired into a layout after they are created (registry doc trade-off)

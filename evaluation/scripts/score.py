@@ -34,12 +34,15 @@ def load_truth(paths):
     return rows
 
 
-def load_smells(path):
+def load_smells(path, active_only=False):
     with open(path) as f:
         items = json.load(f)["items"]
     smells = set()
     for s in items:
         spec = s["spec"]
+        # A Pending Smell (spec.for not yet elapsed) is not a finding; Smells without a phase are Active.
+        if active_only and spec.get("phase", "Active") != "Active":
+            continue
         t = spec.get("target", {})
         smells.add((spec["pattern"]["name"], t.get("kind", ""), t.get("namespace", "") or "", t.get("name", "")))
     return smells
@@ -61,6 +64,7 @@ def main():
     ap.add_argument("--patterns", nargs="*", help="only score these patterns (default: every pattern in the ground truth)")
     ap.add_argument("--allow-unlisted", nargs="*", default=[], help="patterns whose extra findings are expected (natural findings)")
     ap.add_argument("--out", help="directory for scores.csv, rows.csv and table.tex")
+    ap.add_argument("--active-only", action="store_true", help="ignore Pending Smells (spec.for not yet elapsed)")
     ap.add_argument("--probe-expect", choices=["engine", "truth"], default="engine",
                     help="probe oracle: the predicted engine output (default) or the truth (RQ6 best-effort policies)")
     args = ap.parse_args()
@@ -68,7 +72,7 @@ def main():
     rows = load_truth(args.truth)
     if args.patterns:
         rows = [r for r in rows if r["pattern"] in args.patterns]
-    smells = load_smells(args.smells)
+    smells = load_smells(args.smells, args.active_only)
     patterns = sorted({r["pattern"] for r in rows})
     platform_of = {r["pattern"]: r["platform"] for r in rows}
 
