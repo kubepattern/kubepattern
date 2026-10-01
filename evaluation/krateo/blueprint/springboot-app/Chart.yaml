@@ -1,0 +1,21 @@
+apiVersion: v2
+name: springboot-app
+description: >-
+  Case-study blueprint for the KubePattern evaluation. It models the SpringbootApp composition
+  of a real Krateo installation (anonymised dump in ../../fixtures/files-clean.yaml): an application
+  namespace with its documentation, RBAC for the AI CVE agents and the platform developers,
+  CVE and SBOM widgets backed by RESTActions, per-pod Prometheus RESTActions, and an application
+  page in the Composable Portal. The composition page comes from the official
+  portal-composition-page-generic blueprint, as in github-scaffolding-with-composition-page.
+type: application
+version: 1.0.0
+home: https://krateo.io
+keywords:
+  - portal
+  - kubepattern-evaluation
+annotations:
+  krateoSupportedVersion: "3.0.2"
+dependencies:
+  - name: portal-composition-page-generic
+    repository: https://marketplace.krateo.io
+    version: 1.4.3

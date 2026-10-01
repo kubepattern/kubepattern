@@ -1,0 +1,147 @@
+# Flux scenario, seeds (see ground-truth.csv).
+# near-miss: consumed only by a suspended HelmRelease with a different name.
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: legacy-chart
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/charts/podinfo
+  ref:
+    semver: ">=0.0.0"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: legacy
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  suspend: true  # reference only: nothing is installed
+  chartRef:
+    kind: OCIRepository
+    name: legacy-chart
+# near-miss: consumed by both a HelmRelease and a Kustomization.
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: shared
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/manifests/podinfo
+  ref:
+    semver: ">=0.0.0"
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: shared-ks
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  suspend: true  # reference only: nothing is applied
+  prune: false
+  path: ./kustomize
+  sourceRef:
+    kind: OCIRepository
+    name: shared
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: shared-hr
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  suspend: true  # reference only: nothing is installed
+  chartRef:
+    kind: OCIRepository
+    name: shared
+# positives: never consumed.
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: orphan-1
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/charts/podinfo
+  ref:
+    semver: ">=0.0.0"
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: orphan-2
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/manifests/podinfo
+  ref:
+    semver: ">=0.0.0"
+# positive: same name as a consumed source in another namespace.
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: podinfo-chart
+  namespace: kp-flux-b
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/charts/podinfo
+  ref:
+    semver: ">=0.0.0"
+# positive: a HelmRelease references a HelmChart that happens to share the name (kind criterion).
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: same-name
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/charts/podinfo
+  ref:
+    semver: ">=0.0.0"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: same-name
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  suspend: true  # reference only: nothing is installed
+  chartRef:
+    kind: HelmChart
+    name: same-name
+# probe G3: consumed cross-namespace through an explicit chartRef.namespace.
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: cross-ns
+  namespace: kp-flux-a
+spec:
+  interval: 24h
+  url: oci://ghcr.io/stefanprodan/charts/podinfo
+  ref:
+    semver: ">=0.0.0"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cross-ns
+  namespace: kp-flux-b
+spec:
+  interval: 24h
+  suspend: true  # reference only: nothing is installed
+  chartRef:
+    kind: OCIRepository
+    name: cross-ns
+    namespace: kp-flux-a

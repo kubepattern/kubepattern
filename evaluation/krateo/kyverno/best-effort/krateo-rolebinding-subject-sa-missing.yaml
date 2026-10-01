@@ -1,0 +1,30 @@
+# Best-effort variant of equivalent/krateo-rolebinding-subject-sa-missing.yaml.
+# G1 + G2: every ServiceAccount subject must exist (kind, name and namespace of the same subject).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-rolebinding-subject-sa-missing
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["rbac.authorization.k8s.io"]
+        apiVersions: ["v1"]
+        resources: ["rolebindings"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: has-serviceaccount-subject
+      expression: object.?subjects.orValue([]).exists(s, s.kind == 'ServiceAccount')
+  variables:
+    - name: serviceaccounts
+      expression: globalContext.Get("serviceaccounts.core", "")
+  validations:
+    - expression: >-
+        object.subjects.filter(s, s.kind == 'ServiceAccount').all(s,
+          dyn(variables.serviceaccounts).exists(d, d.metadata.name == s.name && d.metadata.namespace == s.namespace))
+      messageExpression: >-
+        'RoleBinding ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' grants a Role to a ServiceAccount that does not exist (e.g. an agent that was never deployed): the grant is dormant and is picked up by any future ServiceAccount with that name.'

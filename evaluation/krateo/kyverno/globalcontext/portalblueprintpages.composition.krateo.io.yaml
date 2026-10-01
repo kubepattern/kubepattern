@@ -1,0 +1,10 @@
+# Informer-cached list of every portalblueprintpages.composition.krateo.io (v1-0-9), all namespaces.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: portalblueprintpages.composition.krateo.io
+spec:
+  kubernetesResource:
+    group: composition.krateo.io
+    version: v1-0-9
+    resource: portalblueprintpages

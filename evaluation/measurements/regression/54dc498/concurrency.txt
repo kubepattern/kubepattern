@@ -1,0 +1,7 @@
+overlapping runs at 54dc498: 46 smells after both finished
+TOTAL                                          43  52  43   0   0  52  1.00  1.00    10( 10)    0
+
+simultaneous: two local runs started together (full overlap), 3 repetitions
+rep 1: 46 smells; TOTAL 43 52 43 0 0 52 1.00 1.00 10( 10) 0
+rep 2: 46 smells; TOTAL 43 52 43 0 0 52 1.00 1.00 10( 10) 0
+rep 3: 46 smells; TOTAL 43 52 43 0 0 52 1.00 1.00 10( 10) 0

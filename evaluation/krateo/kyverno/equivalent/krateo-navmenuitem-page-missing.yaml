@@ -1,0 +1,28 @@
+# 1:1 translation of patterns/krateo-navmenuitem-page-missing.yaml.
+# Name and namespace of resourcesRefs.items[*] are checked independently (not per item), as in KubePattern.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-navmenuitem-page-missing
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["widgets.templates.krateo.io"]
+        apiVersions: ["v1beta1"]
+        resources: ["navmenuitems"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: pages
+      expression: globalContext.Get("pages.widgets.templates.krateo.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.pages).exists(d,
+             object.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?name.orValue('') == d.metadata.name)
+          && object.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?namespace.orValue('') == d.metadata.namespace))
+      messageExpression: >-
+        'NavMenuItem ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' is listed in the portal sidebar but the Page it opens (spec.resourcesRefs) does not exist.'

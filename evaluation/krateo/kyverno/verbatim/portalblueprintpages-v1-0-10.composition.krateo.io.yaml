@@ -1,0 +1,10 @@
+# Verbatim run only: the PortalBlueprintPage version the given Pattern pins (v1-0-10), not served by this platform.
+apiVersion: kyverno.io/v2
+kind: GlobalContextEntry
+metadata:
+  name: portalblueprintpages-v1-0-10.composition.krateo.io
+spec:
+  kubernetesResource:
+    group: composition.krateo.io
+    version: v1-0-10
+    resource: portalblueprintpages

@@ -1,0 +1,19 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-app,clean,clean,negative,top-level reference with explicit kind
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-default-kind,clean,clean,near-miss,top-level reference with kind omitted (defaults to SecretStore)
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-data,clean,clean,near-miss,referenced only by data[1].sourceRef.storeRef
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-push,clean,clean,near-miss,referenced only by a PushSecret
+eso-secretstore-not-used,SecretStore,kp-secrets-a,css-g1b,clean,clean,near-miss,referenced only by data[1] of ExternalSecret mixed
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-unused-1,smell,smell,positive,never referenced
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-unused-2,smell,smell,positive,never referenced
+eso-secretstore-not-used,SecretStore,kp-secrets-b,ss-app,smell,smell,positive,same name as a used store in another namespace (namespace criterion)
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-g1,smell,clean,probe-G1,the only entry naming ss-g1 targets a ClusterSecretStore; name and kind are not correlated per data entry
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-selected,clean,smell,probe-G7,selected by a PushSecret label selector; selectors are not evaluated
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-shared,clean,clean,negative,used by ExternalSecrets in two namespaces
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-ces,clean,clean,near-miss,used through a ClusterExternalSecret
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-data,clean,clean,near-miss,referenced only by data[2].sourceRef.storeRef
+eso-clustersecretstore-not-used,ClusterSecretStore,,ss-g1,clean,clean,near-miss,referenced only by data[0] of ExternalSecret mixed
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-unused-1,smell,smell,positive,never referenced
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-unused-2,smell,smell,positive,never referenced
+eso-clustersecretstore-not-used,ClusterSecretStore,,ss-app,smell,smell,positive,same name as a used SecretStore; the kind filter disambiguates
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-g1b,smell,clean,probe-G1,the only entry naming css-g1b targets a SecretStore; name and kind are not correlated per data entry

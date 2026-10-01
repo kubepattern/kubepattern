@@ -1,0 +1,11 @@
+# Kargo scenario, base state: a pipeline dev -> qa fed by Warehouse app (manual Freight, 24h discovery).
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: kp-kargo-1
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: kp-kargo-2

@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "tenant"
+  ],
+  "properties": {
+    "tenant": {
+      "type": "string",
+      "default": "tenant-a",
+      "description": "Tenant owning the application (platform-developers group and agent ServiceAccounts)"
+    },
+    "app": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "default": "Spring Boot demo application with a MySQL database.",
+          "description": "Text of the documentation ConfigMap and of the portal page"
+        },
+        "pods": {
+          "type": "array",
+          "description": "Pods whose resource usage is read from Prometheus (one RESTAction each)",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "backend-86ccc4747f-gzc4v",
+            "frontend-557b899867-8dkbp",
+            "mysql-db-5f6f758d4b-zhxtl"
+          ]
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "endpointRef": {
+          "type": "object",
+          "description": "Secret with the Prometheus server-url",
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "prometheus-endpoint"
+            },
+            "namespace": {
+              "type": "string",
+              "default": "krateo-system"
+            }
+          }
+        }
+      }
+    },
+    "cve": {
+      "type": "object",
+      "properties": {
+        "tableEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Render the cve-table RESTAction that manages the CVE Markdown widgets"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "cve-2021-3449",
+            "cve-2022-37434",
+            "cve-2023-4806",
+            "cve-2024-2961",
+            "cve-2025-4673"
+          ]
+        }
+      }
+    },
+    "sbom": {
+      "type": "array",
+      "description": "SBOM viewers, one per ReplicaSet/container (default in values.yaml: core-provider 1.0.0 turns array-of-object defaults into strings and the generated CRD is rejected)",
+      "items": {
+        "type": "object",
+        "required": [
+          "replicaset",
+          "container"
+        ],
+        "properties": {
+          "replicaset": {
+            "type": "string"
+          },
+          "container": {
+            "type": "string"
+          },
+          "scanned": {
+            "type": "boolean",
+            "default": true,
+            "description": "An SbomReport exists (renders the RESTAction)"
+          },
+          "displayed": {
+            "type": "boolean",
+            "default": true,
+            "description": "Listed in the SBOM panel"
+          }
+        }
+      }
+    },
+    "rbac": {
+      "type": "object",
+      "properties": {
+        "aiAgents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "ai-cve-clustering",
+            "ai-cve-summary",
+            "ai-cve-tech-clustering"
+          ]
+        },
+        "vulnerabilityReportClusterRole": {
+          "type": "string",
+          "default": "platform-devs-vulnerabilityreport-clusterrole"
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "type": "integer",
+          "default": 100,
+          "description": "Position in the portal sidebar"
+        },
+        "releaseNotes": {
+          "type": "object",
+          "properties": {
+            "rendered": {
+              "type": "boolean",
+              "default": true
+            },
+            "listed": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+# 1:1 translation of patterns/page-not-referenced.yaml.
+# Name and namespace of resourcesRefs.items[*] are checked independently (not per item), as in KubePattern.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: page-not-referenced
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["widgets.templates.krateo.io"]
+        apiVersions: ["v1beta1"]
+        resources: ["pages"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: not-krateo-system
+      expression: object.metadata.namespace != 'krateo-system'
+  variables:
+    - name: navmenuitems
+      expression: globalContext.Get("navmenuitems.widgets.templates.krateo.io", "")
+    - name: panels
+      expression: globalContext.Get("panels.widgets.templates.krateo.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.navmenuitems).exists(d,
+             d.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?name.orValue('') == object.metadata.name)
+          && d.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?namespace.orValue('') == object.metadata.namespace))
+        || dyn(variables.panels).exists(d,
+             d.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?name.orValue('') == object.metadata.name)
+          && d.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?namespace.orValue('') == object.metadata.namespace))
+      messageExpression: >-
+        'Page ' + object.metadata.name + ' in namespace ' + object.metadata.namespace +
+        ' is not managed by any NavMenuItem.'

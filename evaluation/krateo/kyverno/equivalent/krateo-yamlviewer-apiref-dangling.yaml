@@ -1,0 +1,29 @@
+# 1:1 translation of patterns/krateo-yamlviewer-apiref-dangling.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: krateo-yamlviewer-apiref-dangling
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["widgets.templates.krateo.io"]
+        apiVersions: ["v1beta1"]
+        resources: ["yamlviewers"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: has-apiref
+      expression: object.spec.?apiRef.?name.hasValue()
+  variables:
+    - name: restactions
+      expression: globalContext.Get("restactions.templates.krateo.io", "")
+  validations:
+    - expression: >-
+        dyn(variables.restactions).exists(d, d.metadata.name == object.spec.apiRef.name
+          && d.metadata.namespace == object.spec.?apiRef.?namespace.orValue(''))
+      messageExpression: >-
+        'YamlViewer ' + object.metadata.namespace + '/' + object.metadata.name +
+        ' reads its data from a RESTAction (spec.apiRef) that does not exist: snowplow fails to resolve the widget.'

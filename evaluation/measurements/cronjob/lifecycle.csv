@@ -1,0 +1,52 @@
+pattern,kind,namespace,name,present_in_runs,distinct_smell_objects
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-cluster-none,1 2 3 4 5 6 7 8 9,1
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-empty-list,1 2 3 4 5 6 7 8 9,1
+argocd-applicationset-generates-nothing,ApplicationSet,argocd,as-git-badpath,1 2 3 4 5 6 7 8 9,1
+argocd-appproject-empty,AppProject,argocd,empty-1,1 2 3 4 5 6 7 8 9,1
+argocd-appproject-empty,AppProject,argocd,empty-2,1 2 3 4 5 6 7 8 9,1
+argocd-appproject-empty,AppProject,argocd,empty-3,1 2 3 4 5 6 7 8 9,1
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-orphan,1 9,2
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-rotated-v1,1 2 3 4 5 6 7 8 9,1
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-rotated-v2,8,1
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-rotated-v3,7,1
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-b,dmt-md-workers,1 2 3 4 5 6 7 8 9,1
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-kind-omitted,1 2 3 4 5 6 7 8 9,1
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-new-unused,3 4 5 6 7 8,1
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-retired,1 2 3 4 5 6 7 8 9,1
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-unused,1 9,2
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-nobackup,1 2 3 4 5 6 7 8 9,1
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-sb-elsewhere,1 2 3 4 5 6 7 8 9,1
+cnpg-cluster-without-scheduledbackup,Cluster,kp-db-a,db-typo,1 2 3 4 5 6 7 8 9,1
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-nobackup,1 2 3 4 5 6 7 8 9,1
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-two-sb,1 2 3 4 5 6 7 8 9,1
+cnpg-pooler-name-clashes-with-cluster,Pooler,kp-db-a,db-typo,1 2 3 4 5 6 7 8 9,1
+crossplane-composition-without-xrd,Composition,,app-typo,1 2 3 4 5 6 7 8 9,1
+crossplane-composition-without-xrd,Composition,,database-from-package,1 2 3 4 5 6 7 8 9,1
+crossplane-composition-without-xrd,Composition,,queue-default,1 2 3 4 5 6 7 8 9,1
+crossplane-function-not-used,Function,,function-environment-configs,1 2 3 4 5 6 7 8 9,1
+crossplane-function-not-used,Function,,function-kcl,1 2 3 4 5 6 7 8 9,1
+crossplane-function-not-used,Function,,function-sequencer,1 2 3 4 5 6 7 8 9,1
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-unused-1,1 2 3 4 5 6 7 8 9,1
+eso-clustersecretstore-not-used,ClusterSecretStore,,css-unused-2,1 2 3 4 5 6 7 8 9,1
+eso-clustersecretstore-not-used,ClusterSecretStore,,ss-app,1 2 3 4 5 6 7 8 9,1
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-new-unused,3 4 5 6 7 8,1
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-selected,1 2 3 4 5 6 7 8 9,1
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-unused-1,1 2 3 4 5 6 7 8 9,1
+eso-secretstore-not-used,SecretStore,kp-secrets-a,ss-unused-2,1 2 3 4 5 6 7 8 9,1
+eso-secretstore-not-used,SecretStore,kp-secrets-b,ss-app,1 2 3 4 5 6 7 8 9,1
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,cross-ns,1 2 3 4 5 6 7 8 9,1
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,orphan-1,1 9,2
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,orphan-2,1 2 3 4 5 6 7 8 9,1
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,same-name,1 2 3 4 5 6 7 8 9,1
+flux-ocirepository-not-used,OCIRepository,kp-flux-b,podinfo-chart,1 2 3 4 5 6 7 8 9,1
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,new-unused,3 4 6 7 8,2
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,orphan,1 9,2
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,retired,1 2 3 4 6 7 8 9,2
+kargo-warehouse-not-requested,Warehouse,kp-kargo-2,app,1 2 3 4 6 7 8 9,2
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-batch,1 2 3 4 5 6 7 8 9,1
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-legacy-cm,1 2 3 4 5 6 7 8 9,1
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-versioned,1 2 3 4 5 6 7 8 9,1
+kubevela-componentdefinition-not-used,ComponentDefinition,kp-vela-a,kp-worker,1 2 3 4 5 6 7 8 9,1
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-b-trait,1 2 3 4 5 6 7 8 9,1
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-unused-trait-1,1 2 3 4 5 6 7 8 9,1
+kubevela-traitdefinition-not-used,TraitDefinition,kp-vela-a,kp-unused-trait-2,1 2 3 4 5 6 7 8 9,1

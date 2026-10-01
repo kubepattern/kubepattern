@@ -1,0 +1,60 @@
+# cert-manager scenario, base state: namespace and ClusterIssuers in normal use.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-certs
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-web
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-grouped
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-manual
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: ci-new-ca
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: web
+  namespace: kp-certs
+spec:
+  secretName: web-tls
+  dnsNames: ["web.kp-certs.svc"]
+  revisionHistoryLimit: 3
+  issuerRef:
+    name: ci-web
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grouped
+  namespace: kp-certs
+spec:
+  secretName: grouped-tls
+  dnsNames: ["grouped.kp-certs.svc"]
+  revisionHistoryLimit: 3
+  issuerRef:
+    name: ci-grouped
+    kind: ClusterIssuer
+    group: cert-manager.io

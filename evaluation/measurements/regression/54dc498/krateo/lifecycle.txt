@@ -1,0 +1,8 @@
+baseline  KubePattern         smells= 61 oracle= 61 missing=0 extra=0
+baseline  Kyverno equivalent  smells= 61 oracle= 61 missing=0 extra=0
+mutated   KubePattern         smells= 51 oracle= 51 missing=0 extra=0
+mutated   Kyverno equivalent  smells= 51 oracle= 51 missing=0 extra=0
+reverted  KubePattern         smells= 61 oracle= 61 missing=0 extra=0
+reverted  Kyverno equivalent  smells= 61 oracle= 61 missing=0 extra=0
+KubePattern         expected changes seen: 26/26; total delta 26; reverted == baseline: True
+Kyverno equivalent  expected changes seen: 26/26; total delta 26; reverted == baseline: True

@@ -1,0 +1,10 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,podinfo-chart,clean,clean,negative,consumed by HelmRelease podinfo via chartRef
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,podinfo-manifests,clean,clean,negative,consumed by Kustomization podinfo via sourceRef
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,legacy-chart,clean,clean,near-miss,consumed only by a suspended HelmRelease
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,shared,clean,clean,near-miss,consumed by a HelmRelease and a Kustomization
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,orphan-1,smell,smell,positive,never consumed
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,orphan-2,smell,smell,positive,never consumed
+flux-ocirepository-not-used,OCIRepository,kp-flux-b,podinfo-chart,smell,smell,positive,same name as a consumed source in another namespace (namespace criterion)
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,same-name,smell,smell,positive,a HelmRelease references a HelmChart with the same name (kind criterion)
+flux-ocirepository-not-used,OCIRepository,kp-flux-a,cross-ns,clean,smell,probe-G3,consumed from kp-flux-b through an explicit chartRef.namespace; the namespace criterion ignores the override

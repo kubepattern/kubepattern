@@ -1,0 +1,33 @@
+# Best-effort variant of equivalent/page-not-referenced.yaml.
+# G1: name, namespace and resource are correlated on the same resourcesRefs item.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: page-not-referenced
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["widgets.templates.krateo.io"]
+        apiVersions: ["v1beta1"]
+        resources: ["pages"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: not-krateo-system
+      expression: object.metadata.namespace != 'krateo-system'
+  variables:
+    - name: navmenuitems
+      expression: globalContext.Get("navmenuitems.widgets.templates.krateo.io", "")
+    - name: panels
+      expression: globalContext.Get("panels.widgets.templates.krateo.io", "")
+  validations:
+    - expression: >-
+        [variables.navmenuitems, variables.panels].exists(l, dyn(l).exists(d,
+          d.spec.?resourcesRefs.?items.orValue([]).exists(i, i.?name.orValue('') == object.metadata.name
+            && i.?namespace.orValue('') == object.metadata.namespace && i.?resource.orValue('') == 'pages')))
+      messageExpression: >-
+        'Page ' + object.metadata.name + ' in namespace ' + object.metadata.namespace +
+        ' is not managed by any NavMenuItem.'

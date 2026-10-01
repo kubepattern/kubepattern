@@ -1,0 +1,50 @@
+platform,smell,family,verdict,limitations,evaluated_pattern,rationale
+Crossplane v2,Function not referenced by any Composition/Operation pipeline,orphan,expressible,,crossplane-function-not-used,nested [*] over pipelines; four matchNone entries (Composition + 3 Operation kinds)
+Crossplane v2,Composition targeting a kind no XRD defines,dangling,expressible,G4,crossplane-composition-without-xrd,kind compared exactly; the API group is embedded in compositeTypeRef.apiVersion (probe)
+Crossplane v2,Unused ProviderConfig / managed resource with missing ProviderConfig,orphan,not expressible,G6,,dependencies are hundreds of provider-specific managed-resource kinds (needs kind wildcards or categories)
+Krateo,CompositionDefinition whose spec.apiRef names a missing RESTAction,dangling,expressible,,,scalar name + namespace reference
+Krateo,CompositionDefinition with no instance of its generated kind,orphan,not expressible,G6,,dependency kind is generated per definition version
+Krateo,Page not referenced by any NavMenuItem (paper example),orphan,partial,G1,,name and namespace of resourcesRefs.items[*] are not correlated per item (false negatives)
+KubeVela,Unused ComponentDefinition / TraitDefinition,orphan,expressible,,kubevela-componentdefinition-not-used; kubevela-traitdefinition-not-used,nested [*]; namespace filter separates team definitions from the global catalogue
+KubeVela,Unused PolicyDefinition / WorkflowStepDefinition,orphan,expressible,,,spec.policies[*].type and spec.workflow.steps[*].type
+KubeVela,Application using a type with no definition,dangling,not expressible,G2,,needs "some element resolves to nothing" (per-element universal quantification)
+KubeVela,Definition referenced through a pinned revision (name@v1),orphan,partial,G4,kubevela-componentdefinition-not-used,version suffix is part of the string (probe: false positive)
+Kargo,Warehouse not requested by any Stage,orphan,expressible,,kargo-warehouse-not-requested,origin.kind can only be Warehouse so the uncorrelated name criterion is exact
+Kargo,Unused AnalysisTemplate,orphan,expressible,,,spec.verification.analysisTemplates[*].name + namespace
+Kargo,Stage whose upstream Stage does not exist,dangling,not expressible,G2,,per-element check over sources.stages[*]
+Kratix,Promise without resource requests / Destination selected by nothing,orphan,not expressible,G6;G7,,request kinds are generated per Promise; destinations are chosen by label selectors
+Cluster API,Orphan machine template (per provider kind),orphan,expressible,G1;G6,capi-machinetemplate-orphan,five matchNone entries incl. two on the same ClusterClass; one Pattern per provider kind; name/kind not correlated per worker class (probe)
+Cluster API,Unused ClusterClass,orphan,partial,G3,,spec.topology.classRef.namespace defaults to the Cluster namespace when omitted
+Capsule,Tenant owning no Namespace,orphan,expressible,,,owns + matchNone
+Argo CD,ApplicationSet owning no Application,orphan,expressible,,argocd-applicationset-generates-nothing,owns + matchNone over the ownership graph
+Argo CD,AppProject without Applications,orphan,expressible,,argocd-appproject-empty,custom + target filter excluding the default project
+Argo Rollouts,Rollout referencing a missing stable/canary Service,dangling,expressible,,,scalar names; one Pattern per reference field
+Argo Rollouts,Unused AnalysisTemplate,orphan,expressible,,,templates[*].templateName + namespace
+Argo Workflows,Unused WorkflowTemplate,orphan,partial,G8,,Workflows are transient (use CronWorkflows as referrers)
+Flux,Unused OCIRepository / GitRepository,orphan,expressible,G3,flux-ocirepository-not-used,name + kind + namespace; an explicit cross-namespace chartRef.namespace is not modelled (probe)
+Flux,Unused Alert Provider / ImageRepository,orphan,partial,G3,,providerRef / imageRepositoryRef namespace defaults to the referrer
+Tekton,Unused Task / Pipeline,orphan,partial,G9,,local taskRef.name is expressible; resolvers and bundles are remote references
+Gateway API,Unused GatewayClass,orphan,expressible,,,spec.gatewayClassName is a scalar name
+Gateway API,Gateway without Routes / stale ReferenceGrant,orphan,partial,G1;G3,,parentRefs namespace defaults; ReferenceGrant needs from/to correlation (Gateway already exposes attachedRoutes)
+Istio,DestinationRule subsets unused by any VirtualService,orphan,not expressible,G4,,hosts are FQDN or short names needing normalisation
+Traefik,Middleware not used by any IngressRoute,orphan,partial,G3;G4,,optional namespace and name@provider strings
+cert-manager,Unused ClusterIssuer,orphan,expressible,G4;G8,certmanager-clusterissuer-not-used,dependency filter on issuerRef.kind; group string and retained CertificateRequests are probes
+cert-manager,Unused namespaced Issuer,orphan,expressible,,,dependency filter matchNone kind EQUALS ClusterIssuer keeps omitted kinds (default Issuer) + namespace criterion
+External Secrets,Unused SecretStore / ClusterSecretStore,orphan,expressible,G1;G7,eso-secretstore-not-used; eso-clustersecretstore-not-used,top-level + data[*] + dataFrom[*] + PushSecret references; per-entry name/kind not correlated; label-selected stores (probes)
+Sealed Secrets,Secret not owned by SealedSecret/ExternalSecret,orphan,partial,,,ownedBy + matchNone; needs type filters to drop SA tokens and Helm release secrets
+OLM,Subscription whose CatalogSource does not exist,dangling,expressible,,,spec.source vs name and spec.sourceNamespace vs namespace
+CloudNativePG,Cluster without ScheduledBackup,missing-companion,expressible,G10,cnpg-cluster-without-scheduledbackup,name + namespace; a suspended ScheduledBackup cannot be excluded (boolean comparison)
+CloudNativePG,Pooler named like a Cluster,misconfiguration,expressible,,cnpg-pooler-name-clashes-with-cluster,matchAll on name + namespace
+CloudNativePG,Unused Barman ObjectStore,orphan,expressible,,,spec.plugins[*].parameters.barmanObjectName (key without dots)
+Strimzi,KafkaTopic/KafkaUser whose strimzi.io/cluster label names no Kafka,dangling,not expressible,G5,,label key contains dots (no escaping in paths)
+Velero,Restore whose Backup does not exist,dangling,expressible,,,spec.backupName + namespace
+Velero,Schedule/Backup with missing BackupStorageLocation,dangling,partial,G3,,empty storageLocation means the default location
+KEDA,ScaledObject referencing a missing TriggerAuthentication,dangling,not expressible,G2;G3,,per-trigger check with kind default
+Dapr,Component scoped to app-ids no Pod declares,orphan,not expressible,G5,,dapr.io/app-id annotation key contains dots
+Knative Eventing,Broker with no Trigger,orphan,expressible,,,spec.broker + namespace
+Karpenter,NodeClass not referenced by any NodePool,orphan,expressible,,,spec.template.spec.nodeClassRef.name + kind
+Kyverno / Gatekeeper,ConstraintTemplate without Constraints,orphan,not expressible,G6,,constraint kinds are generated per template
+OpenShift,ConsolePlugin whose backend Service is missing,dangling,expressible,,,spec.backend.service.{name,namespace}
+Prometheus Operator,ServiceMonitor selecting no Service,orphan,not expressible,G7,,label selectors are not evaluated
+Standard kinds,Unused ConfigMap / Secret / PVC / ServiceAccount; bare Pod; dangling RoleBinding,orphan,expressible,,,already covered by kor/Popeye (baseline only)
+Standard kinds,Service selecting no Pod,orphan,not expressible,G7,,selects/selectedBy are lint-valid but not implemented

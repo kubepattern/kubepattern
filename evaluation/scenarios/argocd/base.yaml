@@ -1,0 +1,54 @@
+# Argo CD scenario, base state: projects and Applications in use (no automated sync: nothing is deployed).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kp-argo-apps
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-a
+  namespace: argocd
+spec:
+  sourceRepos: ["https://github.com/argoproj/argocd-example-apps.git"]
+  destinations:
+    - {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-appset
+  namespace: argocd
+spec:
+  sourceRepos: ["https://github.com/argoproj/argocd-example-apps.git"]
+  destinations:
+    - {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook-a
+  namespace: argocd
+spec:
+  project: team-a
+  source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+  destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: as-list-2
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - list:
+        elements: [{name: one}, {name: two}]
+  template:
+    metadata:
+      name: 'as-list-2-{{.name}}'
+    spec:
+      project: team-appset
+      source: {repoURL: "https://github.com/argoproj/argocd-example-apps.git", path: guestbook, targetRevision: HEAD}
+      destination: {server: https://kubernetes.default.svc, namespace: kp-argo-apps}

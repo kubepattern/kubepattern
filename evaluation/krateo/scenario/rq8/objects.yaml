@@ -1,0 +1,25 @@
+# RQ8 on Krateo: widgets that are unreferenced for a while during development (namespace kp-krateo-rq8).
+#   rq8-stale  never wired: a persistent smell
+#   rq8-wip    created unreferenced, wired into the Column later (development in progress)
+#   rq8-moved  wired from the start; the Column is deleted and re-created (a re-sync) for one run
+apiVersion: v1
+kind: Namespace
+metadata: {name: kp-krateo-rq8}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: rq8-stale, namespace: kp-krateo-rq8}
+spec:
+  widgetData: {text: never wired}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: rq8-wip, namespace: kp-krateo-rq8}
+spec:
+  widgetData: {text: wired later}
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Paragraph
+metadata: {name: rq8-moved, namespace: kp-krateo-rq8}
+spec:
+  widgetData: {text: re-synced}
