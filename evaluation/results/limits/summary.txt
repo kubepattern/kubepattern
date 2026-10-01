@@ -1,5 +1,5 @@
-# Engine update 'limitations': replay results (2026-10-01T22:58:49Z)
-baseline engine: a848c98, new engine: a848c98+changes, Kubernetes v1.34.4
+# Engine update 'limitations': replay results (2026-10-01T23:03:17Z)
+baseline engine: a848c98, new engine: 23878ef, Kubernetes v1.34.4
 
 ## RQ2, baseline engine, original Patterns (probes scored against the engine prediction)
 rq2-base-v1: 14 Patterns, 46 Smells in 0.85 s
