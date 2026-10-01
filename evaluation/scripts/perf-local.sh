@@ -10,8 +10,10 @@ label="${1:?usage: perf-local.sh <label>}"
 work="$EVAL/results/raw/perf/$label/$(date -u +%Y%m%dT%H%M%S%NZ)"
 mkdir -p "$work"
 kc="$EVAL/env/sa.kubeconfig"
-if [[ ! -f "$kc" || $(find "$kc" -mmin +600 | wc -l) -gt 0 ]]; then
-  server="$(kubectl config view --minify --context "$KP_PROFILE" -o jsonpath='{.clusters[0].cluster.server}')"
+server="$(kubectl config view --minify --context "$KP_PROFILE" -o jsonpath='{.clusters[0].cluster.server}')"
+# Regenerate the token kubeconfig when it is old or was made for another profile (or a re-created one).
+if [[ ! -f "$kc" || $(find "$kc" -mmin +600 | wc -l) -gt 0 \
+      || "$(kubectl config view --kubeconfig "$kc" -o jsonpath='{.clusters[0].cluster.server}')" != "$server" ]]; then
   token="$(kubectl -n "$KP_NAMESPACE" create token "${KP_RELEASE}-sa" --duration=24h)"
   kubectl config --kubeconfig="$kc" set-cluster kp --server="$server" --certificate-authority="$HOME/.minikube/ca.crt" --embed-certs >/dev/null
   kubectl config --kubeconfig="$kc" set-credentials sa --token="$token" >/dev/null

@@ -4,11 +4,12 @@
 # except run time. The image must already be in the profile (minikube -p kp-eval image load <tar>).
 # Kyverno's reports and background controllers are scaled to 0 for the duration and restored at the end.
 # Results: results/regression/<commit>/; per-run archives in results/raw/. Run it under systemd-inhibit.
-# Usage: regression.sh <commit>
+# Usage: regression.sh <commit> [all|incluster|outcluster]   (outcluster needs no image in the profile)
 set -uo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 S="$EVAL/scripts"
-C="${1:?usage: regression.sh <commit>}"
+C="${1:?usage: regression.sh <commit> [all|incluster|outcluster]}"
+PART="${2:-all}"
 export KP_COMMIT="$C"
 source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
@@ -23,6 +24,7 @@ restore() { kubectl -n "$KYVERNO_NAMESPACE" scale deploy kyverno-reports-control
 trap restore EXIT
 kubectl -n "$KYVERNO_NAMESPACE" scale deploy kyverno-reports-controller kyverno-background-controller --replicas=0 >/dev/null
 
+incluster() {
 step "install $C (CRDs re-applied: helm does not upgrade them)"
 kubectl apply -f "$EVAL/../charts/kubepattern/crds/" >/dev/null
 KP_SKIP_LOAD=1 "$EVAL/env/install/00-kubepattern.sh" >/dev/null && echo "installed $KP_IMAGE"
@@ -42,6 +44,10 @@ step "RQ5: CronJob timeline"
 TIMELINE_LABEL="cronjob-regr-$C" "$S/cronjob-timeline.sh" | grep -E "^run|suspended"
 "$S/timeline_report.py" --label "cronjob-regr-$C" --gc per-pattern | tee "$OUT/timeline.txt"; echo "timeline exit=${PIPESTATUS[0]}"
 
+}
+
+outcluster() {
+kubectl apply -f "$EVAL/../charts/kubepattern/crds/" >/dev/null
 step "whole cluster: 3 measured runs each, a814e4a (5 QPS) vs $C"
 : > "$OUT/whole-cluster.jsonl"
 for r in 1 2 3; do
@@ -60,6 +66,16 @@ step "RQ4: full sweep S1/S2/S3 (compare with results/scale/)"
 SCALE_OUT="results/regression/$C/scale" RUN_PREFIX="regr-$C-" KP_BIN="$EVAL/bin/kubepattern-$C" python3 -u "$S/scale.py"
 python3 "$S/scale.py" cleanup
 
-step "final baseline"
-score_run "regr-$C-final" | head -2 | tee "$OUT/final.txt"
-step "done (engine $C stays installed)"
+}
+
+case "$PART" in
+  incluster) incluster ;;
+  outcluster) outcluster ;;
+  all) incluster; outcluster ;;
+  *) echo "unknown part $PART" >&2; exit 2 ;;
+esac
+if [[ "$PART" != outcluster ]]; then
+  step "final baseline"
+  score_run "regr-$C-final" | head -2 | tee "$OUT/final.txt"
+fi
+step "done ($PART)"
