@@ -7,6 +7,7 @@ EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 source "$EVAL/env/versions.env"
 S="$EVAL/scripts"
 # MUTATION_RUNNER: the analysis runner (RQ6 uses scripts/kyverno-run.sh); it must print the run directory last.
+# MUTATION_AFTER_APPLY, MUTATION_REVERT: replay hooks (replay/mutate.sh); unset on minikube.
 RUN="${MUTATION_RUNNER:-$S/run-once.sh}"
 base="$("$RUN" "${MUTATION_LABEL:-mutation}-baseline" | tail -1)"
 
@@ -37,6 +38,9 @@ kubectl -n kp-vela-a patch applications.core.oam.dev a2 --type=json -p '[
   {"op":"replace","path":"/spec/components/1/traits","value":[{"type":"kp-team-label"}]}]'
 kubectl -n kp-capi-a patch machinedeployment md-workers --type=merge -p '{"spec":{"template":{"spec":{"infrastructureRef":{"name":"dmt-rotated-v2"}}}}}'
 # let controllers converge (AppSet deletes its Application, CES children are garbage-collected)
+# Optional hook for clusters without controllers (the offline replay): it performs what the
+# controllers do in response to the mutations above (garbage collection, generated objects).
+[[ -n "${MUTATION_AFTER_APPLY:-}" ]] && "$MUTATION_AFTER_APPLY"
 for i in $(seq 1 30); do
   kubectl -n argocd get application as-list-1-solo >/dev/null 2>&1 || kubectl -n kp-secrets-b get externalsecret ces >/dev/null 2>&1 || break
   sleep 2
@@ -45,7 +49,7 @@ applied="$("$RUN" "${MUTATION_LABEL:-mutation}-applied" | tail -1)"
 
 echo "==> reverting"
 kubectl -n kp-db-a delete clusters.postgresql.cnpg.io pool-rw
-"$S/apply-scenario.sh" >/dev/null
+"${MUTATION_REVERT:-$S/apply-scenario.sh}" >/dev/null
 sleep 20
 reverted="$("$RUN" "${MUTATION_LABEL:-mutation}-reverted" | tail -1)"
 

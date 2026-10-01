@@ -1,4 +1,4 @@
-# Handoff: KubePattern evaluation (RQ1–RQ6, Krateo case study, engine update and RQ8 done)
+# Handoff: KubePattern evaluation (RQ1–RQ6, Krateo case study, engine update, RQ8 and limitations update done)
 
 Read this first when you continue the work in a new session. RQ1–RQ5, the fix validation and the Kyverno comparison (RQ6, [`COMPARISON-PLAN.md`](COMPARISON-PLAN.md)) are done; results are in [`README.md`](README.md).
 
@@ -26,6 +26,12 @@ The user is writing a paper on **KubePattern**, a Go engine that runs as a CronJ
 | RQ8 `spec.for` | 0 transient findings with `for` (vs 2 on kp-eval, 3 on Krateo); every persistent smell reported 2 periods later; Kyverno reports the transients |
 
 All main results use the engine **as-is** (`dev` @ `69d4ffd`). The fix is reported as a separate before/after validation.
+
+## 1b. Limitations update (2026-10-01, branch `ccr-02fe82f9-6bq28v` from `dev` @ `a848c98`)
+- **Engine:** the DSL resolves G1–G7 and G10 (`[@]` anchors, defaults, transforms, quoted keys, `kind: "*"` / `category` / `kinds` / `fromTarget`, `selects` / `selectedBy`, typed filters, `valuesFrom`, literal criterion sides). Reference: [`../docs/dsl.md`](../docs/dsl.md). New package `internal/fieldpath`; unit tests per limitation in `internal/analysis/limitations_test.go`.
+- **Patterns:** `patterns-v2/` (8 RQ2 Patterns) and `krateo/patterns-v2/` (10 Krateo Patterns, including the new `krateo-restaction-manager-missing`). Same names as the originals, which stay unchanged.
+- **Measured on the offline replay** ([`replay/`](replay/README.md)): kube-apiserver + etcd + pinned CRDs, no controllers, built because minikube was not available in that session. Its baseline reproduces the minikube results exactly. Results and the full log: [`results/limits/`](results/limits/README.md) (`replay/regression.sh`).
+- **Not done:** re-running on `kp-eval` / `kp-krateo` (cost, RQ5, RQ8, Kyverno, Krateo natural state); updating the Pattern registry; the paper text (Listing 1 with `[@]`, five primitives now implemented).
 
 ## 2. Repository state
 - **Branch layout since 2026-10-01: everything is on `dev`** (pushed). The per-pattern prune, the engine update (`chore/engine-cleanup`, `feat/for`) and the evaluation material (`paper/evaluation`) were merged into `dev`, which now holds the engine, `evaluation/` and `docs/proposals/`. New work goes on feature branches from `dev`; merge them back into `dev`. The merged branches and `fix/per-pattern-prune` are kept on origin for history.
@@ -128,7 +134,7 @@ Index, G2, discovery, readability study and the operator port come after the pap
 - **Pitfalls found:**
   - `perf-local.sh` reused the SA kubeconfig of another profile (fixed: it now regenerates when the server changes);
   - waiting with `pgrep -f <script>` matches the waiting shell itself.
-- **Next:** WP1 (G1, element-scoped criteria `[@]`), then the paper track. The registry patch for the `v1-0-10` pin is ready but not applied.
+- **Next:** WP1 is done and extended to G2–G7 and G10 (§1b, measured on the replay); confirm it on `kp-eval` and `kp-krateo`, then the paper track. The registry patch for the `v1-0-10` pin is ready but not applied.
 
 The earlier assessment (strengths, weaknesses, positioning) and the roadmap are in `README.md` → *Discussion and next steps*. Candidates, in the order recommended before the plan:
 1. Element-scoped criteria (G1): removes silent false negatives.

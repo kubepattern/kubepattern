@@ -1,0 +1,45 @@
+# v2: G7/G5 resolved. The portal also lists a Panel through its krateo.io/portal-page label
+# (quoted key), so such Panels are not orphans (probe-G7 rows). One dependency lists the six
+# layout kinds (kinds). Scope as given: names only (probe-scope panel-kind, panel-links), and
+# PortalBlueprintPage read at v1-0-9 as in the scored v1 copy.
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: panel-not-referenced
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: Panel Not Referenced
+  category: Architecture
+  severity: MEDIUM
+  message: "Panel {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not included in any layout (Row, Column, TabList or Panel)."
+  reference: https://docs.krateo.io/widgets/panel
+  target:
+    kind: Panel
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    plural: panels
+    filters:
+      matchNone:
+        - {path: metadata.namespace, operator: EQUALS, values: [krateo-system]}
+        - {path: "metadata.labels['krateo.io/portal-page']", operator: EXISTS}
+  dependencies:
+    - id: layout
+      kinds:
+        - {kind: Panel, apiVersion: widgets.templates.krateo.io/v1beta1, plural: panels}
+        - {kind: Column, apiVersion: widgets.templates.krateo.io/v1beta1, plural: columns}
+        - {kind: Row, apiVersion: widgets.templates.krateo.io/v1beta1, plural: rows}
+        - {kind: TabList, apiVersion: widgets.templates.krateo.io/v1beta1, plural: tablists}
+        - {kind: Page, apiVersion: widgets.templates.krateo.io/v1beta1, plural: pages}
+        - {kind: DataGrid, apiVersion: widgets.templates.krateo.io/v1beta1, plural: datagrids}
+    - {id: portalblueprintpage, kind: PortalBlueprintPage, apiVersion: composition.krateo.io/v1-0-9, plural: portalblueprintpages}
+  relationships:
+    matchNone:
+      - with: layout
+        type: custom
+        criteria:
+          - {targetPath: metadata.name, dependencyPath: "spec.resourcesRefs.items[*].name", operator: EQUALS}
+      - with: portalblueprintpage
+        type: custom
+        criteria:
+          - {targetPath: metadata.name, dependencyPath: "status.managed[*].name", operator: EQUALS}

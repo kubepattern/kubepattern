@@ -7,13 +7,16 @@ import (
 	"os"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"kubepattern-go/internal/analysis"
 	"kubepattern-go/internal/cluster"
+	"kubepattern-go/internal/fieldpath"
 	"kubepattern-go/internal/kube"
 	"kubepattern-go/internal/linter"
 )
@@ -122,23 +125,7 @@ func main() {
 	var allResources []unstructured.Unstructured
 
 	for _, pattern := range patterns {
-		var reqResources []kube.Resource
-
-		reqResources = append(reqResources, kube.Resource{
-			APIVersion: pattern.Spec.Target.APIVersion,
-			Kind:       pattern.Spec.Target.Kind,
-			Resource:   pattern.Spec.Target.PluralName,
-		})
-
-		for _, dependency := range pattern.Spec.Dependencies {
-			reqResources = append(reqResources, kube.Resource{
-				APIVersion: dependency.APIVersion,
-				Kind:       dependency.Kind,
-				Resource:   dependency.PluralName,
-			})
-		}
-
-		res, err := kubeClient.FetchSelectedWithInheritance(reqResources, ctx)
+		res, err := fetchForPattern(ctx, kubeClient, pattern, allResources)
 
 		if len(res) > 0 {
 			allResources = append(allResources, res...)
@@ -180,4 +167,122 @@ func main() {
 	pruneOrphans()
 
 	slog.Info("analysis complete")
+}
+
+// fetchForPattern lists the resource types a pattern reads, with their owners, and returns
+// the objects not fetched before. Kind wildcards and categories are expanded through
+// discovery and recorded in the pattern (Resolved). Dependencies whose types are derived
+// from the targets (fromTarget) are resolved after the targets are available; a derived
+// type that the API server does not serve has no instances.
+func fetchForPattern(ctx context.Context, c *kube.Client, pattern *linter.PatternAsCode, fetched []unstructured.Unstructured) ([]unstructured.Unstructured, error) {
+	spec := &pattern.Spec
+	targetRes, err := c.ExpandRefs(spec.Target.Refs())
+	if err != nil {
+		return nil, err
+	}
+	if !spec.Target.IsSingleKind() {
+		spec.Target.Resolved = kindSet(targetRes)
+	}
+	reqResources := targetRes
+	for i := range spec.Dependencies {
+		dep := &spec.Dependencies[i]
+		if dep.FromTarget != nil {
+			continue
+		}
+		depRes, err := c.ExpandRefs(dep.Refs())
+		if err != nil {
+			return nil, err
+		}
+		if !dep.IsSingleKind() {
+			dep.Resolved = kindSet(depRes)
+		}
+		reqResources = append(reqResources, depRes...)
+	}
+
+	res, err := c.FetchSelectedWithInheritance(reqResources, ctx)
+	if err != nil {
+		return res, err
+	}
+
+	var all []unstructured.Unstructured // the targets are read from everything fetched so far
+	for i := range spec.Dependencies {
+		dep := &spec.Dependencies[i]
+		if dep.FromTarget == nil {
+			continue
+		}
+		if all == nil {
+			all = append(append([]unstructured.Unstructured{}, fetched...), res...)
+		}
+		dep.Resolved = linter.KindSet{}
+		for _, r := range derivedResources(all, spec.Target, dep.FromTarget) {
+			if r.Resource == "" {
+				gvr, err := c.GetGVR(schema.FromAPIVersionAndKind(r.APIVersion, r.Kind))
+				if err != nil {
+					slog.Warn("derived kind is not served, no instances", "pattern", pattern.Metadata.Name, "apiVersion", r.APIVersion, "kind", r.Kind)
+					dep.Resolved.Add(r.APIVersion, r.Kind)
+					continue
+				}
+				r.Resource = gvr.Resource
+			}
+			dep.Resolved.Add(r.APIVersion, r.Kind)
+			more, err := c.FetchSelectedWithInheritance([]kube.Resource{r}, ctx)
+			res = append(res, more...)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					slog.Warn("derived kind is not served, no instances", "pattern", pattern.Metadata.Name, "apiVersion", r.APIVersion, "kind", r.Kind)
+					continue
+				}
+				return res, err
+			}
+		}
+	}
+	return res, nil
+}
+
+// derivedResources reads the apiVersion, kind and plural of a fromTarget dependency from
+// every object of the target's types.
+func derivedResources(objs []unstructured.Unstructured, t linter.Target, ft *linter.FromTarget) []kube.Resource {
+	isTarget := analysis.TargetMatcher(t)
+	seen := map[string]bool{}
+	var out []kube.Resource
+	first := func(obj map[string]any, path string) string {
+		if path == "" {
+			return ""
+		}
+		for _, v := range fieldpath.MustParse(path).Values(obj, nil) {
+			if s, ok := v.(string); ok && s != "" {
+				return s
+			}
+		}
+		return ""
+	}
+	for i := range objs {
+		o := &objs[i]
+		if !isTarget(o) {
+			continue
+		}
+		apiVersion := ft.APIVersion
+		if apiVersion == "" {
+			apiVersion = first(o.Object, ft.APIVersionPath)
+		}
+		r := kube.Resource{
+			APIVersion: apiVersion,
+			Kind:       first(o.Object, ft.KindPath),
+			Resource:   first(o.Object, ft.PluralPath),
+		}
+		if r.APIVersion == "" || r.Kind == "" || seen[r.APIVersion+"|"+r.Kind] {
+			continue
+		}
+		seen[r.APIVersion+"|"+r.Kind] = true
+		out = append(out, r)
+	}
+	return out
+}
+
+func kindSet(res []kube.Resource) linter.KindSet {
+	set := linter.KindSet{}
+	for _, r := range res {
+		set.Add(r.APIVersion, r.Kind)
+	}
+	return set
 }

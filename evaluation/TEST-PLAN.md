@@ -187,6 +187,8 @@ Protocol: baseline run → apply all mutants → run → revert → run. A mutan
 | G9 | template / remote content | (RQ1: Tekton resolvers, CUE) | out of scope |
 | G10 | *new*: filters compare strings only (no booleans) | CNPG `db-suspended` (`spec.suspend: true`) | FN |
 
+**Status after the limitations update** ([`results/limits/`](results/limits/README.md), DSL reference [`../docs/dsl.md`](../docs/dsl.md)): G1, G2, G3, G4, G5, G6, G7 and G10 are resolved by new constructs, and every probe above yields the true verdict with the v2 Patterns (`patterns-v2/`). G8 is covered by `spec.for` (transients) and by a dependency filter (history objects, `ci-old-ca`). G9 stays out of scope. The original Patterns keep their verdicts, so the probe predictions of this table still hold for them.
+
 ## 10. Threats to validity
 - **Construct:**
   - Seeded smells are biased toward detectable forms. Mitigations: near-misses, probes, mutation seeding, and a natural-state experiment with an independent oracle.
