@@ -1,0 +1,34 @@
+# v2: G4 resolved. The group encoded in compositeTypeRef.apiVersion is compared with the
+# XRD's spec.group, so a kind defined only in another group is detected (probe app-foreign-group).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: crossplane-composition-without-xrd
+  labels:
+    kubepattern.dev/suite: eval-v2
+    kubepattern.dev/platform: crossplane
+spec:
+  displayName: Composition Targets an Undefined Composite Kind
+  category: Architecture
+  severity: HIGH
+  message: "Composition {{target.metadata.name}} composes a kind that no CompositeResourceDefinition defines: it can never be selected."
+  reference: "https://docs.crossplane.io/latest/composition/compositions/"
+  target:
+    kind: Composition
+    apiVersion: apiextensions.crossplane.io/v1
+    plural: compositions
+  dependencies:
+    - id: xrd
+      kind: CompositeResourceDefinition
+      apiVersion: apiextensions.crossplane.io/v2
+      plural: compositeresourcedefinitions
+  relationships:
+    matchNone:
+      - with: xrd
+        type: custom
+        criteria:
+          - {targetPath: "spec.compositeTypeRef.kind", dependencyPath: "spec.names.kind", operator: EQUALS}
+          - targetPath: "spec.compositeTypeRef.apiVersion"
+            targetTransform: {apiGroup: true}
+            dependencyPath: "spec.group"
+            operator: EQUALS

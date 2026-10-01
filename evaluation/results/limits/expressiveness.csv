@@ -1,0 +1,50 @@
+platform,smell,family,verdict_v1,limitations_v1,verdict_v2,resolved_by,evidence,note
+Crossplane v2,Function not referenced by any Composition/Operation pipeline,orphan,expressible,,expressible,,,
+Crossplane v2,Composition targeting a kind no XRD defines,dangling,expressible,,expressible,,,
+Crossplane v2,Unused ProviderConfig / managed resource with missing ProviderConfig,orphan,not expressible,G6,expressible,G6 category,analytic,"dependency {category: managed}: every managed-resource kind found by discovery, criterion on spec.providerConfigRef.name"
+Krateo,CompositionDefinition whose spec.apiRef names a missing RESTAction,dangling,expressible,,expressible,,,
+Krateo,CompositionDefinition with no instance of its generated kind,orphan,not expressible,G6,expressible,G6 fromTarget,measured (Krateo replay),"dependency fromTarget {status.apiVersion, status.kind, status.resource}"
+Krateo,Page not referenced by any NavMenuItem (paper example),orphan,partial,G1,expressible,G1 [@],measured (Krateo replay),"items[@] correlates name, namespace and resource of the same entry"
+KubeVela,Unused ComponentDefinition / TraitDefinition,orphan,expressible,,expressible,,,
+KubeVela,Unused PolicyDefinition / WorkflowStepDefinition,orphan,expressible,,expressible,,,
+KubeVela,Application using a type with no definition,dangling,not expressible,G2,expressible,"G2 target [@], G4 split",analytic,"target spec.components[@].type (split '@'), matchNone ComponentDefinition in the Application's namespace or vela-system (targetValue)"
+KubeVela,Definition referenced through a pinned revision (name@v1),orphan,partial,G4,expressible,G4 split,measured (RQ2 replay),dependencyTransform split '@' index 0
+Kargo,Warehouse not requested by any Stage,orphan,expressible,,expressible,,,
+Kargo,Unused AnalysisTemplate,orphan,expressible,,expressible,,,
+Kargo,Stage whose upstream Stage does not exist,dangling,not expressible,G2,expressible,G2 target [@],analytic,"target spec.requestedFreight[@].sources.stages[@] (nested anchors), matchNone Stage name + namespace"
+Kratix,Promise without resource requests / Destination selected by nothing,orphan,not expressible,G6;G7,partial,G7 selects,analytic,destinations: selects on the Promise's destinationSelectors; request kinds: fromTarget needs the generated kind in the Promise status (to verify on a Kratix install)
+Cluster API,Orphan machine template (per provider kind),orphan,expressible,,expressible,,,
+Cluster API,Unused ClusterClass,orphan,partial,G3,expressible,G3 default path,analytic,spec.topology.classRef.namespace with dependencyDefault {path: metadata.namespace}
+Capsule,Tenant owning no Namespace,orphan,expressible,,expressible,,,
+Argo CD,ApplicationSet owning no Application,orphan,expressible,,expressible,,,
+Argo CD,AppProject without Applications,orphan,expressible,,expressible,,,
+Argo Rollouts,Rollout referencing a missing stable/canary Service,dangling,expressible,,expressible,,,
+Argo Rollouts,Unused AnalysisTemplate,orphan,expressible,,expressible,,,
+Argo Workflows,Unused WorkflowTemplate,orphan,partial,G8,partial,(G8),analytic,unchanged: Workflows are transient; spec.for hides transient findings but retained history is still needed
+Flux,Unused OCIRepository / GitRepository,orphan,expressible,,expressible,,,
+Flux,Unused Alert Provider / ImageRepository,orphan,partial,G3,expressible,G3 default path,analytic,providerRef / imageRepositoryRef namespace with dependencyDefault {path: metadata.namespace}
+Tekton,Unused Task / Pipeline,orphan,partial,G9,partial,(G9),analytic,unchanged: resolvers and bundles are remote references (out of scope)
+Gateway API,Unused GatewayClass,orphan,expressible,,expressible,,,
+Gateway API,Gateway without Routes / stale ReferenceGrant,orphan,partial,G1;G3,expressible,"G1 [@], G3 default path",analytic,parentRefs[@] with namespace default; ReferenceGrant from[@]/to[@] correlated
+Istio,DestinationRule subsets unused by any VirtualService,orphan,not expressible,G4,partial,G4 (partly),analytic,subsets[@].name and host split/regex are expressible; mapping a short host to the rule's namespace needs a conditional default
+Traefik,Middleware not used by any IngressRoute,orphan,partial,G3;G4,expressible,"G3 default path, G4 split",analytic,CRD form: routes[*].middlewares[@].name/namespace with namespace default; name@provider via split
+cert-manager,Unused ClusterIssuer,orphan,expressible,,expressible,,,
+cert-manager,Unused namespaced Issuer,orphan,expressible,,expressible,,,
+External Secrets,Unused SecretStore / ClusterSecretStore,orphan,expressible,,expressible,,,
+Sealed Secrets,Secret not owned by SealedSecret/ExternalSecret,orphan,partial,,partial,--,analytic,unchanged (not blocked by a catalogued limitation)
+OLM,Subscription whose CatalogSource does not exist,dangling,expressible,,expressible,,,
+CloudNativePG,Cluster without ScheduledBackup,missing-companion,expressible,,expressible,,,
+CloudNativePG,Pooler named like a Cluster,misconfiguration,expressible,,expressible,,,
+CloudNativePG,Unused Barman ObjectStore,orphan,expressible,,expressible,,,
+Strimzi,KafkaTopic/KafkaUser whose strimzi.io/cluster label names no Kafka,dangling,not expressible,G5,expressible,G5 quoted key,analytic,metadata.labels['strimzi.io/cluster']
+Velero,Restore whose Backup does not exist,dangling,expressible,,expressible,,,
+Velero,Schedule/Backup with missing BackupStorageLocation,dangling,partial,G3,expressible,G3 default value,analytic,an empty storageLocation defaults to the literal 'true' compared with the BSL's spec.default
+KEDA,ScaledObject referencing a missing TriggerAuthentication,dangling,not expressible,G2;G3,expressible,"G2 target [@], G3 default",analytic,target spec.triggers[@].authenticationRef with kind default TriggerAuthentication
+Dapr,Component scoped to app-ids no Pod declares,orphan,not expressible,G5,expressible,"G2 target [@], G5 quoted key",analytic,target scopes[@] vs Pod metadata.annotations['dapr.io/app-id']
+Knative Eventing,Broker with no Trigger,orphan,expressible,,expressible,,,
+Karpenter,NodeClass not referenced by any NodePool,orphan,expressible,,expressible,,,
+Kyverno / Gatekeeper,ConstraintTemplate without Constraints,orphan,not expressible,G6,expressible,G6 fromTarget,analytic,"fromTarget {apiVersion: constraints.gatekeeper.sh/v1beta1, kindPath: spec.crd.spec.names.kind}"
+OpenShift,ConsolePlugin whose backend Service is missing,dangling,expressible,,expressible,,,
+Prometheus Operator,ServiceMonitor selecting no Service,orphan,not expressible,G7,expressible,G7 selects,analytic,selects with selectorPath spec.selector; namespaceSelector.matchNames with a default to the monitor's namespace (namespaceSelector.any not covered)
+Standard kinds,Unused ConfigMap / Secret / PVC / ServiceAccount; bare Pod; dangling RoleBinding,orphan,expressible,,expressible,,,
+Standard kinds,Service selecting no Pod,orphan,not expressible,G7,expressible,G7 selects,measured (unit test),selects with the default selectorPath spec.selector (label map)

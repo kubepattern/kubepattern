@@ -82,7 +82,7 @@ spec:
 			expectError: false,
 		},
 		{
-			name: "Error - selects relationship is not implemented",
+			name: "Success - selects relationship (default selector path)",
 			yamlContent: `
 apiVersion: kubepattern.dev/v1
 kind: Pattern
@@ -113,8 +113,7 @@ spec:
       - with: target-pods
         type: selects
 `,
-			expectError:   true,
-			errorContains: "type 'selects' is not implemented yet",
+			expectError: false,
 		},
 
 		// ---------------------------------------------------------
@@ -741,7 +740,7 @@ spec:
 			expectError: false,
 		},
 		{
-			name: "Error - selectedBy relationship is not implemented",
+			name: "Success - selectedBy relationship (default selector path)",
 			yamlContent: `
 apiVersion: kubepattern.dev/v1
 kind: Pattern
@@ -766,8 +765,7 @@ spec:
       - with: rs
         type: selectedBy
 `,
-			expectError:   true,
-			errorContains: "type 'selectedBy' is not implemented yet",
+			expectError: false,
 		},
 		{
 			name: "Error - Criteria CONTAINS is not implemented",

@@ -1,0 +1,13 @@
+platform,pattern,positives,negatives,TP,FP,FN,TN,precision,recall,probes,probes_predicted,probe_FN,probe_FP,unlisted
+krateo,krateo-compositiondefinition-unused,1,0,1,0,0,0,1.00,1.00,1,1,0,1,0
+krateo,krateo-navmenuitem-page-missing,2,2,2,0,0,2,1.00,1.00,1,1,1,0,0
+krateo,krateo-restaction-endpoint-missing,2,5,2,0,0,5,1.00,1.00,2,2,2,0,0
+krateo,krateo-restaction-not-used,11,5,11,0,0,5,1.00,1.00,1,1,0,1,0
+krateo,krateo-rolebinding-clusterrole-missing,1,7,1,0,0,7,1.00,1.00,0,0,0,0,0
+krateo,krateo-rolebinding-subject-sa-missing,2,5,2,0,0,5,1.00,1.00,2,2,2,0,0
+krateo,krateo-widget-manager-missing,2,2,2,0,0,2,1.00,1.00,1,1,1,0,0
+krateo,krateo-yamlviewer-apiref-dangling,2,4,2,0,0,4,1.00,1.00,0,0,0,0,0
+krateo,page-not-referenced,2,2,2,0,0,2,1.00,1.00,2,2,1,1,0
+krateo,panel-not-referenced,2,5,2,0,0,5,1.00,1.00,3,3,2,1,0
+krateo,paragraph-not-referenced,2,2,2,0,0,2,1.00,1.00,1,1,1,0,0
+all,TOTAL,29,39,29,0,0,39,1.00,1.00,14,14,10,4,0

@@ -20,6 +20,7 @@ A fix for the Smell GC defect it uncovered (`fix/per-pattern-prune` @ `a814e4a`)
 | Fix validation | Porting the per-pattern prune from the `operator` branch (`fix/per-pattern-prune` @ `a814e4a`) removes all three failure modes, with no regression (RQ2 43/52/10, mutation 15/15). Overlapping runs keep **46/46** Smells instead of 12/46; a skipped pattern keeps its Smells (**0** instead of 3 GC'd); above the ceiling **0** valid Smells are deleted (instead of 47–51 per run) and coverage converges (752 → 797 → 804 of 805). Cost: 14 extra LISTs per run (+2.8 s). |
 | Engine update (`54dc498`) | Client QPS 50/100, a linter that rejects unimplemented primitives, and `spec.for`. The whole evaluation re-run with `spec.for` unset gives **identical correctness** on both clusters: RQ2 43/52/10, mutation 15/15, D8 46/46, RQ5 9/9, Krateo 55/0/0/121 with 25/25 probes and lifecycle 26/26. Runs are **about 30× faster** with the same requests: whole cluster 26.2 s → 0.85 s. **The 750-Smell ceiling is gone**: 805 Smells in 30.5 s at the first run, instead of a deadline hit. The next limit is CPU (quadratic matching) at about 20k objects. |
 | RQ8 `spec.for` | Each Pattern is compared with a `spec.for` copy in the same runs. **No transient becomes Active with `for`**: 2 transient findings without it on kp-eval (CAPI rotation, GitOps delete-and-recreate) and 3 on Krateo (widgets wired during development). Every persistent smell is still reported (43/43 seeded, plus the new orphans), exactly 2 periods later (`for` rounded up to the next run). Kyverno reports every transient as `fail`. |
+| Engine update: limitations G1–G10 | The DSL gains element anchors `[@]` (G1, G2), defaults (G3), value transforms (G4), quoted keys (G5), kind wildcards, categories, kind lists and kinds derived from the targets (G6), `selects`/`selectedBy` (G7) and typed filters (G10); reference in [`../docs/dsl.md`](../docs/dsl.md). Measured on an **offline replay** (real API server, pinned CRDs, no controllers; [`replay/`](replay/README.md)), which reproduces the minikube baseline exactly. The original Patterns give **identical Smells** with the new engine. The v2 Patterns resolve **10/10 RQ2 probes** and **11/11 Krateo limitation probes** (verdict = truth) with P = R = 1.00 and mutation 15/15. RQ1 re-classified (analytic): 44 expressible, 5 partial, 0 not (was 27/10/12). Results: [`results/limits/`](results/limits/README.md). |
 
 
 ## Layout
@@ -35,6 +36,8 @@ scripts/        build-image.sh, apply-scenario.sh, apply-patterns.sh, run-once.s
                 footprint-sample.sh, audit_by_user.py, cost_report.py, staleness.sh, staleness_report.py (RQ6)
                 regression.sh, rebuild-eval.sh, qps-eval.sh, rq8.sh, set-for.sh, engine_update_tables.py (engine update, RQ8)
 comparison/     kyverno/: RBAC, GlobalContextEntries and ValidatingPolicies of the RQ6 comparison
+patterns-v2/    the probed Patterns rewritten with the constructs of the limitations update (same names)
+replay/         offline replay: kube-apiserver + etcd + pinned CRDs, controller shim, regression.sh
 for/            durations.csv: the spec.for of every evaluated Pattern, with its rationale
 results/        CSV used in the paper, tables/*.tex (booktabs); results/raw/ holds the per-run archives (git-ignored)
 ```
@@ -488,6 +491,7 @@ All three hypotheses of the proposal hold:
    - Neither tool reacts to dependency-side changes: detection latency is bounded by the period in both (H5).
    - The G8 probe (`ci-old-ca`) can also be fixed within the DSL, with `metadata.ownerReferences IS_EMPTY` on the CertificateRequest dependency. It is a pattern-authoring choice, not a hard limit.
 7. **A stateful duration removes snapshot false positives (RQ8).** With `spec.for`, no scripted transient becomes Active (0 vs 2 on kp-eval and 0 vs 3 on Krateo), every persistent smell is still reported, and the latency cost is `for` rounded up to the next run. Kyverno's stateless background scan reports every transient. It cannot keep a "failing since" without state, and an age filter on the object does not cover old objects whose references change.
+8. **The limitations were principled, and they are resolvable within a declarative DSL (engine update, `results/limits/`).** Each catalogued limitation maps to one construct of a fixed structure (no expression language): element anchors, defaults, transforms, quoted keys, discovery-based kind sets, selectors and typed filters. Every probe of RQ2 and of the Krateo controlled cases now yields the true verdict, the original Patterns are unaffected, and the smell that only Kyverno could express (`krateo-restaction-manager-missing`) has a Pattern. Kind sets resolved by discovery at run time (`kind: "*"`, `category`) go beyond the Kyverno translation, which needs one GlobalContextEntry per kind, as transitive ownership already did. G9 (template and remote content) remains out of scope for both tools.
 
 ## Discussion and next steps
 An overall assessment after RQ1–RQ6, to guide the paper's discussion and the engine's roadmap.
@@ -499,8 +503,8 @@ An overall assessment after RQ1–RQ6, to guide the paper's discussion and the e
 - *Generality.* 9 ecosystems with 0 engine changes (RQ1).
 
 **Weaknesses.**
-- *Expressiveness.* CEL resolves all 10 probes with shorter policies (RQ6a). The question "why not a policy engine?" must be answered with cost, structure and the smell-oriented output model, not with power.
-- *G1 is a correctness risk.* Uncorrelated criteria give silent false negatives (CAPI `t1`, ESO `ss-g1`), not just a missing feature.
+- *Expressiveness.* CEL resolves all 10 probes with shorter policies (RQ6a). The question "why not a policy engine?" must be answered with cost, structure and the smell-oriented output model, not with power. **Update:** the limitations update resolves the same probes in the DSL (`results/limits/`); CEL remains the more general language (arbitrary expressions, e.g. a conditional default).
+- *G1 is a correctness risk.* Uncorrelated criteria give silent false negatives (CAPI `t1`, ESO `ss-g1`), not just a missing feature. **Resolved** by `[@]` (limitations update).
 - *Scalability limits of the implementation.* The 5 QPS client limit took about 97% of a run and capped it at about 750 Smells (RQ4). It is **fixed by the engine update** (0.85 s per run, 805 Smells in 30.5 s). Matching is still quadratic, which binds at about 20k objects.
 - *Maturity.* The fail-open GC, the stale linter tests (D4) and the suppression reset (D3) are fixed. The random pattern order (D6) and the missing Pattern status remain.
 - *External validity (main threat).*
@@ -524,7 +528,7 @@ An overall assessment after RQ1–RQ6, to guide the paper's discussion and the e
 A Crossplane ProviderConfig is **not** a good example for (c): Crossplane tracks its usage natively (`ProviderConfigUsage`, `status.users`). A dependency kind that can be *derived from the target* (e.g. a Gatekeeper ConstraintTemplate and its Constraint kind) is also within Kyverno's reach, through `resource.List` with computed strings.
 
 **Priorities** (status on 2026-10-01).
-1. Element-scoped criteria (G1): cheap, and it removes silent false negatives. **Next.**
+1. Element-scoped criteria (G1): cheap, and it removes silent false negatives. **Done**, with G2–G7 and G10 (limitations update, `results/limits/`, measured on the offline replay; to confirm on minikube).
 2. Raise client QPS/Burst (**done**: engine update) and index dependencies (open: quadratic matching).
 3. Merge the per-pattern prune (**done**: merged into `dev`).
 4. `for:` (extension (a)): **done and measured** (RQ8).

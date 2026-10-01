@@ -1,0 +1,35 @@
+# v2: G1 resolved. A layout entry references the Paragraph only when the same entry names it,
+# its namespace and resource "paragraphs" (items[@]; probe para-g1).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: paragraph-not-referenced
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: Paragraph Not Referenced
+  category: Architecture
+  severity: HIGH
+  message: "Paragraph {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not managed by any widgets."
+  target:
+    kind: Paragraph
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    plural: paragraphs
+    filters:
+      matchNone:
+        - {path: metadata.namespace, operator: EQUALS, values: [krateo-system]}
+  dependencies:
+    - id: layout
+      kinds:
+        - {kind: Panel, apiVersion: widgets.templates.krateo.io/v1beta1, plural: panels}
+        - {kind: Column, apiVersion: widgets.templates.krateo.io/v1beta1, plural: columns}
+        - {kind: Row, apiVersion: widgets.templates.krateo.io/v1beta1, plural: rows}
+  relationships:
+    matchNone:
+      - with: layout
+        type: custom
+        criteria:
+          - {targetPath: metadata.name, dependencyPath: "spec.resourcesRefs.items[@].name", operator: EQUALS}
+          - {targetPath: metadata.namespace, dependencyPath: "spec.resourcesRefs.items[@].namespace", operator: EQUALS}
+          - {targetValue: paragraphs, dependencyPath: "spec.resourcesRefs.items[@].resource", operator: EQUALS}

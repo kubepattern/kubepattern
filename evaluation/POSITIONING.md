@@ -11,7 +11,7 @@ The question "why not a policy engine?" must be answered with:
 - the output model, including the stateful duration (RQ8);
 - the verified semantics.
 
-It cannot be answered with expressive power or readability. On both, Kyverno is at least equal (§2).
+It cannot be answered with expressive power or readability. On both, Kyverno is at least equal (§2). **Update (limitations update, §1.8):** on the catalogued limitations the DSL now reaches parity with the best-effort CEL policies (every probe resolved) and goes beyond them on kind sets resolved by discovery; CEL stays the more general language. Parity on the catalogue is a claim the evidence supports; superiority in power is not.
 
 ## 1. Claims supported by the evidence
 
@@ -99,6 +99,20 @@ This is the core of the "solidity" claim. The DSL can only do what [`TEST-PLAN.m
 - **How to word it:** "a minimum duration trades a declared detection latency for the removal of snapshot false positives."
 - **Not:** "KubePattern has no false positives".
 
+### 1.8 Limitations resolved within the declarative DSL (engine update)
+| Evidence | Value | Source |
+|---|---|---|
+| Constructs added | `[@]` element anchors (G1, G2), defaults (G3), transforms (G4), quoted keys (G5), `kind: "*"`, `category`, `kinds`, `fromTarget` (G6), `selects`/`selectedBy` (G7), typed `EQUALS` and `valuesFrom` (G10) | [`../docs/dsl.md`](../docs/dsl.md) |
+| Backward compatibility | identical Smells with the original Patterns (46/46 RQ2, 39/39 Krateo controlled cases); mutation 15/15 | `results/limits/` |
+| Probes, v2 Patterns | 10/10 RQ2 and 11/11 Krateo limitation probes yield the true verdict; P = R = 1.00 | `results/limits/` |
+| Kyverno-only smell | `krateo-restaction-manager-missing` now has a Pattern (G5) | `krateo/patterns-v2/` |
+| Beyond the Kyverno translation | a kind set resolved by discovery at each run (`kind: "*"` over the Krateo widgets, `category: fluxcd-appliers`); Kyverno needs one GlobalContextEntry per kind (24 for the widgets) | `results/limits/`, `krateo/README.md` |
+| RQ1, re-classified | 44 expressible, 5 partial, 0 not (was 27/10/12); 4 rows measured, the rest analytic | `results/limits/expressiveness.csv` |
+
+- **Caveat: measured on the offline replay** (real API server and CRDs, no controllers), whose baseline reproduces the minikube results exactly. Confirm on `kp-eval` and `kp-krateo` before quoting it as a minikube result.
+- **How to word it:** "each catalogued limitation is resolved by a construct of the declarative structure, with no expression language; the original Patterns keep their verdicts".
+- **Not:** "the DSL is as expressive as CEL". A conditional default (Istio short hosts) or a join between two dependencies of arbitrary shape still need CEL.
+
 ## 2. Claims to avoid
 | Claim | Why not | Say instead |
 |---|---|---|
@@ -147,12 +161,12 @@ These items would turn the positioning into evidence. They are ordered by their 
 | Item | What it gives | Kyverno 1.19 | Where |
 |---|---|---|---|
 | `for:` (stateful duration) | "unused for at least 1 h", with an "unused since" timestamp; removes transients (G8) | not replicable: each evaluation is per object and stateless | **done** (`54dc498`), measured by RQ8 (§1.7) |
-| Element-scoped criteria (G1) | removes silent false negatives, including in the paper's Krateo `Page` example | already possible (`exists(m, …)`) | roadmap item 1 |
+| Element-scoped criteria (G1) | removes silent false negatives, including in the paper's Krateo `Page` example | already possible (`exists(m, …)`) | **done** (limitations update, §1.8), with G2–G7 and G10 |
 | Higher client QPS/Burst and indexed dependencies | removes the ~750-Smell ceiling and the quadratic matching; a prerequisite for any scale claim | – | QPS **done** (`54dc498`); indexing open |
 | Pattern status conditions | failures become visible (§3) | misleading (R1a) or absent (R2) | new |
 | Checking paths against the CRD schemas | makes "schema-checkable" true | CEL strings are not checked (RQ6a) | new |
 | Cycle / reachability primitives | detects cycles of any length, with one Smell per cycle | no recursion; policies unrolled to a fixed length miss longer cycles | extension (b) |
-| Kind sets resolved by discovery | covers new operators automatically | kinds must be enumerated in advance | extension (c) |
+| Kind sets resolved by discovery | covers new operators automatically | kinds must be enumerated in advance | **done** for group versions and categories (`kind: "*"`, `category`) and generated kinds (`fromTarget`); recursive paths (`**.secretRef.name`) open |
 
 **Making readability measurable.** There are two options:
 - a small user study: 10–15 participants, comprehension tasks on pattern/policy pairs, measuring time and correctness;
@@ -174,13 +188,13 @@ Recommended titles:
 | Draft | Evidence | Fix |
 |---|---|---|
 | Abstract: evaluation on "a mock application" and "third-party applications" | the evaluation covers 9 CRD ecosystems, with seeded ground truth, probes, mutation testing and the Kyverno comparison | report the RQ2, RQ3 and RQ6 numbers |
-| Listing 1 (the Krateo `Page`), described as "lists its name and namespace among the entries" | classified *partial, G1* in `results/expressiveness/expressiveness.csv`: `items[*].name` and `items[*].namespace` are not correlated per element | implement G1, or state the limitation |
+| Listing 1 (the Krateo `Page`), described as "lists its name and namespace among the entries" | classified *partial, G1* in `results/expressiveness/expressiveness.csv`: `items[*].name` and `items[*].namespace` are not correlated per element | **G1 implemented**: write the listing with `items[@]` (`krateo/patterns-v2/page-not-referenced.yaml`), and the sentence becomes true |
 | Contribution (ii): "orphan and zombie resources, misplaced resources, misconfigurations" | the catalogue families are orphan 36, dangling 11, missing-companion 1, misconfiguration 1 | use the catalogue families |
 | "Smells are written in a dedicated namespace or, optionally, in the namespace of the resource" | the chart default is `saveInNamespace: true` | invert the two |
 | "validated … instead of silently producing wrong findings" | see §2 | use the §2 wording |
 | "blind to relational smells"; "learning curve" | see §2 | use the §2 wording |
 | CRDs "which the platform then reconciles exactly as the native ones" | the API server stores and serves them uniformly; the operator's controllers reconcile them | reword |
-| Contribution (iii): "five relational primitives" | 3 are implemented; the linter now rejects the selector primitives (engine update) | write "three relational primitives (owns, ownedBy, custom); selectors are future work" |
+| Contribution (iii): "five relational primitives" | 3 were implemented; **the limitations update implements `selects` and `selectedBy`** | "five relational primitives" is true with the updated engine; release it before submission |
 
 **Positioning paragraph (draft).**
 ```latex

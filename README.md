@@ -29,6 +29,7 @@ By using a graph-based approach, it retrieves complex relationships between reso
 
 * **Pattern CRD**: KubePattern evaluates the cluster against the Pattern as Code definitions (`patterns.kubepattern.dev`) applied to the cluster. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry).
 * **Smell CRD**: The engine generates and manages `Smell` Custom Resources (`smells.kubepattern.dev`) to persist analysis results directly inside the cluster.
+* **Pattern DSL**: targets, dependencies and relationships with element-scoped paths, defaults, value transforms, label selectors and kind sets resolved by discovery. See the [Pattern DSL reference](docs/dsl.md).
 * **Execution**: Deployed via Helm, it runs as a lightweight `CronJob`, periodically scanning the cluster without consuming idle resources.
 
 ---

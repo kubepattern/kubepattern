@@ -1,0 +1,32 @@
+# v2: G1 resolved. A NavMenuItem or Panel entry references the Page only when the same entry
+# names it, its namespace and resource "pages" (items[@]; probe page-g1). Scope as given
+# (Routes are not considered, probe-scope page-route).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: page-not-referenced
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: Page Not Referenced
+  category: Architecture
+  severity: HIGH
+  message: "Page {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not managed by any NavMenuItem."
+  target:
+    kind: Page
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    plural: pages
+    filters:
+      matchNone:
+        - {path: metadata.namespace, operator: EQUALS, values: [krateo-system]}
+  dependencies:
+    - {id: layout, kinds: [{kind: NavMenuItem, apiVersion: widgets.templates.krateo.io/v1beta1, plural: navmenuitems}, {kind: Panel, apiVersion: widgets.templates.krateo.io/v1beta1, plural: panels}]}
+  relationships:
+    matchNone:
+      - with: layout
+        type: custom
+        criteria:
+          - {targetPath: metadata.name, dependencyPath: "spec.resourcesRefs.items[@].name", operator: EQUALS}
+          - {targetPath: metadata.namespace, dependencyPath: "spec.resourcesRefs.items[@].namespace", operator: EQUALS}
+          - {targetValue: pages, dependencyPath: "spec.resourcesRefs.items[@].resource", operator: EQUALS}

@@ -5,3 +5,7 @@ results/raw/
 env/.kargo-admin
 env/sa.kubeconfig
 __pycache__/
+# Offline replay: pinned binaries, API server state, downloaded CRDs
+replay/.bin/
+replay/.state/
+replay/.cache/

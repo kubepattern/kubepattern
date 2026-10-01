@@ -14,6 +14,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+
+	"kubepattern-go/internal/linter"
 )
 
 // Client wraps the Kubernetes discovery and dynamic clients.
@@ -22,6 +24,7 @@ type Client struct {
 	dynamicClient   dynamic.Interface
 	mapper          meta.RESTMapper
 	cached          []schema.GroupVersionResource
+	preferred       []*metav1.APIResourceList
 }
 
 func NewClient(config *rest.Config) (*Client, error) {
@@ -264,4 +267,67 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 	}
 
 	return allObjects, nil
+}
+
+// ExpandRefs resolves resource refs to concrete resources: a concrete ref is returned as is,
+// kind "*" becomes every listable kind of its group version, and a category becomes every
+// listable kind whose discovery categories include it. An unknown group version is an error
+// (as a missing CRD is); a category that matches nothing yields no resource.
+func (c *Client) ExpandRefs(refs []linter.ResourceRef) ([]Resource, error) {
+	var out []Resource
+	for _, r := range refs {
+		switch {
+		case r.Category != "":
+			lists, err := c.preferredResources()
+			if err != nil {
+				return nil, err
+			}
+			for _, l := range lists {
+				for _, ar := range l.APIResources {
+					if canList(ar.Verbs) && !isSubresource(ar.Name) && contains(ar.Categories, r.Category) {
+						out = append(out, Resource{APIVersion: l.GroupVersion, Kind: ar.Kind, Resource: ar.Name})
+					}
+				}
+			}
+		case r.Kind == linter.KindWildcard:
+			list, err := c.discoveryClient.ServerResourcesForGroupVersion(r.APIVersion)
+			if err != nil {
+				return nil, fmt.Errorf("failed to discover the kinds of %s: %w", r.APIVersion, err)
+			}
+			for _, ar := range list.APIResources {
+				if canList(ar.Verbs) && !isSubresource(ar.Name) {
+					out = append(out, Resource{APIVersion: r.APIVersion, Kind: ar.Kind, Resource: ar.Name})
+				}
+			}
+		default:
+			out = append(out, Resource{APIVersion: r.APIVersion, Kind: r.Kind, Resource: r.PluralName})
+		}
+	}
+	return out, nil
+}
+
+// preferredResources returns (and caches) the server's preferred resources. A partial
+// discovery failure is logged and the partial result is used.
+func (c *Client) preferredResources() ([]*metav1.APIResourceList, error) {
+	if c.preferred != nil {
+		return c.preferred, nil
+	}
+	lists, err := c.discoveryClient.ServerPreferredResources()
+	if err != nil {
+		slog.Warn("partial discovery failure; some resource types may be missing", "error", err)
+	}
+	if lists == nil {
+		return nil, fmt.Errorf("discovery returned no API groups: %w", err)
+	}
+	c.preferred = lists
+	return lists, nil
+}
+
+func contains(list []string, v string) bool {
+	for _, s := range list {
+		if s == v {
+			return true
+		}
+	}
+	return false
 }

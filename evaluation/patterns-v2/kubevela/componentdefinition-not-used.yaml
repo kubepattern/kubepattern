@@ -1,0 +1,38 @@
+# v2: G4 resolved. A component type pinned to a revision ("name@v1") is compared by its name
+# part (split transform), so a definition used through a pinned revision is clean
+# (probe kp-versioned).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: kubevela-componentdefinition-not-used
+  labels:
+    kubepattern.dev/suite: eval-v2
+    kubepattern.dev/platform: kubevela
+spec:
+  displayName: ComponentDefinition Not Used
+  category: Architecture
+  severity: LOW
+  message: "ComponentDefinition {{target.metadata.namespace}}/{{target.metadata.name}} is not used by any Application that can resolve it."
+  reference: "https://kubevela.io/docs/platform-engineers/oam/x-definition/"
+  target:
+    kind: ComponentDefinition
+    apiVersion: core.oam.dev/v1beta1
+    plural: componentdefinitions
+    filters:
+      matchNone:
+        - {path: "metadata.namespace", operator: EQUALS, values: ["vela-system"]}
+  dependencies:
+    - id: application
+      kind: Application
+      apiVersion: core.oam.dev/v1beta1
+      plural: applications
+  relationships:
+    matchNone:
+      - with: application
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.components[*].type"
+            dependencyTransform: {split: {separator: "@", index: 0}}
+            operator: EQUALS
+          - {targetPath: "metadata.namespace", dependencyPath: "metadata.namespace", operator: EQUALS}

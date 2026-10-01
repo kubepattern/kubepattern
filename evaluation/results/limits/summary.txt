@@ -1,0 +1,35 @@
+# Engine update 'limitations': replay results (2026-10-01T22:58:49Z)
+baseline engine: a848c98, new engine: a848c98+changes, Kubernetes v1.34.4
+
+## RQ2, baseline engine, original Patterns (probes scored against the engine prediction)
+rq2-base-v1: 14 Patterns, 46 Smells in 0.85 s
+TOTAL                                          43  52  43   0   0  52  1.00  1.00    10( 10)    0
+
+## RQ2, new engine, original Patterns
+rq2-new-v1: 14 Patterns, 46 Smells in 0.85 s
+TOTAL                                          43  52  43   0   0  52  1.00  1.00    10( 10)    0
+identical Smells: True (46 vs 46)
+
+## RQ2, new engine, v2 Patterns (probes scored against the truth)
+rq2-new-v2: 14 Patterns, 50 Smells in 1.01 s
+TOTAL                                          43  52  43   0   0  52  1.00  1.00    10( 10)    0
+
+## Mutation testing
+base-v1: mutants: 15  killed: 15  unexpected new smells: 0  lost baseline smells: 0  reverted==baseline: True
+new-v1: mutants: 15  killed: 15  unexpected new smells: 0  lost baseline smells: 0  reverted==baseline: True
+new-v2: mutants: 15  killed: 15  unexpected new smells: 0  lost baseline smells: 0  reverted==baseline: True
+
+## Krateo controlled cases (kp-krateo-a/b)
+krateo-base-v1: 11 Patterns, 39 Smells in 0.49 s
+TOTAL                                          29  39  29   0   0  39  1.00  1.00    14( 14)    0
+krateo-new-v1: 11 Patterns, 39 Smells in 0.49 s
+TOTAL                                          29  39  29   0   0  39  1.00  1.00    14( 14)    0
+identical Smells: True (39 vs 39)
+krateo-new-v2: 12 Patterns, 45 Smells in 0.77 s
+TOTAL                                          30  40  30   0   0  40  1.00  1.00    14( 11)    0
+
+MISMATCHES:
+probe-scope page-not-referenced/Page/kp-krateo-a/page-route: truth=clean expected=smell observed=smell
+probe-scope panel-not-referenced/Panel/kp-krateo-a/panel-kind: truth=smell expected=clean observed=clean
+probe-scope panel-not-referenced/Panel/kp-krateo-b/panel-links: truth=smell expected=clean observed=clean
+only the 3 probe-scope rows differ from the truth (scope of the given Patterns, kept on purpose)
