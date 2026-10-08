@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Full regression of a new engine against the evaluation (RQ2, RQ2b mutation, D8, RQ5, RQ4), with spec.for
-# unset: every result must equal the one of the per-pattern prune engine (results/gcfix/, results/cronjob-fix/),
+# unset: every result must equal the one of the per-pattern prune engine (measurements/gcfix/, measurements/cronjob-fix/),
 # except run time. The image must already be in the profile (minikube -p kp-eval image load <tar>).
 # Kyverno's reports and background controllers are scaled to 0 for the duration and restored at the end.
-# Results: results/regression/<commit>/; per-run archives in results/raw/. Run it under systemd-inhibit.
+# Results: measurements/regression/<commit>/; per-run archives in measurements/raw/. Run it under systemd-inhibit.
 # Usage: regression.sh <commit> [all|incluster|outcluster]   (outcluster needs no image in the profile)
 set -uo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
@@ -13,7 +13,7 @@ PART="${2:-all}"
 export KP_COMMIT="$C"
 source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
-OUT="$EVAL/results/regression/$C"; mkdir -p "$OUT"
+OUT="$EVAL/measurements/regression/$C"; mkdir -p "$OUT"
 step() { printf '\n==> [%s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 score_run() {  # label -> prints the TOTAL line, the score exit status and the run directory
   local dir; dir="$("$S/run-once.sh" "$1" | tail -1)"
@@ -58,12 +58,12 @@ for r in 1 2 3; do
   done
 done
 
-step "RQ4: S2 subset (compare with results/gcfix/scale-after)"
-SCALE_OUT="results/regression/$C/scale-subset" RUN_PREFIX="regr-$C-" KP_BIN="$EVAL/bin/kubepattern-$C" python3 -u "$S/scale.py" s2-subset
+step "RQ4: S2 subset (compare with measurements/gcfix/scale-after)"
+SCALE_OUT="measurements/regression/$C/scale-subset" RUN_PREFIX="regr-$C-" KP_BIN="$EVAL/bin/kubepattern-$C" python3 -u "$S/scale.py" s2-subset
 python3 "$S/scale.py" cleanup
 
-step "RQ4: full sweep S1/S2/S3 (compare with results/scale/)"
-SCALE_OUT="results/regression/$C/scale" RUN_PREFIX="regr-$C-" KP_BIN="$EVAL/bin/kubepattern-$C" python3 -u "$S/scale.py"
+step "RQ4: full sweep S1/S2/S3 (compare with measurements/scale/)"
+SCALE_OUT="measurements/regression/$C/scale" RUN_PREFIX="regr-$C-" KP_BIN="$EVAL/bin/kubepattern-$C" python3 -u "$S/scale.py"
 python3 "$S/scale.py" cleanup
 
 }

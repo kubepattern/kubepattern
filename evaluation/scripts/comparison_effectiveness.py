@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""RQ6b: scores every archived Kyverno run (results/raw/kyverno/{equivalent,best-effort}-r*/<run>/smells.json)
-with score.py and writes results/comparison/effectiveness.csv, plus per-run score.py outputs in
-results/comparison/effectiveness/<label>/.
+"""RQ6b: scores every archived Kyverno run (measurements/raw/kyverno/{equivalent,best-effort}-r*/<run>/smells.json)
+with score.py and writes measurements/comparison/effectiveness.csv, plus per-run score.py outputs in
+measurements/comparison/effectiveness/<label>/.
 
 Probes are reported twice: as predicted by the KubePattern engine semantics (engine_expected) and
 against the truth. A 1:1 translation should reproduce the engine column; a best-effort policy the truth column.
@@ -13,7 +13,7 @@ import os
 import subprocess
 
 EVAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-OUT = os.path.join(EVAL, "results", "comparison")
+OUT = os.path.join(EVAL, "measurements", "comparison")
 
 
 def score(smells, oracle, out=None):
@@ -26,7 +26,7 @@ def score(smells, oracle, out=None):
 
 def main():
     rows = []
-    for d in sorted(glob.glob(os.path.join(EVAL, "results", "raw", "kyverno", "*-r[0-9]*", "*"))):
+    for d in sorted(glob.glob(os.path.join(EVAL, "measurements", "raw", "kyverno", "*-r[0-9]*", "*"))):
         label = os.path.basename(os.path.dirname(d))
         policy_set, rep = label.rsplit("-r", 1)
         smells = os.path.join(d, "smells.json")

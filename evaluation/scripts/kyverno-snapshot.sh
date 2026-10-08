@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Waits until the Kyverno PolicyReports of the RQ6 policies settle, then archives them and their
 # smells.json conversion:
-#   results/raw/kyverno/<label>/<run-id>/{reports.json,smells.json,summary.json}
+#   measurements/raw/kyverno/<label>/<run-id>/{reports.json,smells.json,summary.json}
 # Settled = the (policy, resource, result) fingerprint is identical across two polls POLL seconds
 # apart and, when SINCE (epoch seconds) is set, every result of the RQ6 policies is newer than SINCE.
 # Usage: SINCE=<epoch> kyverno-snapshot.sh <label>
@@ -12,7 +12,7 @@ kubectl config use-context "$KP_PROFILE" >/dev/null
 label="${1:?usage: kyverno-snapshot.sh <label>}"
 : "${SINCE:=0}" "${POLL:=20}" "${TIMEOUT:=1800}"
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
-out="$EVAL/results/raw/kyverno/$label/$run_id"
+out="$EVAL/measurements/raw/kyverno/$label/$run_id"
 mkdir -p "$out"
 policies="$(kubectl get validatingpolicies.policies.kyverno.io -o jsonpath='{.items[*].metadata.name}')"
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Krateo case study: KubePattern vs Kyverno on the same smells, cluster and ground truth.
 
-Reads the archived runs (results/raw/krateo/kp-r*/, results/raw/kyverno/krateo/{equivalent,best-effort}-r*/),
-scores each one with scripts/score.py and writes to krateo/results/:
+Reads the archived runs (measurements/raw/krateo/kp-r*/, measurements/raw/kyverno/krateo/{equivalent,best-effort}-r*/),
+scores each one with scripts/score.py and writes to krateo/measurements/:
   effectiveness.csv   one row per run: in-scope TP/FP/FN/TN, precision, recall, probes as the engine
                       predicts and as the truth demands (G-probes and scope probes separately)
   expressiveness.csv  one row per smell: Pattern size/primitives vs policy size/constructs (RQ6 metrics)
@@ -26,8 +26,8 @@ import yaml
 
 KRATEO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 EVAL = os.path.abspath(os.path.join(KRATEO, ".."))
-RAW = os.path.join(EVAL, "results", "raw")
-OUT = os.path.join(KRATEO, "results")
+RAW = os.path.join(EVAL, "measurements", "raw")
+OUT = os.path.join(KRATEO, "measurements")
 TRUTH = os.path.join(KRATEO, "scenario", "ground-truth.csv")
 TRUTH_KY = os.path.join(KRATEO, "scenario", "ground-truth-kyverno-only.csv")
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RQ1 size/primitives of the evaluated Patterns -> results/expressiveness/patterns.csv."""
+"""RQ1 size/primitives of the evaluated Patterns -> measurements/expressiveness/patterns.csv."""
 import csv, glob, os
 import yaml
 
@@ -25,7 +25,7 @@ for f in sorted(glob.glob(os.path.join(EVAL, "patterns", "*", "*.yaml"))):
         "types": "+".join(sorted({r["type"] for r in rels})),
         "groups": "+".join(sorted({g for g in ("matchAll", "matchAny", "matchNone") if (spec.get("relationships") or {}).get(g)})),
     })
-out = os.path.join(EVAL, "results", "expressiveness", "patterns.csv")
+out = os.path.join(EVAL, "measurements", "expressiveness", "patterns.csv")
 os.makedirs(os.path.dirname(out), exist_ok=True)
 with open(out, "w", newline="") as fh:
     w = csv.DictWriter(fh, fieldnames=list(rows[0]))

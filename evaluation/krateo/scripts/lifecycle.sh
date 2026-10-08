@@ -2,8 +2,8 @@
 # Composition lifecycle (the Krateo counterpart of mutate.sh): six mutations applied through Krateo
 # (composition values, a deleted referrer, a new endpoint Secret, a deleted composition, a deleted
 # definition), then reverted. At each phase both tools run once:
-#   KubePattern: scripts/run-once.sh   -> results/raw/krateo/lifecycle-<phase>/
-#   Kyverno:     scripts/kyverno-run.sh -> results/raw/kyverno/krateo/lifecycle-<phase>/ (equivalent policy set)
+#   KubePattern: scripts/run-once.sh   -> measurements/raw/krateo/lifecycle-<phase>/
+#   Kyverno:     scripts/kyverno-run.sh -> measurements/raw/kyverno/krateo/lifecycle-<phase>/ (equivalent policy set)
 # plus an oracle snapshot of the state. Phases: baseline, mutated, reverted. Report: lifecycle_report.py.
 set -euo pipefail
 KRATEO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,7 +16,7 @@ S="$EVAL/scripts"; SC="$KRATEO/scenario"
 
 phase() {
   local p="$1"
-  "$KRATEO/scripts/krateo_oracle.py" snapshot "$EVAL/results/raw/krateo/$LIFECYCLE_LABEL-$p/oracle" >/dev/null
+  "$KRATEO/scripts/krateo_oracle.py" snapshot "$EVAL/measurements/raw/krateo/$LIFECYCLE_LABEL-$p/oracle" >/dev/null
   "$S/run-once.sh" "krateo/$LIFECYCLE_LABEL-$p" >/dev/null
   "$S/kyverno-run.sh" "krateo/$LIFECYCLE_LABEL-$p" >/dev/null 2>&1
   echo "phase $p done"

@@ -9,7 +9,7 @@ the live target object and its Events, and records:
 A signal counts as "reported upstream" only if it is discriminative: the same condition/event
 reason must not appear on any clean object (negative or near-miss) of the same pattern. This
 filters generic warnings (e.g. ESO's StoreUnmaintained on every fake-provider store).
-Writes results/oracles/oracles.csv and prints a per-pattern summary.
+Writes measurements/oracles/oracles.csv and prints a per-pattern summary.
 """
 import csv
 import glob
@@ -77,7 +77,7 @@ def main():
         r["reported_upstream"] = bool(r["discriminative_signals"])
         r["signals"] = ";".join(r["signals"])
     rows = [r for r in rows if r["truth"] == "smell"]
-    out = os.path.join(EVAL, "results", "oracles")
+    out = os.path.join(EVAL, "measurements", "oracles")
     os.makedirs(out, exist_ok=True)
     with open(os.path.join(out, "oracles.csv"), "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

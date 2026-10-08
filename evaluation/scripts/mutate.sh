@@ -49,7 +49,7 @@ kubectl -n kp-db-a delete clusters.postgresql.cnpg.io pool-rw
 sleep 20
 reverted="$("$RUN" "${MUTATION_LABEL:-mutation}-reverted" | tail -1)"
 
-python3 - "$EVAL/scenarios/mutations.csv" "$base" "$applied" "$reverted" "${MUTATION_OUT:-$EVAL/results/mutation}" <<'PY'
+python3 - "$EVAL/scenarios/mutations.csv" "$base" "$applied" "$reverted" "${MUTATION_OUT:-$EVAL/measurements/mutation}" <<'PY'
 import csv, json, os, sys
 muts, base, applied, reverted, out = sys.argv[1:]
 def load(d):

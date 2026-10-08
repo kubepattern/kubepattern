@@ -7,7 +7,7 @@ set -euo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
-out="$EVAL/results/raw/concurrency-$KP_COMMIT/$(date -u +%Y%m%dT%H%M%SZ)"
+out="$EVAL/measurements/raw/concurrency-$KP_COMMIT/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$out"
 
 # The local run starts 5 s after the Job, so both write and prune in overlapping windows.

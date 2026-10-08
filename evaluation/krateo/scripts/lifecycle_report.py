@@ -6,7 +6,7 @@ For each phase (baseline, mutated, reverted) and each tool (KubePattern, Kyverno
     snapshot taken in that phase (krateo_oracle.py, engine_expected);
   - the baseline -> mutated delta must contain every change in scenario/mutations.csv;
   - the reverted set must equal the baseline set.
-Writes krateo/results/lifecycle.csv (one row per expected change) and prints a summary; exit 1 on any failure.
+Writes krateo/measurements/lifecycle.csv (one row per expected change) and prints a summary; exit 1 on any failure.
 """
 import csv
 import glob
@@ -17,7 +17,7 @@ import sys
 
 KRATEO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 EVAL = os.path.abspath(os.path.join(KRATEO, ".."))
-RAW = os.path.join(EVAL, "results", "raw")
+RAW = os.path.join(EVAL, "measurements", "raw")
 LABEL = os.environ.get("LIFECYCLE_LABEL", "lifecycle")
 
 spec = importlib.util.spec_from_file_location("oracle", os.path.join(KRATEO, "scripts", "krateo_oracle.py"))
@@ -77,7 +77,7 @@ def main():
         delta = len(got[(t, "mutated")] ^ got[(t, "baseline")])
         print(f"{t:19} expected changes seen: {sum(r[t] == r['change'] for r in out)}/{len(out)}; "
               f"total delta {delta}; reverted == baseline: {same}")
-    with open(os.path.join(KRATEO, "results", "lifecycle.csv"), "w", newline="") as f:
+    with open(os.path.join(KRATEO, "measurements", "lifecycle.csv"), "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(out[0]), lineterminator="\n")
         w.writeheader()
         w.writerows(out)

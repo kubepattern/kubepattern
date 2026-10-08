@@ -4,7 +4,7 @@
 #   R1b  a GlobalContextEntry (dependency) whose CRD is not installed, read by a policy on an existing kind
 #   R2   kargo.akuity.io removed from the aggregated controller role, then restored
 # After each step it records the per-policy result counts, the policy/GCE status and controller log lines.
-# Output: results/raw/kyverno/robustness/<run>/{<step>.json,<step>.log,apply-*.txt}
+# Output: measurements/raw/kyverno/robustness/<run>/{<step>.json,<step>.log,apply-*.txt}
 # Usage: kyverno-robustness.sh
 set -euo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,7 +12,7 @@ source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
 R="$EVAL/comparison/kyverno/robustness"
 ns="$KYVERNO_NAMESPACE"
-out="$EVAL/results/raw/kyverno/robustness/$(date -u +%Y%m%dT%H%M%SZ)"
+out="$EVAL/measurements/raw/kyverno/robustness/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$out"
 
 counts() {

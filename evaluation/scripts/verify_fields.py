@@ -3,7 +3,7 @@
 
 For each filter path, targetPath and dependencyPath (metadata.* and kind are universal and
 skipped) it runs `kubectl explain <plural>.<path without [*]> --api-version=<apiVersion>`.
-Writes results/field-verification.csv; exit code 1 if any path is unknown to the API server.
+Writes measurements/field-verification.csv; exit code 1 if any path is unknown to the API server.
 """
 import csv
 import glob
@@ -51,7 +51,7 @@ def main():
             ok = explain(res["plural"], res["apiVersion"], path)
             rows.append({"pattern": p["metadata"]["name"], "kind": res["kind"], "apiVersion": res["apiVersion"],
                          "path": path, "status": "V" if ok else "UNKNOWN"})
-    out = os.path.join(EVAL, "results", "field-verification.csv")
+    out = os.path.join(EVAL, "measurements", "field-verification.csv")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=["pattern", "kind", "apiVersion", "path", "status"])

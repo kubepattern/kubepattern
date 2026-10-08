@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""RQ6d / H5: summarises a staleness.sh run into results/comparison/staleness.csv (every observation)
-and results/comparison/staleness-summary.csv (median/min/max latency per tool and direction).
+"""RQ6d / H5: summarises a staleness.sh run into measurements/comparison/staleness.csv (every observation)
+and measurements/comparison/staleness-summary.csv (median/min/max latency per tool and direction).
 
-Usage: staleness_report.py <results/raw/kyverno/staleness/<run>> [--period 300]
+Usage: staleness_report.py <measurements/raw/kyverno/staleness/<run>> [--period 300]
 """
 import argparse
 import csv
@@ -20,7 +20,7 @@ def main():
     args = ap.parse_args()
 
     events = list(csv.DictReader(open(os.path.join(args.run, "events.csv"))))
-    out = os.path.join(EVAL, "results", "comparison")
+    out = os.path.join(EVAL, "measurements", "comparison")
     with open(os.path.join(out, "staleness.csv"), "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(events[0]))
         w.writeheader()

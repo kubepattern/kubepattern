@@ -1,6 +1,6 @@
 # Local artefacts of the evaluation
 bin/
-results/raw/
+measurements/raw/
 *.kubeconfig
 env/.kargo-admin
 env/sa.kubeconfig

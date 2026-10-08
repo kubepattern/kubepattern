@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Triggers one analysis run from the (suspended) CronJob and archives everything it produced:
-#   results/raw/<label>/<run-id>/{job.json,pod.log,smells.json,audit.jsonl,summary.json}
+#   measurements/raw/<label>/<run-id>/{job.json,pod.log,smells.json,audit.jsonl,summary.json}
 # Usage: run-once.sh <label>
 set -euo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
@@ -8,7 +8,7 @@ source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
 label="${1:?usage: run-once.sh <label>}"
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
-out="$EVAL/results/raw/$label/$run_id"
+out="$EVAL/measurements/raw/$label/$run_id"
 mkdir -p "$out"
 
 since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"

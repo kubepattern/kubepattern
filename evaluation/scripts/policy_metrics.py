@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """RQ6a size/constructs of the Kyverno comparison policies, next to the KubePattern Patterns.
 
-Writes results/comparison/expressiveness.csv (one row per smell) and prints a summary.
+Writes measurements/comparison/expressiveness.csv (one row per smell) and prints a summary.
 Metrics (non-comment, non-blank lines for LOC):
-  kp_loc, kp_primitives       Pattern LOC; criteria + filters (from results/expressiveness/patterns.csv)
+  kp_loc, kp_primitives       Pattern LOC; criteria + filters (from measurements/expressiveness/patterns.csv)
   kp_logic_loc                Pattern LOC from spec.target on (no metadata, display fields or message)
   kyv_loc                     ValidatingPolicy LOC (equivalent/)
   kyv_logic_loc               policy LOC from spec.matchConstraints on, without messageExpression
@@ -78,7 +78,7 @@ def main():
     gce_loc = {}
     for f in glob.glob(os.path.join(KYV, "globalcontext", "*.yaml")):
         gce_loc[yaml.safe_load(open(f))["metadata"]["name"]] = loc(open(f).read())
-    kp = {r["pattern"]: r for r in csv.DictReader(open(os.path.join(EVAL, "results", "expressiveness", "patterns.csv")))}
+    kp = {r["pattern"]: r for r in csv.DictReader(open(os.path.join(EVAL, "measurements", "expressiveness", "patterns.csv")))}
     kp_file = {yaml.safe_load(open(f))["metadata"]["name"]: f
                for f in glob.glob(os.path.join(EVAL, "patterns", "*", "*.yaml")) if "/_" not in f}
     probes = {}
@@ -108,7 +108,7 @@ def main():
             "gce": m["gce"],
         })
 
-    out = os.path.join(EVAL, "results", "comparison", "expressiveness.csv")
+    out = os.path.join(EVAL, "measurements", "comparison", "expressiveness.csv")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0]))

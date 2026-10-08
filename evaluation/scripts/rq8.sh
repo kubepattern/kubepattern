@@ -9,14 +9,14 @@
 #                rotation step 2 (md-rotated -> dmt-rotated-v3; dmt-rotated-v2 is left behind) and Certificate web back
 #   runs 3..RUNS no further event
 # Each run's Smells are split by set and scored against the RQ2 ground truth: the base set as is, the copies with
-# --active-only after stripping the suffix. Output: results/rq8/eval/{timeline.csv,scores.csv,kyverno.csv}.
+# --active-only after stripping the suffix. Output: measurements/rq8/eval/{timeline.csv,scores.csv,kyverno.csv}.
 # At the end the events are reverted (scenario re-applied) and the copies deleted.
 set -euo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
 : "${KP_BIN:?set KP_BIN to an engine with spec.for}"; : "${PERIOD:=150}"; : "${RUNS:=5}"; : "${FOR:=4m}"
-S="$EVAL/scripts"; OUT="$EVAL/results/rq8/eval"; mkdir -p "$OUT"
+S="$EVAL/scripts"; OUT="$EVAL/measurements/rq8/eval"; mkdir -p "$OUT"
 names="$(kubectl get patterns.kubepattern.dev -o name | sed 's|.*/||' | grep -v -- '-for$')"
 echo "run,t_s,set,pattern,kind,namespace,name,phase,since" > "$OUT/timeline.csv"
 echo "run,t_s,set,P,N,TP,FP,FN,TN,prec,rec,probes,unlisted" > "$OUT/scores.csv"

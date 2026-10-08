@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 source krateo/env/krateo.env
 source env/versions.env
 kubectl config use-context "$KP_PROFILE" >/dev/null
-out=results/qps/krateo; mkdir -p "$out"; : > "$out/runs.jsonl"
+out=measurements/qps/krateo; mkdir -p "$out"; : > "$out/runs.jsonl"
 score() { ./scripts/score.py "$1" --truth krateo/scenario/ground-truth.csv | tail -1; }
 for r in 1 2 3; do
   for v in a814e4a wp0; do

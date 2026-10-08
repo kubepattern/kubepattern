@@ -5,7 +5,7 @@
 #   run 1           rq8-stale, rq8-wip unreferenced; rq8-moved wired; then the Column is deleted (re-sync starts)
 #   run 2           all three unreferenced; then a forced Kyverno scan; then the Column is re-created wiring rq8-wip too
 #   runs 3..RUNS    only rq8-stale unreferenced
-# Output: results/rq8/krateo/{timeline.csv,kyverno.csv}. The scenario objects are removed at the end.
+# Output: measurements/rq8/krateo/{timeline.csv,kyverno.csv}. The scenario objects are removed at the end.
 set -euo pipefail
 KRATEO="$(cd "$(dirname "$0")/.." && pwd)"
 EVAL="$(cd "$KRATEO/.." && pwd)"
@@ -13,7 +13,7 @@ source "$KRATEO/env/krateo.env"
 source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
 : "${KP_BIN:?set KP_BIN to an engine with spec.for}"; : "${PERIOD:=180}"; : "${RUNS:=4}"; : "${FOR:=5m}"
-SC="$KRATEO/scenario/rq8"; OUT="$EVAL/results/rq8/krateo"; mkdir -p "$OUT"
+SC="$KRATEO/scenario/rq8"; OUT="$EVAL/measurements/rq8/krateo"; mkdir -p "$OUT"
 COPY="paragraph-not-referenced-for5m"
 echo "run,t_s,pattern,namespace,name,phase,since" > "$OUT/timeline.csv"
 

@@ -5,7 +5,7 @@
 #   reverse  re-create it: the smell disappears
 # Each change is applied at a random offset in [0, PERIOD) s after the previous one was observed by
 # both tools. Latency = first poll (every POLL s) showing the new state - time of the change.
-# Output: results/raw/kyverno/staleness/<run>/{events.csv,jobs.json,cronjob.json}
+# Output: measurements/raw/kyverno/staleness/<run>/{events.csv,jobs.json,cronjob.json}
 # Preconditions (set by the caller): KubePattern CronJob unsuspended on the same period as Kyverno's
 # backgroundScanInterval. Usage: REPS=5 PERIOD=300 staleness.sh
 set -euo pipefail
@@ -14,7 +14,7 @@ source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
 : "${REPS:=5}" "${PERIOD:=300}" "${POLL:=2}" "${TIMEOUT:=1200}"
 PATTERN=cnpg-cluster-without-scheduledbackup NS=kp-db-a TARGET=db-live
-out="$EVAL/results/raw/kyverno/staleness/$(date -u +%Y%m%dT%H%M%SZ)"
+out="$EVAL/measurements/raw/kyverno/staleness/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$out"
 echo "rep,direction,offset_s,t_change,tool,t_observed,latency_s" > "$out/events.csv"
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # RQ2 natural findings: unused definitions of the KubeVela built-in catalogue (vela-system).
 # Oracle: an independent jq computation over the live objects (definitions minus every type
-# referenced by an Application). Writes results/natural/kubevela.csv and a summary.
+# referenced by an Application). Writes measurements/natural/kubevela.csv and a summary.
 set -euo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 source "$EVAL/env/versions.env"
-out="$EVAL/results/natural"; mkdir -p "$out"
+out="$EVAL/measurements/natural"; mkdir -p "$out"
 kubectl apply -f "$EVAL/patterns/kubevela/natural/"
 run="$("$EVAL/scripts/run-once.sh" natural | tail -1)"
 kubectl delete -f "$EVAL/patterns/kubevela/natural/" >/dev/null

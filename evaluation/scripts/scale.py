@@ -10,11 +10,11 @@ During the sweep only that pattern (plus clones in S3) is installed.
   S2 smells   T=1000 sources, S in {0,100,200,400,800} orphans; cold run (CREATE) then warm run (UPDATE)
   S3 patterns S=0, K in {1,5,10,20} copies of the pattern over the same kinds
   S1 objects  100 orphans, T in {1000,2500,5000,10000} sources (N ~ 2T objects)
-Writes results/scale/{runs.csv,summary.csv}.
+Writes measurements/scale/{runs.csv,summary.csv}.
 `scale.py cleanup` restores the evaluation state (scale namespaces removed, Flux back, all Patterns).
 `scale.py s2-subset` re-measures only S in {400, 800} (cold, warm twice, stale): the cells where
 Smell GC behaviour differs between engine versions. Set SCALE_OUT and RUN_PREFIX to keep the
-results of another engine version (KP_COMMIT/KP_BIN) apart, e.g. SCALE_OUT=results/scale-fix.
+results of another engine version (KP_COMMIT/KP_BIN) apart, e.g. SCALE_OUT=measurements/scale-fix.
 """
 import csv
 import json
@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 EVAL = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-OUT = os.path.join(EVAL, os.environ.get("SCALE_OUT", os.path.join("results", "scale")))
+OUT = os.path.join(EVAL, os.environ.get("SCALE_OUT", os.path.join("measurements", "scale")))
 RUN_PREFIX = os.environ.get("RUN_PREFIX", "")
 NS = [f"kp-scale-{i}" for i in range(10)]
 PATTERN = "flux-ocirepository-not-used"

@@ -7,7 +7,7 @@ set -euo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 source "$EVAL/env/versions.env"
 label="${1:?usage: perf-local.sh <label>}"
-work="$EVAL/results/raw/perf/$label/$(date -u +%Y%m%dT%H%M%S%NZ)"
+work="$EVAL/measurements/raw/perf/$label/$(date -u +%Y%m%dT%H%M%S%NZ)"
 mkdir -p "$work"
 kc="$EVAL/env/sa.kubeconfig"
 server="$(kubectl config view --minify --context "$KP_PROFILE" -o jsonpath='{.clusters[0].cluster.server}')"

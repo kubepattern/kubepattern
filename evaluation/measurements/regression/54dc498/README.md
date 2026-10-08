@@ -1,6 +1,6 @@
 # Regression: engine `54dc498` (client QPS + linter + `spec.for`)
 
-The engine of `feat/for` (commit `54dc498`; chart fix in `2981a4a`) was re-run through the whole evaluation with `spec.for` unset. Every result must equal the per-pattern prune engine (`a814e4a`, `results/gcfix/`, `results/cronjob-fix/`), except run time.
+The engine of `feat/for` (commit `54dc498`; chart fix in `2981a4a`) was re-run through the whole evaluation with `spec.for` unset. Every result must equal the per-pattern prune engine (`a814e4a`, `measurements/gcfix/`, `measurements/cronjob-fix/`), except run time.
 
 Scripts:
 - `scripts/regression.sh 54dc498 [incluster|outcluster]` (kp-eval);

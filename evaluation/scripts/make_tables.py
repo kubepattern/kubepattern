@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Renders the paper tables (booktabs LaTeX) from the CSV results into results/tables/.
+"""Renders the paper tables (booktabs LaTeX) from the CSV results into measurements/tables/.
 
-  effectiveness.tex  RQ2 per-pattern scores          (results/effectiveness/scores.csv)
-  expressiveness.tex RQ1 verdicts per limitation      (results/expressiveness/expressiveness.csv)
-  timeline.tex       RQ5 scheduled runs               (results/cronjob/timeline.csv)
-  scale.tex          RQ4 S1/S2/S3 sweeps              (results/scale/summary.csv)
+  effectiveness.tex  RQ2 per-pattern scores          (measurements/effectiveness/scores.csv)
+  expressiveness.tex RQ1 verdicts per limitation      (measurements/expressiveness/expressiveness.csv)
+  timeline.tex       RQ5 scheduled runs               (measurements/cronjob/timeline.csv)
+  scale.tex          RQ4 S1/S2/S3 sweeps              (measurements/scale/summary.csv)
 """
 import csv
 import os
 from collections import Counter
 
 EVAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-R = os.path.join(EVAL, "results")
+R = os.path.join(EVAL, "measurements")
 OUT = os.path.join(R, "tables")
 
 

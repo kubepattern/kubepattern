@@ -5,9 +5,9 @@ For each run it compares the Smell set (pattern, kind, namespace, name) with the
 and classifies every Smell object as created, kept (same object updated in place: same UID),
 recreated (same identity, new object) or garbage-collected. It also checks each run against the
 set predicted from the scripted events, and extracts run duration and skip messages.
-Writes results/<label>/{timeline.csv,lifecycle.csv}; exit code 1 if a run deviates.
+Writes measurements/<label>/{timeline.csv,lifecycle.csv}; exit code 1 if a run deviates.
 
-  --label  archive to read (results/raw/<label>) and output folder (default: cronjob)
+  --label  archive to read (measurements/raw/<label>) and output folder (default: cronjob)
   --gc     expected GC semantics: "global" (engine as-is: a skipped pattern loses its Smells)
            or "per-pattern" (fixed engine: a skipped pattern keeps its Smells)
 """
@@ -66,8 +66,8 @@ def main():
     ap.add_argument("--label", default="cronjob")
     ap.add_argument("--gc", choices=("global", "per-pattern"), default="global")
     args = ap.parse_args()
-    raw = os.path.join(EVAL, "results", "raw", args.label)
-    out = os.path.join(EVAL, "results", args.label)
+    raw = os.path.join(EVAL, "measurements", "raw", args.label)
+    out = os.path.join(EVAL, "measurements", args.label)
 
     runs = sorted(glob.glob(os.path.join(raw, "run-*")), key=lambda p: int(p.rsplit("-", 1)[1]))
     snaps = [load(r) for r in runs]

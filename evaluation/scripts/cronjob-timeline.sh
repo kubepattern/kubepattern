@@ -10,13 +10,13 @@
 #   after run 7  E6 churn   rotation step 2: switch md-rotated to it
 #   after run 8  E7 revert  back to the seeded scenario
 #   run 9        end
-# Output: results/raw/$TIMELINE_LABEL/run-N/{job.json,pod.log,smells.json,audit.jsonl}
+# Output: measurements/raw/$TIMELINE_LABEL/run-N/{job.json,pod.log,smells.json,audit.jsonl}
 #         (TIMELINE_LABEL defaults to "cronjob"; use e.g. cronjob-fix for another engine version)
 set -euo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
-RAW="$EVAL/results/raw/${TIMELINE_LABEL:-cronjob}"
+RAW="$EVAL/measurements/raw/${TIMELINE_LABEL:-cronjob}"
 RUNS=9
 CHART="$EVAL/../charts/kubepattern"
 helm_kp() { helm upgrade "$KP_RELEASE" "$CHART" -n "$KP_NAMESPACE" --reuse-values "$@" >/dev/null; }

@@ -57,7 +57,7 @@ D8 and D9 are **fixed on branch `fix/per-pattern-prune` @ `a814e4a`**, a port of
 
 D3 and D4 are **fixed by the engine update** (`feat/for` @ `54dc498`): the Smell update keeps `suppress` (and the new `since`), and the linter fixtures declare `plural`. The same update makes the client rate limits configurable (default 50/100), so the 5 QPS throttling is gone, and makes the linter reject the unimplemented primitives (`selects`, `selectedBy`, `CONTAINS`, `LABEL_SELECTOR`). Its regression and RQ8 are in `README.md` (*Engine update*, *RQ8*). The transient half of **G8** is addressed by `spec.for` (RQ8). The history-object half (`ci-old-ca`) is unchanged: it is a filter choice on the dependency.
 
-Results are in `results/gcfix/` and `results/cronjob-fix/`.
+Results are in `measurements/gcfix/` and `measurements/cronjob-fix/`.
 
 ## 3. Research questions and metrics
 | RQ | Question | Metrics |
@@ -145,7 +145,7 @@ Protocol: baseline run → apply all mutants → run → revert → run. A mutan
 | field paths | `kubectl explain` on every path used by the Patterns (`scripts/verify_fields.py`) |
 
 ## 8. Protocols
-- **RQ1:** classify the source note's long list against the verified semantics (`results/expressiveness/expressiveness.csv`), and measure Pattern size and primitives (`scripts/pattern_metrics.py`).
+- **RQ1:** classify the source note's long list against the verified semantics (`measurements/expressiveness/expressiveness.csv`), and measure Pattern size and primitives (`scripts/pattern_metrics.py`).
 - **RQ2:**
   1. `apply-scenario.sh` then `apply-patterns.sh`;
   2. 3 repetitions of `run-once.sh`: run 1 exercises the CREATE path, runs 2–3 the UPDATE path;

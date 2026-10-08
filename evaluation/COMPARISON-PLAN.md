@@ -100,7 +100,7 @@ Special cases:
 - **`matchAll`** (`cnpg-pooler-name-clashes-with-cluster`): fail when *some* Cluster in the same namespace has the Pooler's name.
 
 ## 2. RQ6a Expressiveness
-New script `scripts/policy_metrics.py`, mirroring `pattern_metrics.py`, writes `results/comparison/expressiveness.csv`. For each of the 14 smells and 10 probes:
+New script `scripts/policy_metrics.py`, mirroring `pattern_metrics.py`, writes `measurements/comparison/expressiveness.csv`. For each of the 14 smells and 10 probes:
 - verdict (expressible / partial / not);
 - non-comment lines of code, for Kyverno vs Pattern;
 - number of context entries;
@@ -111,7 +111,7 @@ Report which G-limitations Kyverno overcomes (H3), and which KubePattern feature
 
 ## 3. RQ6b Effectiveness
 1. Apply the GlobalContextEntries and the `equivalent/` policies, then wait for a completed background scan. Make the reports settle before reading them, with a stable count across two polls.
-2. New script `scripts/kyverno_reports_to_smells.py`: converts every `fail` result into a smells.json-shaped item (`spec.pattern.name` = policy, `spec.target` = kind/namespace/name) and writes it into `results/raw/kyverno/<run>/smells.json`.
+2. New script `scripts/kyverno_reports_to_smells.py`: converts every `fail` result into a smells.json-shaped item (`spec.pattern.name` = policy, `spec.target` = kind/namespace/name) and writes it into `measurements/raw/kyverno/<run>/smells.json`.
 3. Score it with `./scripts/score.py <file>` against the unchanged ground truth: precision/recall, unlisted findings, and probe outcomes.
 4. Repeat 3 times. Force a re-scan between repetitions (reports-controller restart or policy re-apply; document which).
 5. Do the same with `best-effort/`, which gives the probe outcomes for H3.
@@ -121,7 +121,7 @@ Report which G-limitations Kyverno overcomes (H3), and which KubePattern feature
 1. **Footprint:** sample `kubectl top pods -n kyverno` every 10 s for 30 min idle and across a background scan, giving median/peak CPU and memory per controller. For KubePattern, use the Job pod during a run (25–30 s) and **0 when idle**.
 2. **API load:** extend `env/audit-policy.yaml` to the Kyverno ServiceAccounts in namespace `kyverno` (keep the KubePattern SA) and restart `kp-eval`. For one scan cycle and one hour idle, count requests by verb and resource (`audit_summary.py` needs a user filter parameter). Separate WATCH, which is long-lived, from LIST, GET and report writes.
 3. **Report churn:** count the PolicyReport writes per cycle, against the Smell writes per KubePattern run.
-4. **Optional scale:** the S1 subset (T ∈ {1000, 5000} Flux objects via `scale.py` helpers), measuring Kyverno scan time and memory against `results/scale/summary.csv`.
+4. **Optional scale:** the S1 subset (T ∈ {1000, 5000} Flux objects via `scale.py` helpers), measuring Kyverno scan time and memory against `measurements/scale/summary.csv`.
 
 ## 5. RQ6d Operational behaviour
 - **Staleness / detection latency (H5).** Set the same period for both tools (e.g. KubePattern CronJob `*/5`, Kyverno background scan interval 5m). Apply a dependency-side change (delete a referrer, e.g. M02 or M08) at a random offset, and measure the time until the Smell appears and until the PolicyReport shows `fail`. Do 5 repetitions per tool, then the reverse: time until it disappears.
@@ -131,7 +131,7 @@ Report which G-limitations Kyverno overcomes (H3), and which KubePattern feature
 - **Output model:** a short qualitative comparison, PolicyReport entries (per rule/resource, pass/fail/error) vs Smell CRs (per finding, with severity, category, message and a stable identity).
 
 ## 6. Outputs
-- `results/comparison/{expressiveness,effectiveness,cost,staleness}.csv` and `results/tables/comparison.tex`.
+- `measurements/comparison/{expressiveness,effectiveness,cost,staleness}.csv` and `measurements/tables/comparison.tex`.
 - A `README.md` section **"RQ6: Comparison with Kyverno"**, plus one row in the headline table and one finding.
 - Update `TEST-PLAN.md`: add RQ6 to §3, and the Kyverno version to §4.
 

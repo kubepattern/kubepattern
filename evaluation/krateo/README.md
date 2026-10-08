@@ -24,7 +24,7 @@ Results are in [Results](#results).
 | `patterns/` | one Pattern per file; `verbatim/` holds the given `panel-not-referenced` as it was written |
 | `kyverno/` | `rbac.yaml`, `globalcontext/` (30 entries), `equivalent/` (11), `best-effort/` (10), `verbatim/` |
 | `scripts/` | `krateo_oracle.py` (independent oracle, ground truth), `final-runs.sh` (all scored runs), `lifecycle.sh` + `lifecycle_report.py`, `krateo_compare.py` |
-| `results/` | `effectiveness.csv`, `expressiveness.csv`, `coverage.csv`, `lifecycle.csv`, `tables/krateo.tex`; raw runs in `../results/raw/{krateo,kyverno/krateo}/` (git-ignored) |
+| `measurements/` | `effectiveness.csv`, `expressiveness.csv`, `coverage.csv`, `lifecycle.csv`, `tables/krateo.tex`; raw runs in `../measurements/raw/{krateo,kyverno/krateo}/` (git-ignored) |
 
 ## Setup
 ```bash
@@ -153,7 +153,7 @@ kubectl apply -f krateo/kyverno/globalcontext/ -f krateo/kyverno/equivalent/
 kubectl apply -f krateo/kyverno/best-effort/
 ./scripts/kyverno-run.sh krateo/best-effort-r{1,2,3}
 ./krateo/scripts/lifecycle.sh && ./krateo/scripts/lifecycle_report.py
-./krateo/scripts/krateo_compare.py                         # results/*.csv and tables/krateo.tex
+./krateo/scripts/krateo_compare.py                         # measurements/*.csv and tables/krateo.tex
 ```
 - **Scoring:** each run is scored with `../scripts/score.py --truth krateo/scenario/ground-truth.csv`.
   - KubePattern and the 1:1 policies are scored against `engine_expected` (the probes must behave as the engine semantics predict).
@@ -188,7 +188,7 @@ All scored runs are on the same cluster state (`scripts/final-runs.sh`), which i
   | G7 | 3 | the composition Panels that the portal lists by label, including both compositions' |
 - **Engine cost, descriptive only:** one KubePattern run takes 33 s and 160 API requests. Kyverno reports settle 63–102 s after a forced re-scan. Cost was not in scope; RQ6 has the comparison.
 
-### Coverage by smell type (`results/coverage.csv`, `results/tables/krateo.tex`)
+### Coverage by smell type (`measurements/coverage.csv`, `measurements/tables/krateo.tex`)
 | Smell | Family | KubePattern | Kyverno 1:1 | Kyverno best-effort | Limitation | Rows agreeing with the truth (KP / 1:1 / best) |
 |---|---|---|---|---|---|---|
 | Page not referenced | orphan widget | partial | partial | expressible | G1; scope | 6/8, 6/8, 7/8 |
@@ -213,13 +213,13 @@ All scored runs are on the same cluster state (`scripts/final-runs.sh`), which i
 - For a *generated* kind (N8), CEL resolves the kind at run time from the definition's status.
 - For "any widget", neither tool can discover the kinds: KubePattern writes 24 relationship entries (a 337-line Pattern); Kyverno needs 24 GlobalContextEntries (216 lines) under a 55-line policy.
 
-### Expressiveness (`results/expressiveness.csv`)
+### Expressiveness (`measurements/expressiveness.csv`)
 - **Size:** the 11 Patterns total 826 LOC (489 without the enumerating `krateo-restaction-not-used`). The 11 policies total 367 LOC (312 without it), plus 30 shared GlobalContextEntries (273 LOC).
 - **Decision logic:** 91 Pattern primitives against 34 CEL predicates.
 - **CEL list abstraction:** `[a, b, ...].exists(...)` folds dependencies that share a criterion; the DSL repeats one relationship entry per kind.
 - **Best-effort cost:** fixing the limitations changes the policy size by −5 to +5 lines. In most cases the fix is a tighter predicate, not more code.
 
-### Composition lifecycle (`results/lifecycle.csv`)
+### Composition lifecycle (`measurements/lifecycle.csv`)
 Six mutations were done through Krateo (`scenario/mutations.csv`):
 - composition values (release notes listed, CVE table off, an SBOM unscanned);
 - a deleted referrer;
@@ -245,10 +245,10 @@ These are separate validations; the results above stay on `69d4ffd`.
 - **Regression of `54dc498`** (client QPS, linter, `spec.for` unset), with `krateo/scripts/regression.sh`:
   - 3 in-cluster runs: 55/0/0/121, 25/25 probes;
   - lifecycle 61/51/61, 26/26, reverted == baseline, for both tools;
-  - a whole-cluster run takes 1.42 s instead of 31.85 s, with the same 171 requests (`krateo/scripts/qps-krateo.sh`, `../results/qps/README.md`).
+  - a whole-cluster run takes 1.42 s instead of 31.85 s, with the same 171 requests (`krateo/scripts/qps-krateo.sh`, `../measurements/qps/README.md`).
 
   The lifecycle re-created `demo-app-2`, which renamed two RoleBindings in `scenario/ground-truth.csv`.
-- **RQ8** (`krateo/scripts/rq8-dev-wiring.sh`, `scenario/rq8/`, `../results/rq8/README.md`). `paragraph-not-referenced` was evaluated next to a `for: 5m` copy in the same runs:
+- **RQ8** (`krateo/scripts/rq8-dev-wiring.sh`, `scenario/rq8/`, `../measurements/rq8/README.md`). `paragraph-not-referenced` was evaluated next to a `for: 5m` copy in the same runs:
   - widgets wired during development, or briefly unreferenced during a re-sync, give 3 transient findings without `for` and none with it;
   - Kyverno reports them as `fail`;
   - the never-wired widget is reported 2 periods later.

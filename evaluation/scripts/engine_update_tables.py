@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """LaTeX tables of the engine update (client QPS, linter, spec.for) and of RQ8.
 
-  results/tables/engine-update.tex  correctness and run time, per-pattern prune engine vs the updated engine
-  results/tables/rq8.tex            RQ8 on kp-eval and Krateo: transient and persistent findings with and without spec.for
+  measurements/tables/engine-update.tex  correctness and run time, per-pattern prune engine vs the updated engine
+  measurements/tables/rq8.tex            RQ8 on kp-eval and Krateo: transient and persistent findings with and without spec.for
 
-Inputs: results/regression/<commit>/, results/scale/, results/gcfix/scale-after/, results/qps/krateo/, results/rq8/.
+Inputs: measurements/regression/<commit>/, measurements/scale/, measurements/gcfix/scale-after/, measurements/qps/krateo/, measurements/rq8/.
 Usage: engine_update_tables.py [<commit>]   (default 54dc498)
 """
 import csv
@@ -15,7 +15,7 @@ import sys
 
 EVAL = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 C = sys.argv[1] if len(sys.argv) > 1 else "54dc498"
-R = os.path.join(EVAL, "results")
+R = os.path.join(EVAL, "measurements")
 REG = os.path.join(R, "regression", C)
 
 
@@ -90,4 +90,4 @@ def rq8():
 
 engine_update()
 rq8()
-print("wrote results/tables/engine-update.tex and results/tables/rq8.tex")
+print("wrote measurements/tables/engine-update.tex and measurements/tables/rq8.tex")

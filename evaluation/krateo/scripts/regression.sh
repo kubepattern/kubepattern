@@ -4,7 +4,7 @@
 # The image must already be in the profile (minikube -p kp-krateo image load <tar>).
 # The lifecycle re-creates demo-app-2, which renames the CDC's RoleBindings, so the ground truth is regenerated
 # at the end (krateo_oracle.py truth) and its diff is printed: only RoleBinding renames are expected.
-# Results: results/regression/<commit>/krateo/. Usage: regression.sh <commit>
+# Results: measurements/regression/<commit>/krateo/. Usage: regression.sh <commit>
 set -uo pipefail
 KRATEO="$(cd "$(dirname "$0")/.." && pwd)"
 EVAL="$(cd "$KRATEO/.." && pwd)"
@@ -13,13 +13,13 @@ source "$KRATEO/env/krateo.env"
 export KP_COMMIT="$C"
 source "$EVAL/env/versions.env"
 kubectl config use-context "$KP_PROFILE" >/dev/null
-S="$EVAL/scripts"; OUT="$EVAL/results/regression/$C/krateo"; mkdir -p "$OUT"
+S="$EVAL/scripts"; OUT="$EVAL/measurements/regression/$C/krateo"; mkdir -p "$OUT"
 step() { printf '\n==> [%s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 
 step "install $C on $KP_PROFILE (CRDs re-applied)"
 kubectl apply -f "$EVAL/../charts/kubepattern/crds/" >/dev/null
 KP_SKIP_LOAD=1 "$EVAL/env/install/00-kubepattern.sh" >/dev/null && echo "installed $KP_IMAGE"
-snap="$EVAL/results/raw/krateo/regr-$C-snapshot"
+snap="$EVAL/measurements/raw/krateo/regr-$C-snapshot"
 "$KRATEO/scripts/krateo_oracle.py" snapshot "$snap" >/dev/null
 echo "oracle before: $("$KRATEO/scripts/krateo_oracle.py" check "$snap/objects.json" | tail -1)" | tee "$OUT/oracle-before.txt"
 
@@ -34,7 +34,7 @@ LIFECYCLE_LABEL="lifecycle-regr-$C" "$KRATEO/scripts/lifecycle.sh"
 LIFECYCLE_LABEL="lifecycle-regr-$C" "$KRATEO/scripts/lifecycle_report.py" | tee "$OUT/lifecycle.txt"
 
 step "ground truth after the lifecycle"
-snap2="$EVAL/results/raw/krateo/regr-$C-snapshot-after"
+snap2="$EVAL/measurements/raw/krateo/regr-$C-snapshot-after"
 "$KRATEO/scripts/krateo_oracle.py" snapshot "$snap2" >/dev/null
 "$KRATEO/scripts/krateo_oracle.py" truth "$snap2/objects.json" | tail -1
 git -C "$EVAL/.." diff --stat -- evaluation/krateo/scenario/ | tee "$OUT/ground-truth-diff.txt"

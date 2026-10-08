@@ -36,7 +36,7 @@ scripts/        build-image.sh, apply-scenario.sh, apply-patterns.sh, run-once.s
                 regression.sh, rebuild-eval.sh, qps-eval.sh, rq8.sh, set-for.sh, engine_update_tables.py (engine update, RQ8)
 comparison/     kyverno/: RBAC, GlobalContextEntries and ValidatingPolicies of the RQ6 comparison
 for/            durations.csv: the spec.for of every evaluated Pattern, with its rationale
-results/        CSV used in the paper, tables/*.tex (booktabs); results/raw/ holds the per-run archives (git-ignored)
+measurements/   CSV used in the paper, tables/*.tex (booktabs); measurements/raw/ holds the per-run archives (git-ignored)
 ```
 
 ## Reproduce
@@ -52,19 +52,19 @@ for s in env/install/[0-9]*.sh; do [[ $s == *95-kyverno* ]] || "$s"; done   # Ku
 
 # RQ2 effectiveness (3 repetitions)
 for i in 1 2 3; do out=$(./scripts/run-once.sh full-$i | tail -1); ./scripts/score.py "$out/smells.json"; done
-./scripts/score.py results/raw/full-3/*/smells.json --out results/effectiveness
+./scripts/score.py measurements/raw/full-3/*/smells.json --out measurements/effectiveness
 ./scripts/mutate.sh                                     # RQ2b mutation testing
 ./scripts/natural-findings.sh                           # RQ2 natural state (KubeVela catalogue)
 ./scripts/collect_oracles.py                            # RQ3 complementarity
 ./scripts/pattern_metrics.py                            # RQ1 pattern size
 ./scripts/cronjob-timeline.sh && ./scripts/timeline_report.py   # RQ5 (~20 min)
 ./scripts/scale.py && ./scripts/scale.py cleanup       # RQ4 (~1 h), then restore the evaluation state
-./scripts/make_tables.py                                # LaTeX tables in results/tables/
+./scripts/make_tables.py                                # LaTeX tables in measurements/tables/
 
 # Fix validation (per-pattern prune): build the fixed engine, then re-measure the GC scenarios
 KP_COMMIT=a814e4a ./scripts/build-image.sh all          # image eval-a814e4a + bin/kubepattern-a814e4a
 ./scripts/gcfix-remeasure.sh a814e4a                    # before/after (~1.5 h), leaves the fix installed
-./scripts/gcfix_compare.py                              # results/gcfix/compare.csv, tables/gcfix.tex
+./scripts/gcfix_compare.py                              # measurements/gcfix/compare.csv, tables/gcfix.tex
 
 # RQ6 comparison with Kyverno (the audit policy must include the kyverno ServiceAccounts: restart the profile)
 KYVERNO_SCAN_INTERVAL=5m ./env/install/95-kyverno.sh
@@ -75,26 +75,26 @@ kubectl apply -f comparison/kyverno/best-effort/
 for i in 1 2 3; do ./scripts/kyverno-run.sh best-effort-r$i; done
 kubectl apply -f comparison/kyverno/equivalent/
 ./scripts/comparison_effectiveness.py && ./scripts/policy_metrics.py
-MUTATION_RUNNER=./scripts/kyverno-run.sh MUTATION_LABEL=kyverno-mutation MUTATION_OUT=results/comparison/mutation ./scripts/mutate.sh
+MUTATION_RUNNER=./scripts/kyverno-run.sh MUTATION_LABEL=kyverno-mutation MUTATION_OUT=measurements/comparison/mutation ./scripts/mutate.sh
 # cost: 1 h idle window, then scripts/cost_report.py <window> --kp-run <run-once archive> --kp-perf <perf-local line>
 ./scripts/footprint-sample.sh <dir>/footprint.tsv 3600 10 & ./scripts/audit-harvest.sh <dir>/audit.jsonl 3600 120
 # staleness: CronJob */5 unsuspended, then REPS=5 PERIOD=300 ./scripts/staleness.sh && ./scripts/staleness_report.py <run>
 ./scripts/kyverno-robustness.sh
-./scripts/comparison_tables.py                          # results/tables/comparison.tex
+./scripts/comparison_tables.py                          # measurements/tables/comparison.tex
 
 # Engine update (QPS, linter, spec.for) and RQ8. Load the image by hand if `minikube image load` is not usable here.
 KP_COMMIT=54dc498 ./scripts/build-image.sh build && KP_COMMIT=54dc498 ./scripts/build-image.sh extract
 podman save -o bin/kubepattern-eval-54dc498.tar localhost/kubepattern:eval-54dc498   # minikube -p kp-eval image load <tar>
 ./scripts/regression.sh 54dc498                         # RQ2, mutation, D8, RQ5, whole cluster, RQ4 (~1.5 h)
 KP_BIN=$PWD/bin/kubepattern-54dc498 ./scripts/rq8.sh    # RQ8 on kp-eval (~13 min)
-./scripts/engine_update_tables.py                       # results/tables/{engine-update,rq8}.tex
+./scripts/engine_update_tables.py                       # measurements/tables/{engine-update,rq8}.tex
 # Krateo: krateo/scripts/qps-krateo.sh, krateo/scripts/regression.sh 54dc498, KP_BIN=... krateo/scripts/rq8-dev-wiring.sh
 # A re-created (empty) profile: ./scripts/rebuild-eval.sh rebuilds the state and checks the as-is baseline
 ```
 
 ## Results
 
-All numbers below come from `results/` and were produced on the `kp-eval` profile with the pinned versions in `env/versions.env`.
+All numbers below come from `measurements/` and were produced on the `kp-eval` profile with the pinned versions in `env/versions.env`.
 
 ### RQ1: Expressiveness
 The evaluation covers 14 Patterns on 9 platforms with **no change to the engine**. The platforms span 33 distinct GVRs, all read through the dynamic client after discovery. No Pattern needs platform-specific code.
@@ -109,7 +109,7 @@ The evaluation covers 14 Patterns on 9 platforms with **no change to the engine*
 | Patterns with target or dependency filters | 6 |
 | Field paths verified against live CRD schemas (`kubectl explain`) | 41 / 41 |
 
-The source note's long list has 49 relational smells, classified against the verified semantics in `results/expressiveness/expressiveness.csv`:
+The source note's long list has 49 relational smells, classified against the verified semantics in `measurements/expressiveness/expressiveness.csv`:
 
 | Verdict | Smells |
 |---|---|
@@ -159,13 +159,13 @@ The seeded scenarios contain 43 positives and 52 negatives, 29 of them near-miss
   | FP | 3 | G3: Flux explicit `chartRef.namespace`; G4: KubeVela `name@v1`; G7: ESO label-selected store |
 
   So the limitations are **predictable from the DSL semantics**; they are not random errors.
-- **Mutation testing** (`results/mutation/mutation.csv`) used 14 mutants, one per pattern, with the operators delete-referrer, rename-reference, delete-referenced and introduce-clash. It also recorded one side effect: the Cluster introduced by M03 has no ScheduledBackup, so a second pattern rightly flags it.
+- **Mutation testing** (`measurements/mutation/mutation.csv`) used 14 mutants, one per pattern, with the operators delete-referrer, rename-reference, delete-referenced and introduce-clash. It also recorded one side effect: the Cluster introduced by M03 has no ScheduledBackup, so a second pattern rightly flags it.
   - All **15/15 were detected**, with no unexpected Smell.
   - After the revert, the Smell set was **identical to the baseline**, because the stale Smells were garbage-collected.
-- **Natural state** (`results/natural/kubevela.csv`): KubeVela ships 45 built-in definitions, and **40 of them (89%) are unused** by the Applications in the cluster (8/10 ComponentDefinitions, 32/35 TraitDefinitions). KubePattern agrees with an independent `jq` oracle on **45/45**.
+- **Natural state** (`measurements/natural/kubevela.csv`): KubeVela ships 45 built-in definitions, and **40 of them (89%) are unused** by the Applications in the cluster (8/10 ComponentDefinitions, 32/35 TraitDefinitions). KubePattern agrees with an independent `jq` oracle on **45/45**.
 
 ### RQ3: Complementarity with the platforms
-`results/oracles/` records, for each of the 50 smelly objects (positives and probes), whether the platform itself exposes a *discriminative* signal: an unhealthy condition or a Warning Event that does not also appear on clean objects of the same pattern.
+`measurements/oracles/` records, for each of the 50 smelly objects (positives and probes), whether the platform itself exposes a *discriminative* signal: an unhealthy condition or a Warning Event that does not also appear on clean objects of the same pattern.
 
 | When collected | Smells reported by the platform |
 |---|---|
@@ -178,7 +178,7 @@ The seeded scenarios contain 43 positives and 52 negatives, 29 of them near-miss
 - KubePattern turns transient or missing signals into **persistent, queryable CRs** (`kubectl get smells -A`).
 
 ### RQ4: Efficiency and scalability
-The whole scenario (14 Patterns, 9 platforms, 215 objects fetched) gives these per-run numbers (`results/effectiveness/runs.csv`, `results/scale/full-cluster.csv`):
+The whole scenario (14 Patterns, 9 platforms, 215 objects fetched) gives these per-run numbers (`measurements/effectiveness/runs.csv`, `measurements/scale/full-cluster.csv`):
 
 | Metric | Value |
 |---|---|
@@ -192,7 +192,7 @@ The whole scenario (14 Patterns, 9 platforms, 215 objects fetched) gives these p
 
 About 97% of the run is spent waiting on client-go's default rate limiter (5 QPS, burst 10). The engine computes almost nothing: the Pattern evaluation itself is sub-second.
 
-The scale sweep (`results/scale/summary.csv`, runs in `runs.csv`) uses suspended Flux objects with the controllers at 0. Each run is the out-of-cluster binary under `/usr/bin/time -v`, authenticated as the ServiceAccount.
+The scale sweep (`measurements/scale/summary.csv`, runs in `runs.csv`) uses suspended Flux objects with the controllers at 0. Each run is the out-of-cluster binary under `/usr/bin/time -v`, authenticated as the ServiceAccount.
 
 **S2, Smell count** (1,000 sources, 1 run per cell; the rate limiter makes runs deterministic):
 
@@ -243,7 +243,7 @@ The number of LISTs is constant: each GVR is listed once, whatever the number of
 
 
 ### RQ5: CronJob mode (snapshot semantics)
-The CronJob ran every 2 minutes for 9 runs, with a scripted event between runs (`results/cronjob/timeline.csv`, `lifecycle.csv`). **All 9 snapshots equal the predicted Smell set.**
+The CronJob ran every 2 minutes for 9 runs, with a scripted event between runs (`measurements/cronjob/timeline.csv`, `lifecycle.csv`). **All 9 snapshots equal the predicted Smell set.**
 
 | Run | Event before the run | Smells | Created | Kept (updated in place) | Garbage-collected | Skipped patterns |
 |---|---|---|---|---|---|---|
@@ -262,7 +262,7 @@ The CronJob ran every 2 minutes for 9 runs, with a scripted event between runs (
 - **Robustness.** A missing CRD and a narrowed RBAC only skip the affected pattern; every Job completed (25–27 s).
 - **Fail-open GC (as-is engine; fixed, see *Fix validation*).** When a pattern is skipped (RBAC), `CleanOldScans` deletes its Smells. An unreadable resource type is therefore reported as "resolved" (run 5), and its Smells come back as *new* objects once access returns (run 6).
 - **Transient (G8).** During a two-step template rotation, the new template is flagged for exactly one run (run 7). With a longer CronJob period or a minimum-age filter this disappears.
-- **Timeout (observed incidentally).** In the first attempt of this experiment the host suspended during run 5. The Job resumed after its 5-minute deadline, every remaining write failed, and GC then deleted the 11 Smells that had not been refreshed (42 → 31). The archive is kept in `results/raw/cronjob-aborted-host-suspend/`. Same mechanism as above: **a run that exceeds the deadline silently resolves the Smells it could not refresh.** RQ4 reproduces this deliberately.
+- **Timeout (observed incidentally).** In the first attempt of this experiment the host suspended during run 5. The Job resumed after its 5-minute deadline, every remaining write failed, and GC then deleted the 11 Smells that had not been refreshed (42 → 31). The archive is kept in `measurements/raw/cronjob-aborted-host-suspend/`. Same mechanism as above: **a run that exceeds the deadline silently resolves the Smells it could not refresh.** RQ4 reproduces this deliberately.
 
 ### Fix validation: per-pattern prune
 The fail-open GC found by RQ4 and RQ5 was fixed on branch `fix/per-pattern-prune` (commit `a814e4a`) by porting the design already used on the `operator` branch:
@@ -273,7 +273,7 @@ The fail-open GC found by RQ4 and RQ5 was fixed on branch `fix/per-pattern-prune
 
 The change adds 9 unit tests (`internal/analysis/engine_test.go`, `internal/kube/report_test.go`). `go vet` is clean; the only failures are the pre-existing linter tests (D4).
 
-`scripts/gcfix-remeasure.sh` repeated the affected scenarios with both engines (`results/gcfix/compare.csv`, `results/tables/gcfix.tex`):
+`scripts/gcfix-remeasure.sh` repeated the affected scenarios with both engines (`measurements/gcfix/compare.csv`, `measurements/tables/gcfix.tex`):
 
 | Scenario | Metric | As-is `69d4ffd` | Per-pattern prune `a814e4a` |
 |---|---|---|---|
@@ -286,8 +286,8 @@ The change adds 9 unit tests (`internal/analysis/engine_test.go`, `internal/kube
 
 Regression and migration checks:
 - RQ2 still gives 43/52/10 with no unlisted Smell, across 3 runs with the fixed engine.
-- Mutation testing still gives 15/15 killed and restored, with reverted == baseline (`results/gcfix/mutation-after/`).
-- The RQ5 timeline matches the per-pattern expectations **9/9** (`results/cronjob-fix/`).
+- Mutation testing still gives 15/15 killed and restored, with reverted == baseline (`measurements/gcfix/mutation-after/`).
+- The RQ5 timeline matches the per-pattern expectations **9/9** (`measurements/cronjob-fix/`).
 - The first run of the fixed engine relabeled every existing Smell, leaving 0 unlabeled.
 - **Cost:** one label-selected LIST of Smells per pattern, plus one for orphans. That is 143 instead of 129 requests on the whole cluster, i.e. +2.8 s at 5 QPS. A single LIST shared by all patterns would remove this overhead (future work).
 - **What the fix does not change:** the throttling ceiling. A run still writes at most about 750 Smells. The difference is that the Smell set now converges monotonically over consecutive runs instead of flapping.
@@ -315,7 +315,7 @@ comparison/kyverno/
   robustness/            R1a/R1b missing CRDs, R2 RBAC without kargo.akuity.io
 ```
 
-**RQ6a: Expressiveness** (`results/comparison/expressiveness.csv`, `scripts/policy_metrics.py`).
+**RQ6a: Expressiveness** (`measurements/comparison/expressiveness.csv`, `scripts/policy_metrics.py`).
 - All 14 smells are expressible in CEL.
 - `owns` is the only KubePattern primitive without a direct counterpart. KubePattern walks ownerReferences transitively over the fetched graph; CEL has no recursion and checks direct ownership only. That is equivalent on this scenario, because ApplicationSets own their Applications directly.
 
@@ -347,7 +347,7 @@ comparison/kyverno/
   - G6 (kind wildcards) is only partly covered: `matchConstraints` accepts wildcards on the target, but a dependency list needs one GlobalContextEntry or `resource.List` per GVR;
   - G9 (template or remote content) was not attempted.
 
-**RQ6b: Effectiveness** (`results/comparison/effectiveness.csv`, per-run scores in `results/comparison/effectiveness/`, `scripts/comparison_effectiveness.py`).
+**RQ6b: Effectiveness** (`measurements/comparison/effectiveness.csv`, per-run scores in `measurements/comparison/effectiveness/`, `scripts/comparison_effectiveness.py`).
 
 | Policy set | Runs | TP | FP | FN | TN | Precision | Recall | Probes as the KubePattern semantics predict | Probes resolved (truth) | Error results |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -355,9 +355,9 @@ comparison/kyverno/
 | `best-effort/` | 3 | 43 | 0 | 0 | 52 | 1.00 | 1.00 | 0/10 | **10/10** | 0 |
 
 - **H2 is confirmed.** The 1:1 translation agrees with KubePattern on all 105 verdicts, including the 10 probes. An independent engine that implements the verified semantics reproduces them exactly, which **cross-validates the semantics in §2.1 of `TEST-PLAN.md`**.
-- **Mutation testing** (`MUTATION_RUNNER=scripts/kyverno-run.sh scripts/mutate.sh`, `results/comparison/mutation/`): **15/15** mutants killed and restored, with no unexpected or lost finding and reverted == baseline. This is the same as KubePattern.
+- **Mutation testing** (`MUTATION_RUNNER=scripts/kyverno-run.sh scripts/mutate.sh`, `measurements/comparison/mutation/`): **15/15** mutants killed and restored, with no unexpected or lost finding and reverted == baseline. This is the same as KubePattern.
 
-**RQ6c: Cost** (`results/comparison/cost.csv`, `scripts/cost_report.py`).
+**RQ6c: Cost** (`measurements/comparison/cost.csv`, `scripts/cost_report.py`).
 - Kyverno: one idle hour (08:03–09:03 UTC), background scan every 5 min (12 scans). The inputs are:
   - per-container CPU counters and working-set memory from the kubelet every 10 s (`scripts/footprint-sample.sh`);
   - the audit log of every ServiceAccount in namespace `kyverno`, harvested every 2 min because the kubelet rotates it (`scripts/audit-harvest.sh`, `scripts/audit_by_user.py`).
@@ -381,7 +381,7 @@ comparison/kyverno/
 - CPU is about 39× (reports controller only) to 52× (whole install) that of KubePattern.
 
 **RQ6d: Operational behaviour.**
-- **Staleness (H5)** (`scripts/staleness.sh`, `results/comparison/staleness*.csv`).
+- **Staleness (H5)** (`scripts/staleness.sh`, `measurements/comparison/staleness*.csv`).
   - Protocol: CronJob `*/5` and `backgroundScanInterval=5m`, both observing the same change at the same time. The change is M02: the ScheduledBackup of `db-live` is deleted (the smell appears) or re-created (the smell disappears). 5 repetitions per direction, at random offsets, polled every 2 s.
 
   | Latency (s) | KubePattern appear | KubePattern disappear | Kyverno appear | Kyverno disappear |
@@ -390,7 +390,7 @@ comparison/kyverno/
 
   - **H5 is confirmed.** Neither tool reacts to a dependency-side change. KubePattern sees it 8–27 s after its next CronJob tick. Kyverno sees it 61–63 s after a wall-clock 5-minute boundary in all 10 observations, i.e. always at the same phase of its own scan: the background scan re-evaluates *all* 105 results in one burst per interval. It does not re-queue per resource, and it does not track GlobalContextEntry changes.
   - The maximum latency is about one period for both (1.07 vs 0.97 periods). Which tool wins a given repetition depends only on the phase of the change relative to the two ticks.
-- **Robustness** (`scripts/kyverno-robustness.sh`, `results/comparison/robustness.csv`):
+- **Robustness** (`scripts/kyverno-robustness.sh`, `measurements/comparison/robustness.csv`):
 
   | Case | KubePattern | Kyverno 1.19 |
   |---|---|---|
@@ -428,7 +428,7 @@ The engine of branch `feat/for` (`54dc498`, on top of `dev` with the per-pattern
 - **The linter rejects** `selects`, `selectedBy`, `CONTAINS` and `LABEL_SELECTOR`. They passed the linter before, but always evaluated to false. The linter tests pass again (D4).
 - **`spec.for`** is a minimum duration before a Smell becomes `Active`; until then it is `Pending`. The Smell records `spec.since` (first observation) and `spec.phase`, with a label and printer columns. Both ride the existing writes. The update path now keeps `since` and `suppress` (D3 fixed). Proposal: [`../docs/proposals/for.md`](../docs/proposals/for.md).
 
-**Regression** (`results/regression/54dc498/README.md`, table `results/tables/engine-update.tex`). The whole evaluation was re-run with `spec.for` unset, against the per-pattern prune engine:
+**Regression** (`measurements/regression/54dc498/README.md`, table `measurements/tables/engine-update.tex`). The whole evaluation was re-run with `spec.for` unset, against the per-pattern prune engine:
 - `scripts/regression.sh` on kp-eval;
 - `krateo/scripts/regression.sh` on kp-krateo.
 
@@ -452,7 +452,7 @@ The engine of branch `feat/for` (`54dc498`, on top of `dev` with the per-pattern
 ### RQ8: minimum duration (`spec.for`)
 > **RQ8.** Does a minimum duration remove snapshot false positives without hiding persistent smells, and at what cost in detection latency?
 
-**Method** (`results/rq8/README.md`, table `results/tables/rq8.tex`). Each Pattern is evaluated in the same out-of-cluster runs as a copy with `spec.for`, so both see identical cluster states. Transients are scripted, and a forced Kyverno scan is taken while they are present.
+**Method** (`measurements/rq8/README.md`, table `measurements/tables/rq8.tex`). Each Pattern is evaluated in the same out-of-cluster runs as a copy with `spec.for`, so both see identical cluster states. Transients are scripted, and a forced Kyverno scan is taken while they are present.
 
 | Setting | Without `for` | With `for` | Kyverno 1:1 |
 |---|---|---|---|

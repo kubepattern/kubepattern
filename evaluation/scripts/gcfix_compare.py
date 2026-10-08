@@ -2,7 +2,7 @@
 """Before/after comparison of Smell garbage collection (engine as-is vs per-pattern prune).
 
 Reads the archives produced by gcfix-remeasure.sh and the original RQ5 timeline, and writes
-results/gcfix/compare.csv and results/tables/gcfix.tex with one row per scenario:
+measurements/gcfix/compare.csv and measurements/tables/gcfix.tex with one row per scenario:
   D8        overlapping runs: Smells left after both runs (of the 46 expected)
   RQ5 run 5 narrowed RBAC: Smells of the skipped Kargo pattern that are garbage-collected
   RQ5 run 6 RBAC restored: Smells re-created as new objects
@@ -15,7 +15,7 @@ import os
 import re
 
 EVAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-R = os.path.join(EVAL, "results")
+R = os.path.join(EVAL, "measurements")
 
 
 def rows(path):

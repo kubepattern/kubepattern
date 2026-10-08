@@ -26,9 +26,9 @@ Setup:
 - The fetch phase drops from 5.0 s to 0.44 s; writes and the prune from about 26 s to 0.9 s.
 - The 171 requests are 160 of the as-is engine plus one Smell LIST per pattern (11) for the per-pattern prune.
 
-Re-run: `krateo/scripts/qps-krateo.sh`. Raw runs: `results/raw/perf/krateo/qps-{a814e4a,wp0}-r{1,2,3}/` (git-ignored); summary in `krateo/runs.csv`.
+Re-run: `krateo/scripts/qps-krateo.sh`. Raw runs: `measurements/raw/perf/krateo/qps-{a814e4a,wp0}-r{1,2,3}/` (git-ignored); summary in `krateo/runs.csv`.
 
 ## kp-eval: the RQ4 ceiling (pending, `scripts/qps-eval.sh`)
 To do:
-- `scale.py s2-subset` with the wp0 binary (S = 400, 800 orphans; cold, warm twice, stale twice), compared with `results/gcfix/scale-after` (`a814e4a`, which writes at most 752–804 of 805 Smells and hits the 5-minute deadline);
+- `scale.py s2-subset` with the wp0 binary (S = 400, 800 orphans; cold, warm twice, stale twice), compared with `measurements/gcfix/scale-after` (`a814e4a`, which writes at most 752–804 of 805 Smells and hits the 5-minute deadline);
 - whole-cluster runs scored against the RQ2 ground truth.

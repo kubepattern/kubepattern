@@ -4,14 +4,14 @@
 #   before (engine as-is)   D8 overlapping runs, RQ4 S2 subset (S = 400, 800)
 #   after  (fixed engine)   RQ2 regression + label migration, mutation testing, D8,
 #                           RQ5 timeline (per-pattern expectations), RQ4 S2 subset
-# Results: results/gcfix/ (+ results/cronjob-fix/); per-run archives in results/raw/.
+# Results: measurements/gcfix/ (+ measurements/cronjob-fix/); per-run archives in measurements/raw/.
 # Usage: gcfix-remeasure.sh [<fixed-commit>]   (default: a814e4a). Run it under systemd-inhibit.
 set -uo pipefail
 EVAL="$(cd "$(dirname "$0")/.." && pwd)"
 S="$EVAL/scripts"
 BEFORE=69d4ffd
 AFTER="${1:-a814e4a}"
-OUT="$EVAL/results/gcfix"
+OUT="$EVAL/measurements/gcfix"
 mkdir -p "$OUT"
 step() { printf '\n==> [%s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 install() { KP_COMMIT="$1" "$EVAL/env/install/00-kubepattern.sh" >/dev/null && echo "installed engine $1"; }
@@ -30,7 +30,7 @@ KP_COMMIT="$BEFORE" "$S/concurrency_check.sh" | tee "$OUT/concurrency-before.txt
 score_run gcfix-before-restore >/dev/null
 
 step "BEFORE ($BEFORE): RQ4 S2 subset"
-KP_COMMIT="$BEFORE" SCALE_OUT=results/gcfix/scale-before RUN_PREFIX=gcfix-before- python3 -u "$S/scale.py" s2-subset
+KP_COMMIT="$BEFORE" SCALE_OUT=measurements/gcfix/scale-before RUN_PREFIX=gcfix-before- python3 -u "$S/scale.py" s2-subset
 python3 "$S/scale.py" cleanup
 
 step "AFTER ($AFTER): install + first run (label migration) + regression"
@@ -52,7 +52,7 @@ TIMELINE_LABEL=cronjob-fix "$S/cronjob-timeline.sh" | grep -E "^run|suspended"
 "$S/timeline_report.py" --label cronjob-fix --gc per-pattern; echo "timeline exit=$?"
 
 step "AFTER ($AFTER): RQ4 S2 subset"
-KP_COMMIT="$AFTER" SCALE_OUT=results/gcfix/scale-after RUN_PREFIX=gcfix-after- python3 -u "$S/scale.py" s2-subset
+KP_COMMIT="$AFTER" SCALE_OUT=measurements/gcfix/scale-after RUN_PREFIX=gcfix-after- python3 -u "$S/scale.py" s2-subset
 python3 "$S/scale.py" cleanup
 score_run gcfix-after-final | head -2
 

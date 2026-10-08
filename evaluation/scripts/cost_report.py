@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """RQ6c: footprint and API load of Kyverno over an idle window, next to KubePattern per run.
 
-Inputs (one window directory from results/raw/kyverno/cost-idle/<run>/):
+Inputs (one window directory from measurements/raw/kyverno/cost-idle/<run>/):
   footprint.tsv  epoch, pod, container, cumulative CPU seconds, memory working set (scripts/footprint-sample.sh)
   audit.jsonl    audit events of the kyverno ServiceAccounts (scripts/audit-harvest.sh)
   start, end     window bounds (ISO)
 KubePattern per-run numbers come from a run-once.sh archive (audit) and a perf-local.sh line (RSS, CPU).
 
-Writes results/comparison/cost.csv (one row per component) and prints it.
+Writes measurements/comparison/cost.csv (one row per component) and prints it.
 """
 import argparse
 import csv
@@ -53,7 +53,7 @@ def audit_counts(path, t_from=None, t_to=None, users=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("window", help="results/raw/kyverno/cost-idle/<run>")
+    ap.add_argument("window", help="measurements/raw/kyverno/cost-idle/<run>")
     ap.add_argument("--scan-interval", type=float, default=300, help="Kyverno backgroundScanInterval in seconds")
     ap.add_argument("--kp-run", help="run-once.sh archive of a KubePattern run (audit.jsonl, summary.json)")
     ap.add_argument("--kp-perf", help="perf-local.sh JSON line (file) of a KubePattern run")
@@ -113,7 +113,7 @@ def main():
                      "smell_writes_per_cycle": kp.get("smell-write", 0), "run_s": s.get("completion") and
                      (iso(s["completion"]) - iso(s["start"])).total_seconds()})
 
-    out = os.path.join(EVAL, "results", "comparison", "cost.csv")
+    out = os.path.join(EVAL, "measurements", "comparison", "cost.csv")
     fields = list(dict.fromkeys(k for r in rows for k in r))
     with open(out, "w", newline="") as fh:
         wr = csv.DictWriter(fh, fieldnames=fields)
