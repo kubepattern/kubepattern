@@ -22,6 +22,10 @@ type Client struct {
 	dynamicClient   dynamic.Interface
 	mapper          meta.RESTMapper
 	cached          []schema.GroupVersionResource
+	// failed records the resource types that could not be fetched in this run, either because
+	// their LIST failed or because one of their owner types could not be fetched. Every pattern
+	// that needs one of them is skipped, not only the first one that tried to fetch it.
+	failed map[schema.GroupVersionResource]error
 }
 
 func NewClient(config *rest.Config) (*Client, error) {
@@ -216,6 +220,12 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 			}
 		}
 
+		// A resource type that could not be fetched earlier in this run fails every pattern that
+		// needs it: being cached does not mean its objects are in the graph.
+		if err, failed := c.failed[gvr]; failed {
+			return allObjects, fmt.Errorf("%s could not be fetched earlier in this run: %w", gvr.String(), err)
+		}
+
 		// Skip if we have already fetched this resource type.
 		if c.cachedGVR(gvr) {
 			continue
@@ -226,6 +236,7 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 
 		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 		if err != nil {
+			c.markFailed(gvr, err)
 			return allObjects, err
 		}
 
@@ -242,8 +253,9 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 					continue
 				}
 
-				// Queue the owner for the next fetch cycle if not cached yet.
-				if !c.cachedGVR(ownerGVR) {
+				// Queue the owner for the next fetch cycle if not cached yet, or if it failed
+				// earlier in this run, so that the failure reaches this resource type too.
+				if _, failed := c.failed[ownerGVR]; failed || !c.cachedGVR(ownerGVR) {
 					inherited = append(inherited, Resource{
 						APIVersion: owner.APIVersion,
 						Kind:       owner.Kind,
@@ -257,6 +269,8 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 		if len(inherited) > 0 {
 			fetched, err := c.FetchSelectedWithInheritance(inherited, ctx)
 			if err != nil {
+				// Without its owners the ownership of these objects cannot be resolved.
+				c.markFailed(gvr, err)
 				return allObjects, err
 			}
 			allObjects = append(allObjects, fetched...)
@@ -264,4 +278,12 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 	}
 
 	return allObjects, nil
+}
+
+// markFailed records that a resource type could not be fetched in this run.
+func (c *Client) markFailed(gvr schema.GroupVersionResource, err error) {
+	if c.failed == nil {
+		c.failed = make(map[schema.GroupVersionResource]error)
+	}
+	c.failed[gvr] = err
 }
