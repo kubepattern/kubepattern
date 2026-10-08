@@ -29,9 +29,15 @@ RBAC:
 
 analysis:
   # Save the smells in the namespace of the involved resources
-  saveInNamespace: false
-  # Default output namespace if saveInNamespace == false or for cluster-scoped resources
-  targetNamespace: kubepattern-analysis-ns
+  saveInNamespace: true
+  # Default output namespace if saveInNamespace == false or for cluster-scoped resources.
+  # Must already exist; empty means the release namespace.
+  targetNamespace: ""
+  # Client-side rate limits of the Kubernetes API client. client-go defaults to 5 QPS / 10 burst,
+  # which dominates the run time when many Smells are written.
+  client:
+    qps: 50
+    burst: 100
 
 # Deploy example resources to test KubePattern (a Pattern CRD and a matching Pod)
 example:

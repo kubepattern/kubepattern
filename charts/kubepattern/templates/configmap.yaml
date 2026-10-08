@@ -5,6 +5,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   config.yaml: |
-    analysis:
-      saveInNamespace: {{ .Values.analysis.saveInNamespace }}
-      targetNamespace: {{ .Values.analysis.targetNamespace | quote }}
+    saveInNamespace: {{ .Values.analysis.saveInNamespace }}
+    targetNamespace: {{ default .Release.Namespace .Values.analysis.targetNamespace | quote }}
+    {{- /* `helm upgrade --reuse-values` from a chart without analysis.client keeps the old values: fall back to the defaults. */}}
+    {{- $client := .Values.analysis.client | default dict }}
+    client:
+      qps: {{ $client.qps | default 50 }}
+      burst: {{ $client.burst | default 100 }}
