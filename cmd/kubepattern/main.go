@@ -122,23 +122,7 @@ func main() {
 	var allResources []unstructured.Unstructured
 
 	for _, pattern := range patterns {
-		var reqResources []kube.Resource
-
-		reqResources = append(reqResources, kube.Resource{
-			APIVersion: pattern.Spec.Target.APIVersion,
-			Kind:       pattern.Spec.Target.Kind,
-			Resource:   pattern.Spec.Target.PluralName,
-		})
-
-		for _, dependency := range pattern.Spec.Dependencies {
-			reqResources = append(reqResources, kube.Resource{
-				APIVersion: dependency.APIVersion,
-				Kind:       dependency.Kind,
-				Resource:   dependency.PluralName,
-			})
-		}
-
-		res, err := kubeClient.FetchSelectedWithInheritance(reqResources, ctx)
+		res, err := kubeClient.FetchForPattern(ctx, pattern, allResources)
 
 		if len(res) > 0 {
 			allResources = append(allResources, res...)

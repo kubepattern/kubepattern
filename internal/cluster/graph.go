@@ -71,24 +71,29 @@ func (g *Graph) GetByUID(uid types.UID) (*unstructured.Unstructured, bool) {
 	return n, true
 }
 
-// IsParentOwner returns true if a child is owned by a parent (direct edge or ancestor)
+// IsParentOwner returns true if a child is owned by a parent (direct edge or ancestor).
+// Each object is visited once, so an ownership cycle (which the API server does not
+// prevent) ends the walk instead of recursing forever.
 func (g *Graph) IsParentOwner(parent, child types.UID) bool {
-	owned, exists := g.nodes[child]
-	if !exists || owned == nil {
-		return false
-	}
-
-	for _, r := range owned.GetOwnerReferences() {
-		// direct owner
-		if r.UID == parent {
-			return true
+	visited := map[types.UID]bool{child: true}
+	queue := []types.UID{child}
+	for len(queue) > 0 {
+		owned, exists := g.nodes[queue[0]]
+		queue = queue[1:]
+		if !exists || owned == nil {
+			continue
 		}
-
-		if g.IsParentOwner(parent, r.UID) {
-			return true
+		for _, r := range owned.GetOwnerReferences() {
+			// direct owner
+			if r.UID == parent {
+				return true
+			}
+			if !visited[r.UID] {
+				visited[r.UID] = true
+				queue = append(queue, r.UID)
+			}
 		}
 	}
-
 	return false
 }
 

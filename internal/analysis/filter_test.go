@@ -135,7 +135,7 @@ func TestEvalCondition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := evalCondition(obj, tt.cond)
+			result := evalCondition(obj, tt.cond, nil)
 			if result != tt.expected {
 				t.Errorf("evalCondition() failed for %q: expected %v, got %v", tt.name, tt.expected, result)
 			}
@@ -314,13 +314,13 @@ func TestCompareErrors(t *testing.T) {
 	}
 
 	obj := map[string]any{"items": []any{1, 2}}
-	res = compareArraySize(obj, "items", []string{"xyz"}, func(a, b int) bool { return a > b })
+	res = compareArraySize(obj, "items", []string{"xyz"}, nil, func(a, b int) bool { return a > b })
 	if res != false {
 		t.Errorf("compareArraySize with invalid target should have returned false")
 	}
 
 	obj2 := map[string]any{"not-an-array": "hello"}
-	res = compareArraySize(obj2, "not-an-array", []string{"1"}, func(a, b int) bool { return a > b })
+	res = compareArraySize(obj2, "not-an-array", []string{"1"}, nil, func(a, b int) bool { return a > b })
 	if res != false {
 		t.Errorf("compareArraySize on non-array field should have returned false")
 	}
@@ -331,12 +331,12 @@ func TestMoreOperators(t *testing.T) {
 	obj := createMockPod()
 
 	condGreaterOrEqual := linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterGreaterOrEqual, Values: []string{"3"}}
-	if !evalCondition(obj, condGreaterOrEqual) {
+	if !evalCondition(obj, condGreaterOrEqual, nil) {
 		t.Errorf("FilterGreaterOrEqual failed (3 >= 3 should be true)")
 	}
 
 	condLessOrEqual := linter.FilterCondition{Path: "spec.replicas", Operator: linter.FilterLessOrEqual, Values: []string{"3"}}
-	if !evalCondition(obj, condLessOrEqual) {
+	if !evalCondition(obj, condLessOrEqual, nil) {
 		t.Errorf("FilterLessOrEqual failed (3 <= 3 should be true)")
 	}
 }
