@@ -1,0 +1,35 @@
+# v2: G6 resolved. One Pattern covers every kind that carries the managed-by label
+# (Markdown, YamlViewer, RESTAction: kinds), and reports the kind in its message (probes
+# yv-managed-missing and the natural YamlViewers and RESTActions).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-widget-manager-missing
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: Widget Manager Missing
+  category: Architecture
+  severity: LOW
+  message: "{{target.kind}} {{target.metadata.namespace}}/{{target.metadata.name}} is labelled managed-by a RESTAction or Table that does not exist in its namespace: nothing keeps it up to date."
+  target:
+    kinds:
+      - {kind: Markdown, apiVersion: widgets.templates.krateo.io/v1beta1, plural: markdowns}
+      - {kind: YamlViewer, apiVersion: widgets.templates.krateo.io/v1beta1, plural: yamlviewers}
+      - {kind: RESTAction, apiVersion: templates.krateo.io/v1, plural: restactions}
+    filters:
+      matchAll:
+        - {path: "metadata.labels['managed-by']", operator: EXISTS}
+  dependencies:
+    - id: manager
+      kinds:
+        - {kind: RESTAction, apiVersion: templates.krateo.io/v1, plural: restactions}
+        - {kind: Table, apiVersion: widgets.templates.krateo.io/v1beta1, plural: tables}
+  relationships:
+    matchNone:
+      - with: manager
+        type: custom
+        criteria:
+          - {targetPath: "metadata.labels['managed-by']", dependencyPath: metadata.name, operator: EQUALS}
+          - {targetPath: metadata.namespace, dependencyPath: metadata.namespace, operator: EQUALS}

@@ -1,0 +1,66 @@
+# Given Pattern, verbatim from fixtures/files-clean.yaml (only the suite labels are added).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: paragraph-not-referenced
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  category: Architecture
+  dependencies:
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: panel
+    kind: Panel
+    plural: panels
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: column
+    kind: Column
+    plural: columns
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: row
+    kind: Row
+    plural: rows
+  displayName: Paragraph Not Referenced
+  message: Paragraph {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not managed
+    by any widgets.
+  relationships:
+    matchNone:
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: panel
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: column
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: row
+  severity: HIGH
+  target:
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    filters:
+      matchNone:
+      - operator: EQUALS
+        path: metadata.namespace
+        values:
+        - krateo-system
+    kind: Paragraph
+    plural: paragraphs

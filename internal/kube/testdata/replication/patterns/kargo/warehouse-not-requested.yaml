@@ -1,0 +1,33 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: kargo-warehouse-not-requested
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: kargo
+spec:
+  displayName: Warehouse Not Requested by Any Stage
+  category: Cost
+  severity: MEDIUM
+  message: "Warehouse {{target.metadata.name}} in project {{target.metadata.namespace}} keeps discovering artifacts, but no Stage requests its Freight."
+  reference: "https://docs.kargo.io/user-guide/how-to-guides/working-with-warehouses"
+  target:
+    kind: Warehouse
+    apiVersion: kargo.akuity.io/v1alpha1
+    plural: warehouses
+  dependencies:
+    - id: stage
+      kind: Stage
+      apiVersion: kargo.akuity.io/v1alpha1
+      plural: stages
+  relationships:
+    matchNone:
+      - with: stage
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.requestedFreight[*].origin.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

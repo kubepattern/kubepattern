@@ -1,0 +1,35 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: argocd-appproject-empty
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: argocd
+spec:
+  displayName: AppProject Without Applications
+  category: Security
+  severity: LOW
+  message: "AppProject {{target.metadata.name}} grants source/destination permissions but no Application uses it."
+  reference: "https://argo-cd.readthedocs.io/en/stable/user-guide/projects/"
+  target:
+    kind: AppProject
+    apiVersion: argoproj.io/v1alpha1
+    plural: appprojects
+    filters:
+      matchNone:
+        - path: "metadata.name"
+          operator: EQUALS
+          values: ["default"]
+  dependencies:
+    - id: application
+      kind: Application
+      apiVersion: argoproj.io/v1alpha1
+      plural: applications
+  relationships:
+    matchNone:
+      - with: application
+        type: custom
+        criteria:
+          - targetPath: "metadata.name"
+            dependencyPath: "spec.project"
+            operator: EQUALS

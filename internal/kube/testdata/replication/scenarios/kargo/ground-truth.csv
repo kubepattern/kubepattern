@@ -1,0 +1,8 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,app,clean,clean,negative,requested directly by dev and through dev by qa
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,config,clean,clean,near-miss,requested as the second requestedFreight entry
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,hotfix,clean,clean,near-miss,requested directly by hotfix-dev and via upstream stage by hotfix-prod
+kargo-warehouse-not-requested,Warehouse,kp-kargo-2,images,clean,clean,negative,requested by Stage dev of project 2
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,orphan,smell,smell,positive,never requested
+kargo-warehouse-not-requested,Warehouse,kp-kargo-1,retired,smell,smell,positive,never requested
+kargo-warehouse-not-requested,Warehouse,kp-kargo-2,app,smell,smell,positive,same name as a requested Warehouse in another project (namespace criterion)

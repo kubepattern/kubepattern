@@ -1,0 +1,100 @@
+# Given Pattern from fixtures/files-clean.yaml, adapted: the PortalBlueprintPage dependency is read at
+# v1-0-9 (portal-blueprint-page 1.0.9, the latest published) instead of v1-0-10, which does not exist on this
+# platform version (with v1-0-10 the whole Pattern is skipped: see verbatim/panel-not-referenced.yaml).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: panel-not-referenced
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  category: Architecture
+  dependencies:
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: parent-panel
+    kind: Panel
+    plural: panels
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: column
+    kind: Column
+    plural: columns
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: row
+    kind: Row
+    plural: rows
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: tablist
+    kind: TabList
+    plural: tablists
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: page
+    kind: Page
+    plural: pages
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: datagrid
+    kind: DataGrid
+    plural: datagrids
+  - apiVersion: composition.krateo.io/v1-0-9
+    id: portalblueprintpage
+    kind: PortalBlueprintPage
+    plural: portalblueprintpages
+  displayName: Panel Not Referenced
+  message: Panel {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not included in
+    any layout (Row, Column, TabList or Panel).
+  reference: https://docs.krateo.io/widgets/panel
+  relationships:
+    matchNone:
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: parent-panel
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: column
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: row
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: tablist
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: page
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: datagrid
+    - criteria:
+      - dependencyPath: status.managed[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      type: custom
+      with: portalblueprintpage
+  severity: MEDIUM
+  target:
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    filters:
+      matchNone:
+      - operator: EQUALS
+        path: metadata.namespace
+        values:
+        - krateo-system
+    kind: Panel
+    plural: panels

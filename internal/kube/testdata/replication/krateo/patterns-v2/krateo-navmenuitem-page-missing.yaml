@@ -1,0 +1,31 @@
+# v2: G1 resolved. Only the entry the item opens (items[@].id equal to
+# widgetData.resourceRefId, valuesFrom) must name an existing Page (probe nav-two).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-navmenuitem-page-missing
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: NavMenuItem Page Missing
+  category: Reliability
+  severity: HIGH
+  message: "NavMenuItem {{target.metadata.namespace}}/{{target.metadata.name}} is listed in the portal sidebar but the Page it opens (spec.resourcesRefs) does not exist."
+  reference: "https://docs.krateo.io/how-to-guides/write-frontend/widgets-api-reference"
+  target:
+    kind: NavMenuItem
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    plural: navmenuitems
+    filters:
+      matchAll:
+        - {path: "spec.resourcesRefs.items[@].id", operator: EQUALS, valuesFrom: spec.widgetData.resourceRefId}
+  dependencies:
+    - {id: page, kind: Page, apiVersion: widgets.templates.krateo.io/v1beta1, plural: pages}
+  relationships:
+    matchNone:
+      - with: page
+        type: custom
+        criteria:
+          - {targetPath: "spec.resourcesRefs.items[@].name", dependencyPath: metadata.name, operator: EQUALS}
+          - {targetPath: "spec.resourcesRefs.items[@].namespace", dependencyPath: metadata.namespace, operator: EQUALS}

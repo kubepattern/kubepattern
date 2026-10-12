@@ -1,0 +1,44 @@
+# v2: G3 resolved. A reference's namespace defaults to the referrer's own namespace only when
+# chartRef.namespace / sourceRef.namespace is not set (probe cross-ns).
+# G6: the referrers are the kinds of the discovery category fluxcd-appliers (HelmRelease and
+# Kustomization today), so an applier kind added by a later Flux release is covered.
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: flux-ocirepository-not-used
+  labels:
+    kubepattern.dev/suite: eval-v2
+    kubepattern.dev/platform: flux
+spec:
+  displayName: OCIRepository Not Consumed
+  category: Cost
+  severity: LOW
+  message: "OCIRepository {{target.metadata.namespace}}/{{target.metadata.name}} is polled by source-controller but no HelmRelease or Kustomization consumes it."
+  reference: "https://fluxcd.io/flux/components/source/ocirepositories/"
+  target:
+    kind: OCIRepository
+    apiVersion: source.toolkit.fluxcd.io/v1
+    plural: ocirepositories
+  dependencies:
+    - id: applier
+      category: fluxcd-appliers
+  relationships:
+    matchNone:
+      - with: applier
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.chartRef.name", operator: EQUALS}
+          - {targetPath: "kind", dependencyPath: "spec.chartRef.kind", operator: EQUALS}
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.chartRef.namespace"
+            dependencyDefault: {path: "metadata.namespace"}
+            operator: EQUALS
+      - with: applier
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.sourceRef.name", operator: EQUALS}
+          - {targetPath: "kind", dependencyPath: "spec.sourceRef.kind", operator: EQUALS}
+          - targetPath: "metadata.namespace"
+            dependencyPath: "spec.sourceRef.namespace"
+            dependencyDefault: {path: "metadata.namespace"}
+            operator: EQUALS

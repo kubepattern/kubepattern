@@ -1,0 +1,45 @@
+# v2: G6 and G4 resolved. Every widget kind is read through one dependency (kind "*",
+# expanded by discovery at run time) instead of 24 enumerated kinds, and a RESTAction called
+# by another one through its /call path (string-encoded name and namespace, regex
+# transform, same api[@] entry) is in use (probe ra-called).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-restaction-not-used
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: RESTAction Not Used
+  category: Architecture
+  severity: LOW
+  message: "RESTAction {{target.metadata.namespace}}/{{target.metadata.name}} is not read by any widget (spec.apiRef) nor called by another RESTAction: its API calls are defined but never rendered."
+  reference: "https://docs.krateo.io/key-concepts/kcp/snowplow/rest-actions"
+  target:
+    kind: RESTAction
+    apiVersion: templates.krateo.io/v1
+    plural: restactions
+    filters:
+      matchNone:
+        - {path: metadata.namespace, operator: EQUALS, values: [krateo-system]}
+  dependencies:
+    - {id: widget, kind: "*", apiVersion: widgets.templates.krateo.io/v1beta1}
+    - {id: caller, kind: RESTAction, apiVersion: templates.krateo.io/v1, plural: restactions}
+  relationships:
+    matchNone:
+      - with: widget
+        type: custom
+        criteria:
+          - {targetPath: metadata.name, dependencyPath: spec.apiRef.name, operator: EQUALS}
+          - {targetPath: metadata.namespace, dependencyPath: spec.apiRef.namespace, operator: EQUALS}
+      - with: caller
+        type: custom
+        criteria:
+          - targetPath: metadata.name
+            dependencyPath: "spec.api[@].path"
+            dependencyTransform: {regex: "resource=restactions&name=([^&]+)"}
+            operator: EQUALS
+          - targetPath: metadata.namespace
+            dependencyPath: "spec.api[@].path"
+            dependencyTransform: {regex: "resource=restactions&name=[^&]+&namespace=([^&]+)"}
+            operator: EQUALS

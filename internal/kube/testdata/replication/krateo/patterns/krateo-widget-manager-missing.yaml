@@ -1,0 +1,49 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-widget-manager-missing
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: Widget Manager Missing
+  category: Architecture
+  severity: LOW
+  message: "Markdown {{target.metadata.namespace}}/{{target.metadata.name}} is labelled managed-by a RESTAction or Table that does not exist in its namespace: nothing keeps it up to date."
+  target:
+    kind: Markdown
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    plural: markdowns
+    filters:
+      matchAll:
+        - path: "metadata.labels.managed-by"
+          operator: EXISTS
+  dependencies:
+    - id: restaction
+      kind: RESTAction
+      apiVersion: templates.krateo.io/v1
+      plural: restactions
+    - id: table
+      kind: Table
+      apiVersion: widgets.templates.krateo.io/v1beta1
+      plural: tables
+  relationships:
+    matchNone:
+      - with: restaction
+        type: custom
+        criteria:
+          - targetPath: "metadata.labels.managed-by"
+            dependencyPath: "metadata.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS
+      - with: table
+        type: custom
+        criteria:
+          - targetPath: "metadata.labels.managed-by"
+            dependencyPath: "metadata.name"
+            operator: EQUALS
+          - targetPath: "metadata.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

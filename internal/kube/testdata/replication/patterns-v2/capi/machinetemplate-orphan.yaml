@@ -1,0 +1,68 @@
+# v2: G1 resolved. The ClusterClass worker classes are read element by element ("[@]"), so a
+# class that names the template with another kind no longer hides an orphan (probe t1).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: capi-machinetemplate-orphan
+  labels:
+    kubepattern.dev/suite: eval-v2
+    kubepattern.dev/platform: capi
+spec:
+  displayName: Orphan DockerMachineTemplate
+  category: Architecture
+  severity: LOW
+  message: "DockerMachineTemplate {{target.metadata.namespace}}/{{target.metadata.name}} is not referenced by any MachineDeployment, MachineSet, KubeadmControlPlane or ClusterClass (left over by a template rotation?)."
+  reference: "https://cluster-api.sigs.k8s.io/tasks/updating-machine-templates"
+  target:
+    kind: DockerMachineTemplate
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    plural: dockermachinetemplates
+  dependencies:
+    - id: machinedeployment
+      kind: MachineDeployment
+      apiVersion: cluster.x-k8s.io/v1beta2
+      plural: machinedeployments
+    - id: machineset
+      kind: MachineSet
+      apiVersion: cluster.x-k8s.io/v1beta2
+      plural: machinesets
+    - id: controlplane
+      kind: KubeadmControlPlane
+      apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+      plural: kubeadmcontrolplanes
+    - id: clusterclass
+      kind: ClusterClass
+      apiVersion: cluster.x-k8s.io/v1beta2
+      plural: clusterclasses
+  relationships:
+    matchNone:
+      - with: machinedeployment
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.template.spec.infrastructureRef.name", operator: EQUALS}
+          - {targetPath: "kind", dependencyPath: "spec.template.spec.infrastructureRef.kind", operator: EQUALS}
+          - {targetPath: "metadata.namespace", dependencyPath: "metadata.namespace", operator: EQUALS}
+      - with: machineset
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.template.spec.infrastructureRef.name", operator: EQUALS}
+          - {targetPath: "kind", dependencyPath: "spec.template.spec.infrastructureRef.kind", operator: EQUALS}
+          - {targetPath: "metadata.namespace", dependencyPath: "metadata.namespace", operator: EQUALS}
+      - with: controlplane
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.machineTemplate.spec.infrastructureRef.name", operator: EQUALS}
+          - {targetPath: "kind", dependencyPath: "spec.machineTemplate.spec.infrastructureRef.kind", operator: EQUALS}
+          - {targetPath: "metadata.namespace", dependencyPath: "metadata.namespace", operator: EQUALS}
+      - with: clusterclass
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.workers.machineDeployments[@].infrastructure.templateRef.name", operator: EQUALS}
+          - {targetPath: "kind", dependencyPath: "spec.workers.machineDeployments[@].infrastructure.templateRef.kind", operator: EQUALS}
+          - {targetPath: "metadata.namespace", dependencyPath: "metadata.namespace", operator: EQUALS}
+      - with: clusterclass
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.controlPlane.machineInfrastructure.templateRef.name", operator: EQUALS}
+          - {targetPath: "kind", dependencyPath: "spec.controlPlane.machineInfrastructure.templateRef.kind", operator: EQUALS}
+          - {targetPath: "metadata.namespace", dependencyPath: "metadata.namespace", operator: EQUALS}

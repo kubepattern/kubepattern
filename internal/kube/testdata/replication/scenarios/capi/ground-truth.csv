@@ -1,0 +1,11 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-cp,clean,clean,negative,used by KubeadmControlPlane c1-cp
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-md-workers,clean,clean,negative,used by MachineDeployment md-workers
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-rotated-v2,clean,clean,negative,current template of md-rotated
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-cc-md2,clean,clean,near-miss,used only by worker class 2 of ClusterClass cc1
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-cc-cp,clean,clean,near-miss,used only as control-plane machine infrastructure of cc1 (second entry on the same dependency)
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-ms-only,clean,clean,near-miss,used only by a bare MachineSet
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-rotated-v1,smell,smell,positive,left behind by a template rotation
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,dmt-orphan,smell,smell,positive,never referenced
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-b,dmt-md-workers,smell,smell,positive,same name as a used template in another namespace (namespace criterion)
+capi-machinetemplate-orphan,DockerMachineTemplate,kp-capi-a,t1,smell,clean,probe-G1,cc1 md[0] names t1 with kind DevMachineTemplate and md[1] has kind DockerMachineTemplate; criteria are not correlated per element

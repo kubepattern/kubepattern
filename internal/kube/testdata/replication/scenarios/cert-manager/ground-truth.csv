@@ -1,0 +1,10 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-web,clean,clean,negative,used by Certificate web
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-grouped,clean,clean,near-miss,referenced with explicit group cert-manager.io
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-manual,clean,clean,near-miss,used only by a hand-made CertificateRequest
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-new-ca,clean,clean,negative,issuer in use after a rotation
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-unused,smell,smell,positive,never referenced
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-retired,smell,smell,positive,never referenced (retired CA)
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-kind-omitted,smell,smell,positive,reference without kind targets a namespaced Issuer (implicit default handled by the dependency filter)
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-foreign-group,smell,clean,probe-G4,issuerRef.group names an external issuer type; the group is encoded in the target apiVersion string and cannot be compared
+certmanager-clusterissuer-not-used,ClusterIssuer,,ci-old-ca,smell,clean,probe-G8,Certificate rotated away but the retained CertificateRequest (revisionHistoryLimit) still names it

@@ -1,0 +1,48 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-compositiondefinition-unused
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: CompositionDefinition Unused
+  category: Architecture
+  severity: LOW
+  message: "CompositionDefinition {{target.metadata.namespace}}/{{target.metadata.name}} has no composition of the kind it generates, but keeps a CRD and a composition-dynamic-controller running."
+  reference: "https://docs.krateo.io/key-concepts/kco/core-provider"
+  target:
+    kind: CompositionDefinition
+    apiVersion: core.krateo.io/v1alpha1
+    plural: compositiondefinitions
+  # Each CompositionDefinition generates its own kind at its own version, so the instances cannot be
+  # listed generically: every generated kind the platform uses has to be enumerated here (limitation G6).
+  dependencies:
+    - id: springbootapp
+      kind: SpringbootApp
+      apiVersion: composition.krateo.io/v1-0-0
+      plural: springbootapps
+    - id: portalblueprintpage
+      kind: PortalBlueprintPage
+      apiVersion: composition.krateo.io/v1-0-9
+      plural: portalblueprintpages
+  relationships:
+    matchNone:
+      - with: springbootapp
+        type: custom
+        criteria:
+          - targetPath: "status.kind"
+            dependencyPath: "kind"
+            operator: EQUALS
+          - targetPath: "status.apiVersion"
+            dependencyPath: "apiVersion"
+            operator: EQUALS
+      - with: portalblueprintpage
+        type: custom
+        criteria:
+          - targetPath: "status.kind"
+            dependencyPath: "kind"
+            operator: EQUALS
+          - targetPath: "status.apiVersion"
+            dependencyPath: "apiVersion"
+            operator: EQUALS
