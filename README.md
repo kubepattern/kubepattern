@@ -29,6 +29,7 @@ By using a graph-based approach, it retrieves complex relationships between reso
 
 * **Pattern CRD**: KubePattern evaluates the cluster against the Pattern as Code definitions (`patterns.kubepattern.dev`) applied to the cluster. You can browse the official definitions here: [Pattern as Code Registry](https://github.com/kubepattern/registry).
 * **Smell CRD**: The engine generates and manages `Smell` Custom Resources (`smells.kubepattern.dev`) to persist analysis results directly inside the cluster.
+* **Pattern DSL**: targets, dependencies and relationships with element-scoped paths, defaults, value transforms, label selectors and kind sets resolved by discovery. See the [Pattern DSL reference](docs/dsl.md).
 * **Execution**: Deployed via Helm, it runs as a lightweight `CronJob`, periodically scanning the cluster without consuming idle resources.
 
 ---
@@ -61,6 +62,15 @@ kubectl get smells -A
 # View detailed information about a specific smell
 kubectl describe smell <smell-name> -n <namespace>
 ```
+
+A Pattern can set `spec.for` (for example `for: 1h`): a Smell then stays `Pending` until its condition has held that long, and becomes `Active` afterwards. This hides transient states, such as a resource that is unreferenced for a few minutes during a GitOps sync. `spec.since` records the first observation. Keep only confirmed findings with `kubectl get smells -A -l kubepattern.dev/phase=Active`.
+
+> [!NOTE]
+> Helm installs the CRDs in `crds/` but does not upgrade them. After upgrading the chart, apply them again: `kubectl apply -f charts/kubepattern/crds/`.
+
+## Evaluation
+
+The evaluation of KubePattern lives in its own replication package, [`kubepattern-replication-2026`](https://github.com/kubepattern/kubepattern-replication-2026). It holds the minikube environments with nine CRD ecosystems and the Krateo case study, the evaluated Patterns and scenarios, the comparison with Kyverno, and the measurements.
 
 ---
 
