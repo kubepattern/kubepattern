@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -14,6 +15,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+
+	"kubepattern-go/internal/linter"
 )
 
 // Client wraps the Kubernetes discovery and dynamic clients.
@@ -22,6 +25,7 @@ type Client struct {
 	dynamicClient   dynamic.Interface
 	mapper          meta.RESTMapper
 	cached          []schema.GroupVersionResource
+	preferred       []*metav1.APIResourceList
 	// failed records the resource types that could not be fetched in this run, either because
 	// their LIST failed or because one of their owner types could not be fetched. Every pattern
 	// that needs one of them is skipped, not only the first one that tried to fetch it.
@@ -42,13 +46,16 @@ func NewClient(config *rest.Config) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API group resources for mapper: %w", err)
 	}
-	mapper := restmapper.NewDiscoveryRESTMapper(groupResources)
+	return newClient(disco, dyn, restmapper.NewDiscoveryRESTMapper(groupResources)), nil
+}
 
+// newClient assembles a Client from its parts (tests pass fakes).
+func newClient(disco discovery.DiscoveryInterface, dyn dynamic.Interface, mapper meta.RESTMapper) *Client {
 	return &Client{
 		discoveryClient: disco,
 		dynamicClient:   dyn,
 		mapper:          mapper,
-	}, nil
+	}
 }
 
 // DynamicClient returns the underlying dynamic client interface.
@@ -231,14 +238,14 @@ func (c *Client) FetchSelectedWithInheritance(resources []Resource, ctx context.
 			continue
 		}
 
-		// Add to cache before listing to prevent circular dependencies or redundant calls.
-		c.cached = append(c.cached, gvr)
-
 		list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			c.markFailed(gvr, err)
 			return allObjects, err
 		}
+		// Cached only once listed, and before the owners are fetched, so that an ownership
+		// cycle between types does not recurse.
+		c.cached = append(c.cached, gvr)
 
 		allObjects = append(allObjects, list.Items...)
 		var inherited []Resource
@@ -286,4 +293,58 @@ func (c *Client) markFailed(gvr schema.GroupVersionResource, err error) {
 		c.failed = make(map[schema.GroupVersionResource]error)
 	}
 	c.failed[gvr] = err
+}
+
+// ExpandRefs resolves resource refs to concrete resources: a concrete ref is returned as is,
+// kind "*" becomes every listable kind of its group version, and a category becomes every
+// listable kind whose discovery categories include it. An unknown group version is an error
+// (as a missing CRD is); a category that matches nothing yields no resource.
+func (c *Client) ExpandRefs(refs []linter.ResourceRef) ([]Resource, error) {
+	var out []Resource
+	for _, r := range refs {
+		switch {
+		case r.Category != "":
+			lists, err := c.preferredResources()
+			if err != nil {
+				return nil, err
+			}
+			for _, l := range lists {
+				for _, ar := range l.APIResources {
+					if canList(ar.Verbs) && !isSubresource(ar.Name) && slices.Contains(ar.Categories, r.Category) {
+						out = append(out, Resource{APIVersion: l.GroupVersion, Kind: ar.Kind, Resource: ar.Name})
+					}
+				}
+			}
+		case r.Kind == linter.KindWildcard:
+			list, err := c.discoveryClient.ServerResourcesForGroupVersion(r.APIVersion)
+			if err != nil {
+				return nil, fmt.Errorf("failed to discover the kinds of %s: %w", r.APIVersion, err)
+			}
+			for _, ar := range list.APIResources {
+				if canList(ar.Verbs) && !isSubresource(ar.Name) {
+					out = append(out, Resource{APIVersion: r.APIVersion, Kind: ar.Kind, Resource: ar.Name})
+				}
+			}
+		default:
+			out = append(out, Resource{APIVersion: r.APIVersion, Kind: r.Kind, Resource: r.PluralName})
+		}
+	}
+	return out, nil
+}
+
+// preferredResources returns (and caches) the server's preferred resources. A partial
+// discovery failure is logged and the partial result is used.
+func (c *Client) preferredResources() ([]*metav1.APIResourceList, error) {
+	if c.preferred != nil {
+		return c.preferred, nil
+	}
+	lists, err := c.discoveryClient.ServerPreferredResources()
+	if err != nil {
+		slog.Warn("partial discovery failure; some resource types may be missing", "error", err)
+	}
+	if lists == nil {
+		return nil, fmt.Errorf("discovery returned no API groups: %w", err)
+	}
+	c.preferred = lists
+	return lists, nil
 }

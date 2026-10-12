@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"kubepattern-go/internal/cluster"
+	"kubepattern-go/internal/fieldpath"
 	"kubepattern-go/internal/linter"
 )
 
@@ -52,12 +53,9 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 	live := make(map[string]struct{})
 
 	// --- Step 1 & 3: fetch and filter target candidates ---
-	targets := FilterResources(
-		nodes,
-		pattern.Spec.Target.Kind,
-		pattern.Spec.Target.APIVersion,
-		pattern.Spec.Target.Filters,
-	)
+	// A target whose paths contain "[@]" is examined element by element: each candidate
+	// carries the element bindings that pass the target filters.
+	targets := SelectTargets(nodes, pattern.Spec)
 
 	if len(targets) == 0 {
 		if !pattern.Spec.Target.EmitOnEmpty {
@@ -82,20 +80,31 @@ func (e *Engine) Run(ctx context.Context, pattern *linter.PatternAsCode) error {
 	// Built once — same candidates for all targets.
 	deps := e.buildDependencies(nodes, pattern.Spec.Dependencies)
 
+	// The dependency side of every relationship is extracted once, not once per target.
+	rels := PrepareRelationships(deps, pattern.Spec.Relationships)
+
 	// --- Step 4 & 5: evaluate relationships and emit smells ---
 	for _, target := range targets {
-		satisfied := EvaluateRelationships(target, deps, pattern.Spec.Relationships, e.graph)
+		// The target is defective when the relationships hold for at least one of its
+		// element bindings (a single, empty binding when the pattern has no "[@]").
+		satisfied := false
+		for _, tb := range target.Bindings {
+			if rels.Evaluate(target.Object, e.graph, tb) {
+				satisfied = true
+				break
+			}
+		}
 		if !satisfied {
 			// Relationships are not satisfied — no smell for this target.
 			continue
 		}
 
-		smell := buildSmell(pattern, target)
+		smell := buildSmell(pattern, target.Object)
 		live[smell.CRDName] = struct{}{}
 		if err := e.writer.Write(ctx, smell); err != nil {
 			slog.Error("failed to write smell",
 				"pattern", pattern.Metadata.Name,
-				"target", target.GetName(),
+				"target", target.Object.GetName(),
 				"error", err,
 			)
 			// Log and continue — one write failure should not stop the whole analysis.
@@ -143,7 +152,7 @@ func (e *Engine) buildDependencies(
 	deps := make(map[string][]*unstructured.Unstructured, len(dependencies))
 
 	for _, dep := range dependencies {
-		candidates := FilterResources(nodes, dep.Kind, dep.APIVersion, dep.Filters)
+		candidates := FilterDependency(nodes, dep)
 		deps[dep.ID] = candidates
 		slog.Debug("dependency candidates fetched",
 			"id", dep.ID,
@@ -153,6 +162,60 @@ func (e *Engine) buildDependencies(
 	}
 
 	return deps
+}
+
+// TargetCandidate is a target resource with the element bindings that pass the target
+// filters.
+type TargetCandidate struct {
+	Object   *unstructured.Unstructured
+	Bindings []fieldpath.Binding
+}
+
+// TargetPaths returns every target-side path of a pattern: they define the target's "[@]"
+// anchors, shared by the target filters and all relationships.
+func TargetPaths(spec linter.Spec) []*fieldpath.Path {
+	return fieldpath.ParseAll(spec.TargetPaths())
+}
+
+// TargetMatcher reports whether a resource is of one of the target's types.
+func TargetMatcher(t linter.Target) func(*unstructured.Unstructured) bool {
+	if t.IsSingleKind() {
+		return func(n *unstructured.Unstructured) bool { return matchKind(n, t.Kind, t.APIVersion) }
+	}
+	return kindMatcher(t.Refs(), t.Resolved)
+}
+
+// TargetSelector returns the function that makes a resource a target candidate of a
+// pattern: it must be of one of the target's types and have at least one element binding
+// that passes the target filters.
+func TargetSelector(spec linter.Spec) func(*unstructured.Unstructured) (TargetCandidate, bool) {
+	t := spec.Target
+	match := TargetMatcher(t)
+	paths := TargetPaths(spec)
+	return func(node *unstructured.Unstructured) (TargetCandidate, bool) {
+		if !match(node) {
+			return TargetCandidate{}, false
+		}
+		var passing []fieldpath.Binding
+		for _, b := range fieldpath.Enumerate(node.Object, paths, nil) {
+			if matchFilters(node, t.Filters, b) {
+				passing = append(passing, b)
+			}
+		}
+		return TargetCandidate{Object: node, Bindings: passing}, len(passing) > 0
+	}
+}
+
+// SelectTargets returns the target candidates of a pattern.
+func SelectTargets(nodes map[types.UID]*unstructured.Unstructured, spec linter.Spec) []TargetCandidate {
+	selectTarget := TargetSelector(spec)
+	var out []TargetCandidate
+	for _, node := range nodes {
+		if c, ok := selectTarget(node); ok {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // buildSmell constructs a Smell from the pattern metadata and the failing target.
