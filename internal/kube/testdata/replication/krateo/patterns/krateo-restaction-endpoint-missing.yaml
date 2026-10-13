@@ -1,0 +1,37 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-restaction-endpoint-missing
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: RESTAction Endpoint Secret Missing
+  category: Reliability
+  severity: MEDIUM
+  message: "RESTAction {{target.metadata.namespace}}/{{target.metadata.name}} calls an endpoint whose Secret (spec.api[*].endpointRef) does not exist: snowplow stops resolving it and the widgets render empty, without an error."
+  reference: "https://docs.krateo.io/key-concepts/kcp/snowplow/endpoints"
+  target:
+    kind: RESTAction
+    apiVersion: templates.krateo.io/v1
+    plural: restactions
+    filters:
+      matchAll:
+        - path: "spec.api[*].endpointRef.name"
+          operator: EXISTS
+  dependencies:
+    - id: secret
+      kind: Secret
+      apiVersion: v1
+      plural: secrets
+  relationships:
+    matchNone:
+      - with: secret
+        type: custom
+        criteria:
+          - targetPath: "spec.api[*].endpointRef.name"
+            dependencyPath: "metadata.name"
+            operator: EQUALS
+          - targetPath: "spec.api[*].endpointRef.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

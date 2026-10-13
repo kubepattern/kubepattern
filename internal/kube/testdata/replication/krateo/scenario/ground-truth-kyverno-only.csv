@@ -1,0 +1,8 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+krateo-restaction-manager-missing,RESTAction,demo-app,demo-app-backend-86ccc4747f-gzc4v-get-pod-resources,smell,n/a,positive,natural; label key with dots (G5): no Pattern
+krateo-restaction-manager-missing,RESTAction,demo-app,demo-app-frontend-557b899867-8dkbp-get-pod-resources,smell,n/a,positive,natural; label key with dots (G5): no Pattern
+krateo-restaction-manager-missing,RESTAction,demo-app,demo-app-mysql-db-5f6f758d4b-zhxtl-get-pod-resources,smell,n/a,positive,natural; label key with dots (G5): no Pattern
+krateo-restaction-manager-missing,RESTAction,demo-app-2,demo-app-2-api-7d9f8b6c5d-x2k4q-get-pod-resources,smell,n/a,positive,natural; label key with dots (G5): no Pattern
+krateo-restaction-manager-missing,RESTAction,demo-app-2,demo-app-2-postgres-0-get-pod-resources,smell,n/a,positive,natural; label key with dots (G5): no Pattern
+krateo-restaction-manager-missing,RESTAction,kp-krateo-a,ra-kmanaged-missing,smell,n/a,positive,seed; label key with dots (G5): no Pattern
+krateo-restaction-manager-missing,RESTAction,kp-krateo-a,ra-kmanaged-ok,clean,n/a,negative,seed; label key with dots (G5): no Pattern

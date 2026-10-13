@@ -1,0 +1,33 @@
+# v2: G6 resolved. The compositions are listed from the kind each definition generates
+# (fromTarget: status.apiVersion, status.kind, status.resource), so no generated kind has to
+# be enumerated in the Pattern (probe portal-composition-page-generic).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-compositiondefinition-unused
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: CompositionDefinition Unused
+  category: Architecture
+  severity: LOW
+  message: "CompositionDefinition {{target.metadata.namespace}}/{{target.metadata.name}} has no composition of the kind it generates, but keeps a CRD and a composition-dynamic-controller running."
+  reference: "https://docs.krateo.io/key-concepts/kco/core-provider"
+  target:
+    kind: CompositionDefinition
+    apiVersion: core.krateo.io/v1alpha1
+    plural: compositiondefinitions
+    filters:
+      matchAll:
+        - {path: status.kind, operator: EXISTS}
+  dependencies:
+    - id: composition
+      fromTarget: {apiVersionPath: status.apiVersion, kindPath: status.kind, pluralPath: status.resource}
+  relationships:
+    matchNone:
+      - with: composition
+        type: custom
+        criteria:
+          - {targetPath: status.kind, dependencyPath: kind, operator: EQUALS}
+          - {targetPath: status.apiVersion, dependencyPath: apiVersion, operator: EQUALS}

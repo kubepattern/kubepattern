@@ -1,0 +1,59 @@
+# v2: G4 and G8 resolved.
+#  - G4: the issuer group is compared with the group encoded in the target's apiVersion
+#    (apiGroup transform); an issuerRef without group means cert-manager.io (default value).
+#  - G8: only CertificateRequests without an owner count as uses. A request owned by a
+#    Certificate is that Certificate's history; the Certificate's current issuerRef is
+#    checked by the first relationship (probe ci-old-ca).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: certmanager-clusterissuer-not-used
+  labels:
+    kubepattern.dev/suite: eval-v2
+    kubepattern.dev/platform: cert-manager
+spec:
+  displayName: ClusterIssuer Not Used
+  category: Security
+  severity: LOW
+  message: "ClusterIssuer {{target.metadata.name}} is not referenced by any Certificate or CertificateRequest; it still holds signing material."
+  reference: "https://cert-manager.io/docs/usage/certificate/"
+  target:
+    kind: ClusterIssuer
+    apiVersion: cert-manager.io/v1
+    plural: clusterissuers
+  dependencies:
+    - id: certificate
+      kind: Certificate
+      apiVersion: cert-manager.io/v1
+      plural: certificates
+      filters:
+        matchAll:
+          - {path: "spec.issuerRef.kind", operator: EQUALS, values: ["ClusterIssuer"]}
+    - id: request
+      kind: CertificateRequest
+      apiVersion: cert-manager.io/v1
+      plural: certificaterequests
+      filters:
+        matchAll:
+          - {path: "spec.issuerRef.kind", operator: EQUALS, values: ["ClusterIssuer"]}
+          - {path: "metadata.ownerReferences", operator: IS_EMPTY}
+  relationships:
+    matchNone:
+      - with: certificate
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.issuerRef.name", operator: EQUALS}
+          - targetPath: "apiVersion"
+            targetTransform: {apiGroup: true}
+            dependencyPath: "spec.issuerRef.group"
+            dependencyDefault: {value: "cert-manager.io"}
+            operator: EQUALS
+      - with: request
+        type: custom
+        criteria:
+          - {targetPath: "metadata.name", dependencyPath: "spec.issuerRef.name", operator: EQUALS}
+          - targetPath: "apiVersion"
+            targetTransform: {apiGroup: true}
+            dependencyPath: "spec.issuerRef.group"
+            dependencyDefault: {value: "cert-manager.io"}
+            operator: EQUALS

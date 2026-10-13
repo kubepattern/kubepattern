@@ -1,0 +1,32 @@
+# v2: G1 and G2 resolved. Each ServiceAccount subject is examined on its own (subjects[@],
+# filtered by kind): the binding is defective when SOME ServiceAccount does not exist
+# (probes rb-sa-g1, rb-sa-mixed). A subject without namespace defaults to the binding's.
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-rolebinding-subject-sa-missing
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: RoleBinding to Missing ServiceAccount
+  category: Security
+  severity: MEDIUM
+  message: "RoleBinding {{target.metadata.namespace}}/{{target.metadata.name}} grants a Role to a ServiceAccount that does not exist (e.g. an agent that was never deployed): the grant is dormant and is picked up by any future ServiceAccount with that name."
+  reference: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#referring-to-subjects"
+  target:
+    kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    plural: rolebindings
+    filters:
+      matchAll:
+        - {path: "subjects[@].kind", operator: EQUALS, values: [ServiceAccount]}
+  dependencies:
+    - {id: serviceaccount, kind: ServiceAccount, apiVersion: v1, plural: serviceaccounts}
+  relationships:
+    matchNone:
+      - with: serviceaccount
+        type: custom
+        criteria:
+          - {targetPath: "subjects[@].name", dependencyPath: metadata.name, operator: EQUALS}
+          - {targetPath: "subjects[@].namespace", targetDefault: {path: metadata.namespace}, dependencyPath: metadata.namespace, operator: EQUALS}

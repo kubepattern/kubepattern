@@ -1,0 +1,30 @@
+# v2, new: G5 resolved. The generator named in the krateo.io/managed-by label (a key with a
+# dot and a slash, quoted) must exist. Before, this smell had a Kyverno policy only.
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-restaction-manager-missing
+  labels:
+    kubepattern.dev/suite: krateo-v2
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: RESTAction Generator Missing
+  category: Architecture
+  severity: LOW
+  message: "RESTAction {{target.metadata.namespace}}/{{target.metadata.name}} is labelled krateo.io/managed-by a RESTAction that does not exist: its generator is gone."
+  target:
+    kind: RESTAction
+    apiVersion: templates.krateo.io/v1
+    plural: restactions
+    filters:
+      matchAll:
+        - {path: "metadata.labels['krateo.io/managed-by']", operator: EXISTS}
+  dependencies:
+    - {id: generator, kind: RESTAction, apiVersion: templates.krateo.io/v1, plural: restactions}
+  relationships:
+    matchNone:
+      - with: generator
+        type: custom
+        criteria:
+          - {targetPath: "metadata.labels['krateo.io/managed-by']", dependencyPath: metadata.name, operator: EQUALS}
+          - {targetPath: metadata.namespace, dependencyPath: metadata.namespace, operator: EQUALS}

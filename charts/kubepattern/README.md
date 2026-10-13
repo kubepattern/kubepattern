@@ -42,6 +42,11 @@ kubectl get smells -A
 kubectl describe smell <smell-name> -n <namespace>
 ```
 
+A Pattern can set `spec.for` (for example `for: 1h`): a Smell then stays `Pending` until its condition has held that long, and becomes `Active` afterwards. This hides transient states, such as a resource that is unreferenced for a few minutes during a GitOps sync. `spec.since` records the first observation. Keep only confirmed findings with `kubectl get smells -A -l kubepattern.dev/phase=Active`.
+
+> [!NOTE]
+> Helm installs the CRDs in `crds/` but does not upgrade them. After upgrading the chart, apply them again: `kubectl apply -f charts/kubepattern/crds/`.
+
 ## Configuration
 
 The CronJob behavior and resource allocation can be customized via the `values.yaml` file.
@@ -64,6 +69,8 @@ By default, the analysis runs every hour. You can easily override the schedule d
 | `resources.limits` | Maximum resource limits for the pod. | `cpu: 1000m, memory: 1Gi` |
 | `affinity` | Node scheduling affinity rules. | Preference for worker nodes (`weight: 1`) |
 | `tolerations` | Tolerations to allow scheduling on tainted nodes. | Toleration for `workload=critical` |
+| `analysis.client.qps` | Client-side QPS limit of the Kubernetes API client. | `50` |
+| `analysis.client.burst` | Client-side burst limit of the Kubernetes API client. | `100` |
 
 *(For advanced configurations, please refer to the `values.yaml` file included in the chart).*
 

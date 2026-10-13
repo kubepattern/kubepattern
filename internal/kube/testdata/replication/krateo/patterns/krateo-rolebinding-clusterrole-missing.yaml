@@ -1,0 +1,35 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-rolebinding-clusterrole-missing
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: RoleBinding to Missing ClusterRole
+  category: Security
+  severity: MEDIUM
+  message: "RoleBinding {{target.metadata.namespace}}/{{target.metadata.name}} binds a ClusterRole that does not exist: its subjects silently get no access (and would get whatever a future ClusterRole with that name grants)."
+  reference: "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding"
+  target:
+    kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    plural: rolebindings
+    filters:
+      matchAll:
+        - path: "roleRef.kind"
+          operator: EQUALS
+          values: ["ClusterRole"]
+  dependencies:
+    - id: clusterrole
+      kind: ClusterRole
+      apiVersion: rbac.authorization.k8s.io/v1
+      plural: clusterroles
+  relationships:
+    matchNone:
+      - with: clusterrole
+        type: custom
+        criteria:
+          - targetPath: "roleRef.name"
+            dependencyPath: "metadata.name"
+            operator: EQUALS

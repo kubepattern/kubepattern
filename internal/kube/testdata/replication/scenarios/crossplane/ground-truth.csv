@@ -1,0 +1,15 @@
+pattern,kind,namespace,name,truth,engine_expected,class,note
+crossplane-function-not-used,Function,,function-patch-and-transform,clean,clean,negative,first pipeline step of several Compositions
+crossplane-function-not-used,Function,,function-auto-ready,clean,clean,near-miss,second pipeline step of one Composition only
+crossplane-function-not-used,Function,,function-go-templating,clean,clean,near-miss,referenced only by a CronOperation
+crossplane-function-not-used,Function,,function-cel-filter,clean,clean,near-miss,referenced only by a WatchOperation
+crossplane-function-not-used,Function,,function-kcl,smell,smell,positive,installed and never referenced
+crossplane-function-not-used,Function,,function-environment-configs,smell,smell,positive,installed and never referenced
+crossplane-function-not-used,Function,,function-sequencer,smell,smell,positive,installed and never referenced
+crossplane-composition-without-xrd,Composition,,app-default,clean,clean,negative,XRD with scope Namespaced
+crossplane-composition-without-xrd,Composition,,cache-default,clean,clean,near-miss,XRD with scope Cluster
+crossplane-composition-without-xrd,Composition,,legacydb-default,clean,clean,near-miss,LegacyCluster XRD created through the v1 API and read through v2
+crossplane-composition-without-xrd,Composition,,queue-default,smell,smell,positive,no XRD defines XQueue
+crossplane-composition-without-xrd,Composition,,app-typo,smell,smell,positive,mistyped composite kind
+crossplane-composition-without-xrd,Composition,,database-from-package,smell,smell,positive,XRD of the originating package never installed
+crossplane-composition-without-xrd,Composition,,app-foreign-group,smell,clean,probe-G4,kind XApp exists only in another API group; the group is embedded in compositeTypeRef.apiVersion

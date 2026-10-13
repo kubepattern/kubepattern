@@ -1,0 +1,38 @@
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: krateo-yamlviewer-apiref-dangling
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  displayName: YamlViewer apiRef Dangling
+  category: Reliability
+  severity: HIGH
+  message: "YamlViewer {{target.metadata.namespace}}/{{target.metadata.name}} reads its data from a RESTAction (spec.apiRef) that does not exist: snowplow fails to resolve the widget."
+  reference: "https://docs.krateo.io/how-to-guides/write-frontend/widgets-api-reference"
+  target:
+    kind: YamlViewer
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    plural: yamlviewers
+    filters:
+      matchAll:
+        - path: "spec.apiRef.name"
+          operator: EXISTS
+  dependencies:
+    - id: restaction
+      kind: RESTAction
+      apiVersion: templates.krateo.io/v1
+      plural: restactions
+  relationships:
+    # snowplow resolves apiRef by name and namespace; an apiRef without namespace is silently ignored.
+    matchNone:
+      - with: restaction
+        type: custom
+        criteria:
+          - targetPath: "spec.apiRef.name"
+            dependencyPath: "metadata.name"
+            operator: EQUALS
+          - targetPath: "spec.apiRef.namespace"
+            dependencyPath: "metadata.namespace"
+            operator: EQUALS

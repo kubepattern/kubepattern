@@ -1,0 +1,53 @@
+# Given Pattern, verbatim from fixtures/files-clean.yaml (only the suite labels are added).
+apiVersion: kubepattern.dev/v1
+kind: Pattern
+metadata:
+  name: page-not-referenced
+  labels:
+    kubepattern.dev/suite: eval
+    kubepattern.dev/platform: krateo
+spec:
+  category: Architecture
+  dependencies:
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: navmenuitem
+    kind: NavMenuItem
+    plural: navmenuitems
+  - apiVersion: widgets.templates.krateo.io/v1beta1
+    id: panel
+    kind: Panel
+    plural: panels
+  displayName: Page Not Referenced
+  message: Page {{target.metadata.name}} in namespace {{target.metadata.namespace}} is not managed by
+    any NavMenuItem.
+  relationships:
+    matchNone:
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: navmenuitem
+    - criteria:
+      - dependencyPath: spec.resourcesRefs.items[*].name
+        operator: EQUALS
+        targetPath: metadata.name
+      - dependencyPath: spec.resourcesRefs.items[*].namespace
+        operator: EQUALS
+        targetPath: metadata.namespace
+      type: custom
+      with: panel
+  severity: HIGH
+  target:
+    apiVersion: widgets.templates.krateo.io/v1beta1
+    filters:
+      matchNone:
+      - operator: EQUALS
+        path: metadata.namespace
+        values:
+        - krateo-system
+    kind: Page
+    plural: pages
