@@ -64,7 +64,7 @@ By default, the analysis runs every hour. You can easily override the schedule d
 | `schedule` | Cron expression for analysis scheduling. | `"0 * * * *"` |
 | `suspend` | Temporarily suspends the CronJob execution. | `false` |
 | `image.repository` | The Docker image repository. | `ghcr.io/kubepattern/kubepattern` |
-| `image.tag` | The image tag to use. | `latest` |
+| `image.tag` | The image tag to use. | `0.1.0` |
 | `resources.requests` | Requested resources (CPU/Memory) for the pod. | `cpu: 200m, memory: 256Mi` |
 | `resources.limits` | Maximum resource limits for the pod. | `cpu: 1000m, memory: 1Gi` |
 | `affinity` | Node scheduling affinity rules. | Preference for worker nodes (`weight: 1`) |
